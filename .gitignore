@@ -1,0 +1,11 @@
+#gitignore
+
+#c/c++
+*.o
+*.out
+
+#SPIRV
+*.spv
+
+#project
+build
