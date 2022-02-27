@@ -2,4 +2,4 @@
 
 cd build
 
- gdb SimpleVulkanEngine
+ gdb SpiritRender

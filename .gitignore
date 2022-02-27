@@ -3,6 +3,8 @@
 #c/c++
 *.o
 *.out
+.ccls
+.ccls-cache
 
 #SPIRV
 *.spv

@@ -7,4 +7,4 @@ cp Config/*.txt build/Config/*.txt
 
 ./compile_shaders.sh
 #run cmake
-cmake -S . -B build/
+cmake -S . -B build/ -DCMAKE_EXPORT_COMPILE_COMMANDS=1
