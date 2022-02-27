@@ -23,7 +23,7 @@ SpiritWindow spCreateWindow (SpiritWindowCreateInfo createInfo) {
 
     GLFWmonitor *windowMonitor = NULL;
     if (createInfo.fullscreen) windowMonitor = glfwGetPrimaryMonitor ();
-    if (windowMonitor == NULL) {
+    if (createInfo.fullscreen && windowMonitor == NULL) {
         glfwGetError (&glfwError);
         LOG_ERROR("No fullscreen monitor available! GLFW error %s", glfwError);
         createInfo.fullscreen = SPIRIT_FALSE;
@@ -88,5 +88,16 @@ SpiritReturns spResizeWindow (SpiritWindow window, uint32_t w, uint32_t h) {
 
     glfwSetWindowSize (window->window, w, h);
 
+    return SPIRIT_SUCCESS;
+}
+
+SpiritReturns spWindowGetPixelSize (SpiritWindow window, uint32_t *w, uint32_t *h) {
+
+    const char *glfwError;
+    glfwGetFramebufferSize (window->window, (int32_t*) w, (int32_t*) h);
+    if (glfwGetError (&glfwError) != GLFW_NO_ERROR) {
+        LOG_ERROR ("Failed to get framebuffer size. GLFW error: %s", glfwError);
+        return SPIRIT_FAILURE;
+    }
     return SPIRIT_SUCCESS;
 }

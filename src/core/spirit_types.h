@@ -32,7 +32,6 @@ typedef enum e_SpiritReturns {
 typedef struct t_SpiritWindow *SpiritWindow; // wanna keep it private in case of platform specific windows
 typedef struct t_SpiritWindowCreateInfo {
     int32_t w, h; // size of window in screen units
-    int32_t pxW, pxH; // size of framebuffer
     char *title;
     bool fullscreen;
 } SpiritWindowCreateInfo;
