@@ -13,11 +13,12 @@
 #include <vulkan/vulkan.h>
 
 // custom
-#include "debug/messenger.h"
-#include "core/spirit_types.h"
+#include "debug/messenger.h" // debug messenging functions
+#include "core/spirit_types.h" // custom types
+#include "mem/spirit_mem.h" // heap memory allocator
 
 // definitions
-#define new_var(typename) (typename)malloc(sizeof(typename))
+#define new_var(typename) (typename)spMemAlloc(sizeof(typename))
 #define new_array(typename, count) (typename*)calloc(count, sizeof(typename))
 
 #endif

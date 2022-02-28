@@ -10,8 +10,13 @@
 SpiritWindow spCreateWindow (SpiritWindowCreateInfo createInfo);
 
 // close and destroy window
-SpiritReturns spDestroyWindow (SpiritWindow window);
+SpiritResult spDestroyWindow (SpiritWindow window);
 
 // check if a window should remain open or has been closed by the user
-SpiritReturns spWindowShouldClose (SpiritWindow window);
+SpiritBool spWindowShouldClose (SpiritWindow window);
 
+// resize window
+SpiritResult spResizeWindow (SpiritWindow window, uint32_t w, uint32_t h);
+
+// get window size in pixels not screen units
+SpiritResult spWindowGetPixelSize (SpiritWindow window, uint32_t *w, uint32_t *h);

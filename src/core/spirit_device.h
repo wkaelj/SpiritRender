@@ -10,5 +10,5 @@
 SpiritDevice spCreateDevice (void);
 
 // destroy spirit device
-SpiritReturns spDestroyDevice (SpiritDevice device);
+SpiritResult spDestroyDevice (SpiritDevice device);
 

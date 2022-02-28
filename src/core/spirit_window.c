@@ -47,7 +47,7 @@ SpiritWindow spCreateWindow (SpiritWindowCreateInfo createInfo) {
     return window;
 }
 
-SpiritReturns spDestroyWindow (SpiritWindow window) {
+SpiritResult spDestroyWindow (SpiritWindow window) {
 
     glfwDestroyWindow (window->window);
     if (glfwGetError (NULL) != GLFW_NO_ERROR) {
@@ -57,10 +57,12 @@ SpiritReturns spDestroyWindow (SpiritWindow window) {
     }
     glfwTerminate ();
 
+    
+
     return SPIRIT_SUCCESS;
 }
 
-SpiritReturns spWindowShouldClose (SpiritWindow window) {
+SpiritBool spWindowShouldClose (SpiritWindow window) {
     const char *description;
     assert (window->window != NULL);
     glfwPollEvents ();
@@ -80,7 +82,7 @@ SpiritReturns spWindowShouldClose (SpiritWindow window) {
     }
 }
 
-SpiritReturns spResizeWindow (SpiritWindow window, uint32_t w, uint32_t h) {
+SpiritResult spResizeWindow (SpiritWindow window, uint32_t w, uint32_t h) {
 
     if (window->window == SPIRIT_NULL) {
         LOG_ERROR("spResizeWindow: window passed is NULL");
@@ -91,7 +93,7 @@ SpiritReturns spResizeWindow (SpiritWindow window, uint32_t w, uint32_t h) {
     return SPIRIT_SUCCESS;
 }
 
-SpiritReturns spWindowGetPixelSize (SpiritWindow window, uint32_t *w, uint32_t *h) {
+SpiritResult spWindowGetPixelSize (SpiritWindow window, uint32_t *w, uint32_t *h) {
 
     const char *glfwError;
     glfwGetFramebufferSize (window->window, (int32_t*) w, (int32_t*) h);
