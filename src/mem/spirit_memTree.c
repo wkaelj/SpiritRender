@@ -38,6 +38,8 @@ MemGap getMemgapMin (MemGapTree gaps) {
 
 int memGapMap (MemGapTree gaps, MemGap newGap) {
 
+    LOG_DEBUG("Mapping pointer '%p'", newGap.ptr);
+    if (gaps->gthn != NULL) LOG_DEBUG("gaps->gthn = %p", gaps->gthn->ptr);
     // what if some idiot has not set gaps yet
     if (gaps == NULL) {
         gaps = malloc (sizeof (MemGap));

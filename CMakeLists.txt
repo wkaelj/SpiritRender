@@ -54,8 +54,12 @@ else()
 	message(STATUS "Using glfw lib at: ${GLFW_LIB}")
 endif()
 
-include_directories(extern)
+include_directories(libs/*)
 include_directories(src)
+
+#libs
+add_subdirectory(libs/liblist)
+target_link_libraries(linkedlist)
 
 # If TINYOBJ_PATH not specified in .env.cmake, try fetching from git repo
 if (NOT TINYOBJ_PATH)

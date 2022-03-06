@@ -8,14 +8,8 @@
 
 // possible memory types. each is stored in custom memory block
 typedef enum e_MemTypes {
-    SPIRIT_MEMTYPE_UNDEFINED,
-    SPIRIT_MEMTYPE_GRAPHICS, 
-    SPIRIT_MEMTYPE_ENTITY,
-    SPIRIT_MEMTYPE_MESH,
-    SPIRIT_MEMTYPE_INITALIZER,
-    //SPIRIT_MEMTYPE_ 
-    //SPIRIT_MEMTYPE_
-
+    SPIRIT_MEMTYPE_PERMANENT,
+    SPIRIT_MEMTYPE_TEMP,
     SPIRIT_MEMTYPE_COUNT
 } SpiritMemTypes;
 

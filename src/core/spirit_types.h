@@ -50,12 +50,6 @@ typedef struct t_SpiritMemory {
     u64 memSize; // total heap size
 } *SpiritMemory;
 
-// Custom pointer
-typedef struct t_SpiritPointer {
-    void *ptr;
-    u64 size;
-} SpiritPtr;
-
 // window
 typedef struct t_SpiritWindow *SpiritWindow; // wanna keep it private in case of platform specific windows
 typedef struct t_SpiritWindowCreateInfo {
@@ -64,14 +58,39 @@ typedef struct t_SpiritWindowCreateInfo {
     bool fullscreen;
 } SpiritWindowCreateInfo;
 
+typedef struct t_SpiritWindowExtensions {
+    u32 count;
+    const char **names;
+} SpiritWindowExtensions;
+
 // rendering device
 typedef struct t_SpiritDevice {
     VkDevice device;
+    VkInstance instance;
+    VkPhysicalDevice physicalDevice;
+
+    VkQueue graphicsQueue;
+    VkQueue presentQueue;
+
+    const char *const *deviceExtensions;
+    u32 deviceExtensionCount;
+
     bool powerSaveMode;
 } *SpiritDevice;
 
 typedef struct t_SpiritDeviceCreateInfo {
-    bool powerSaveMode;
+    SpiritBool powerSaveMode; // prefer integrated GPU, and limit framerate
+    SpiritBool enableValidation; // enable vulkan validation layers
+    SpiritBool verbose; // print info messeges
+
+    char *appName;
+    u32 appVersion;
+    char *engineName;
+    u32 engineVersion;
+
+    SpiritWindowExtensions windowExtensions;
+    u32 requiredValidationLayerCount;
+    const char *const *requiredValidationLayers;
 } SpiritDeviceCreateInfo;
 
 // swapchain

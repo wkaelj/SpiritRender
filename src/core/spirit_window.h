@@ -20,3 +20,9 @@ SpiritResult spResizeWindow (SpiritWindow window, uint32_t w, uint32_t h);
 
 // get window size in pixels not screen units
 SpiritResult spWindowGetPixelSize (SpiritWindow window, uint32_t *w, uint32_t *h);
+
+// get requried window extensions
+SpiritWindowExtensions spWindowGetExtensions (SpiritWindow window);
+
+// get window surface
+VkSurfaceKHR spWindowGetSurface (SpiritWindow window, SpiritDevice device);

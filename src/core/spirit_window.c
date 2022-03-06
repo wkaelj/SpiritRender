@@ -103,3 +103,12 @@ SpiritResult spWindowGetPixelSize (SpiritWindow window, uint32_t *w, uint32_t *h
     }
     return SPIRIT_SUCCESS;
 }
+
+SpiritWindowExtensions spWindowGetExtensions (SpiritWindow window) {
+    
+    SpiritWindowExtensions out = {};
+
+    out.names = glfwGetRequiredInstanceExtensions(&out.count);
+
+    return out;
+}

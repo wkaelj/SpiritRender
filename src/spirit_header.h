@@ -12,14 +12,16 @@
 // vulkan
 #include <vulkan/vulkan.h>
 
-// custom
+// custom 
 #include "debug/messenger.h" // debug messenging functions
 #include "core/spirit_types.h" // custom types
 #include "mem/spirit_mem.h" // heap memory allocator
 
 // definitions
-#define new_var(typename) (typename)spMemAlloc(sizeof(typename))
-#define new_array(typename, count) (typename*)calloc(count, sizeof(typename))
+#define new_var(typename) spMemAlloc(sizeof(typename))
+#define new_array(typename, count) spMemAlloc(sizeof(typename) * count)
+#define array_length(array) = (sizeof(array)/sizeof(array[0]))
+
 // debug
 #ifndef DEBUG
 #define db_assert(statement) \
