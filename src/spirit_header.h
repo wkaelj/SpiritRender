@@ -20,5 +20,15 @@
 // definitions
 #define new_var(typename) (typename)spMemAlloc(sizeof(typename))
 #define new_array(typename, count) (typename*)calloc(count, sizeof(typename))
+// debug
+#ifndef DEBUG
+#define db_assert(statement) \
+    if (!(statement)) { \
+        LOG_FATAL("Assertion '%s' failed", #statement); \
+        exit (1); \
+    }
+#else
+#define db_assert(statement)
+#endif
 
 #endif

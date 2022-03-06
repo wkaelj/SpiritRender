@@ -1,30 +1,27 @@
 #pragma once
 #include <spirit_header.h>
 
-// Custom binary tree system to store allocated memory
+#include "spirit_mem.h"
+#include "spirit_memTree.h"
+
+// Manage the accesable pointers of a memblock
+//
 // 
-// 
-// Kael Johnston
+// Kael Johnston Feb 28 2022
 
-typedef struct t_MemNode {
-    u64 ptr;
-    u64 size;
-    struct t_MemNode *gThen;
-    struct t_MemNode *lThen;
-} MemNode;
+// memory map, used to store the memory indices of a memblock
+// must map both heads as NULL on creation
+typedef struct t_memmap {
+    MemGap *gaps;
+    MemChunk *chunks;
+} Memmap;
 
-typedef struct t_MemTree {
-    MemNode *head;
-} MemTree;
+// map a chunk of memory. only guaranteed to be minsize
+// also guaranteed to be a unique pointer
+void *spMemMap (u64 minSize);
 
-// check if a list containes a certaion value
-SpiritBool memTreeCheck (MemTree *tree, u64 value);
+// unmap memory
+SpiritResult spMemUnmap (void *ptr, u64 size);
 
-// add a pointer to the tree
-SpiritResult memTreeAdd (MemTree *tree, u64 ptr, u64 size);
-
-// get a pointer of at least size minSize
-u64 memTreeGetPtr (MemTree *tree, u64 minSize);
-
-// remove a pointer from the binary tree
-SpiritResult memTreeFreePtr (MemTree *tree, u64 ptr, u64 size);
+// remap memory to new memmap without
+Memmap spMemRemap (Memmap mem, u64 newSize);

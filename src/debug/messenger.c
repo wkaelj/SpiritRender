@@ -17,12 +17,13 @@ int debug_log (DebugSeverity severity, const char *file, const char *func, const
     va_start (args, format);
 
     // messege severity prefixes
-    const char *messegeSeverity[] = {
-        "\033[1;31m[FATAL]: \033[0m",
-        "\033[1;33m[ERROR]: \033[0m",
-	    "\033[1;96m[VALIDATION]: \033[0m",
-        "\033[1;32m[INFO]: \033[0m",
-        "\033[1;35m[DEBUG]: \033[0m"
+    const char *messegeSeverity[DEBUG_TYPE_MAX] = {
+        "\033[1;31m[FATAL]: \033[0m", // fatal
+        "\033[1;33m[ERROR]: \033[0m", // error
+        "\033[1,56m[WARNING]: \033[0m", // warning
+	"\033[1;96m[VALIDATION]: \033[0m", // validation
+        "\033[1;32m[INFO]: \033[0m", // info
+        "\033[1;35m[DEBUG]: \033[0m" // debug
     };
 
     // pupulate bufferstring 1 with messege and args and all that
