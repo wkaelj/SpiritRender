@@ -25,4 +25,4 @@ SpiritResult spWindowGetPixelSize (SpiritWindow window, uint32_t *w, uint32_t *h
 SpiritWindowExtensions spWindowGetExtensions (SpiritWindow window);
 
 // get window surface
-VkSurfaceKHR spWindowGetSurface (SpiritWindow window, SpiritDevice device);
+VkSurfaceKHR spWindowGetSurface (SpiritWindow window, VkInstance instance);

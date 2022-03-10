@@ -44,6 +44,17 @@ typedef enum e_SpiritResult {
 // Structures
 //
 
+typedef unsigned char byte;
+
+// predefined
+typedef struct t_SpiritSwapchainSupportInfo {
+    VkSurfaceCapabilitiesKHR capabilties;
+    VkSurfaceFormatKHR *formats; // maybe need to fix pointers later
+    u32 formatCount;
+    VkPresentModeKHR *presentModes;
+    u32 presentModeCount;
+} SpiritSwapchainSupportInfo;
+
 // memory
 typedef struct t_SpiritMemory {
     void *memStart; // pointer to start of heap
@@ -68,14 +79,22 @@ typedef struct t_SpiritDevice {
     VkDevice device;
     VkInstance instance;
     VkPhysicalDevice physicalDevice;
+    VkDebugUtilsMessengerEXT debugMessenger;
+
+    VkSurfaceKHR windowSurface;
 
     VkQueue graphicsQueue;
     VkQueue presentQueue;
+    u32 queueCount;
+    const u32 *queueIndices;
 
     const char *const *deviceExtensions;
     u32 deviceExtensionCount;
 
-    bool powerSaveMode;
+    SpiritBool powerSaveMode;
+    SpiritBool validationEnabled;
+
+    SpiritSwapchainSupportInfo swapchainDetails;
 } *SpiritDevice;
 
 typedef struct t_SpiritDeviceCreateInfo {
@@ -87,15 +106,40 @@ typedef struct t_SpiritDeviceCreateInfo {
     u32 appVersion;
     char *engineName;
     u32 engineVersion;
-
-    SpiritWindowExtensions windowExtensions;
+    SpiritWindow window;
+    SpiritWindowExtensions windowExtensions; // available window extensions
     u32 requiredValidationLayerCount;
     const char *const *requiredValidationLayers;
+
+    VkSurfaceKHR windowSurface; // will be overridden
+
+    u32 requiredDeviceExtensionCount; // required GPU extension count
+    const char *const *requiredDeviceExtensions; // required GPU extensions
+
 } SpiritDeviceCreateInfo;
 
 // swapchain
+typedef struct t_SpiritSwapchainCreateInfo {
+    SpiritBool verbose; // many messeges
+
+    SpiritBool selectedPresentMode;
+    VkPresentModeKHR preferredPresentMode;
+    SpiritBool selectedFormat;
+    VkSurfaceFormatKHR preferedFormat;
+
+    // dimensions of the window in pixels
+    u32 windowWidthPx, windowHeightPx;
+
+} SpiritSwapchainCreateInfo;
+
 typedef struct t_SpiritSwapchain {
     VkSwapchainKHR swapchain;
+    SpiritSwapchainSupportInfo supportInfo;
+
+    VkExtent2D extent;
+    VkSurfaceFormatKHR format;
+    VkPresentModeKHR presentMode;
+
 } *SpiritSwapchain;
 
 // pipeline

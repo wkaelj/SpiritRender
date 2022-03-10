@@ -53,7 +53,7 @@ void *spMemAlloc (u64 size) {
 }
 
 // free custom pointer
-SpiritResult spMemspMemFree (void *mem) {
+SpiritResult spMemFree (void *mem) {
 
     if (mem != NULL) free (mem);
     return SPIRIT_SUCCESS;

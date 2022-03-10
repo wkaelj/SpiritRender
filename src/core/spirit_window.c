@@ -104,6 +104,14 @@ SpiritResult spWindowGetPixelSize (SpiritWindow window, uint32_t *w, uint32_t *h
     return SPIRIT_SUCCESS;
 }
 
+VkSurfaceKHR spWindowGetSurface (SpiritWindow window, VkInstance instance) {
+
+    VkSurfaceKHR surface;
+
+    if (glfwCreateWindowSurface (instance, window->window, SPIRIT_NULL, &surface) != VK_SUCCESS) LOG_FATAL("Failed to create window surface");
+    return surface;
+}
+
 SpiritWindowExtensions spWindowGetExtensions (SpiritWindow window) {
     
     SpiritWindowExtensions out = {};

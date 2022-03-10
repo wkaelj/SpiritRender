@@ -27,52 +27,44 @@ MemGap getMemgapMax (MemGapTree gaps) {
 }
 
 MemGap getMemgapMin (MemGapTree gaps) {
-    
+
     // failure
     if (gaps == NULL) return (MemGap){0, 0, NULL, NULL};
-    
+
     while (gaps->lthn != NULL) gaps = gaps->lthn;
 
     return (MemGap){gaps->size, gaps->ptr, NULL, NULL};
 }
 
-int memGapMap (MemGapTree gaps, MemGap newGap) {
+int memGapMap (const MemGapTree gaps, MemGap newGap) {
 
-    LOG_DEBUG("Mapping pointer '%p'", newGap.ptr);
-    if (gaps->gthn != NULL) LOG_DEBUG("gaps->gthn = %p", gaps->gthn->ptr);
+    const MemGapTree tree = gaps;
     // what if some idiot has not set gaps yet
-    if (gaps == NULL) {
-        gaps = malloc (sizeof (MemGap));
-        *gaps = newGap; 
-        LOG_WARNING("memGapMap: 'gaps' was NULL. Heap memory allocated");
+    if (tree == NULL) {
+        gaps = &newGap;
+        LOG_DEBUG("Mapped ptr '%p', *gaps->ptr");
         return SPIRIT_SUCCESS;
     }
 
-    // iterate through list
-    bool found = false;
-    while (!found) {
-        // greater than
-        if (newGap.size > gaps->size) {
-            if (gaps->gthn == NULL) { gaps->gthn = &newGap; found = true; }
-            else gaps = gaps->gthn;
-        } else
-        // less than
-        if (newGap.size < gaps->size) {
-            if (gaps->lthn == NULL) { gaps->lthn = &newGap; found = true; }
-            else gaps = gaps->lthn;
-        }
-        // failure
-        else {
-            LOG_FATAL("Failed to map pointer '%p'", newGap.ptr);
-            return EXIT_FAILURE;
-        }
+    // what if gaps is null initalized
+    if (tree->size == 0) {
+        gaps = &newGap;
+        return SPIRIT_SUCCESS;
     }
+    // map pointer
+    if (newGap.size > tree->size) {
+        memGapMap(tree->gthn, newGap);
+    } else if (newGap.size < tree->size){
+        memGapMap(tree->lthn, newGap);
+    } else return SPIRIT_FAILURE;
 
-    return 0;
+
+
+    return SPIRIT_SUCCESS;
 }
 
 int memGapRemove (MemGapTree gaps, void *gapPtr) {
-    
+
     // get node to remove, store in gaps
     if (gaps == NULL) {
         LOG_ERROR("Pointer gap '%p' has not been allocated or tree is corrupt. tree head is NULL", gapPtr);

@@ -35,7 +35,7 @@ MemGap getMemgapMax (MemGapTree gaps);
 MemGap getMemgapMin (MemGapTree gaps);
 
 // add a new gap to list
-int memGapMap (MemGapTree gaps, MemGap newGap);
+int memGapMap (const MemGapTree gaps, MemGap newGap);
 
 // remove a gap from list
 int memGapRemove (MemGapTree gaps, void *gapPtr);

@@ -16,11 +16,16 @@
 #include "debug/messenger.h" // debug messenging functions
 #include "core/spirit_types.h" // custom types
 #include "mem/spirit_mem.h" // heap memory allocator
+#include "utils/spirit_string.h"
 
 // definitions
 #define new_var(typename) spMemAlloc(sizeof(typename))
 #define new_array(typename, count) spMemAlloc(sizeof(typename) * count)
 #define array_length(array) = (sizeof(array)/sizeof(array[0]))
+
+#define min_value(x, y) ((x < y) ? x : y)
+#define max_value(x, y) ((x > y) ? x : y)
+#define clamp_value(value, min, max) (value = max_value(min, min_value(value, max)))
 
 // debug
 #ifndef DEBUG

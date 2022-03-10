@@ -9,7 +9,8 @@
 void mainlooptest (void);
 
 int main (int argc, char **argv) {
-    mainlooptest();
+
+    mainlooptest ();
 
     return 0;
 }
@@ -36,11 +37,16 @@ void mainlooptest (void) {
     deviceCreateInfo.engineVersion = VK_MAKE_VERSION(0, 0, 0);
 
     deviceCreateInfo.windowExtensions = spWindowGetExtensions(window);
+    deviceCreateInfo.window = window;
+
 
     SpiritDevice device = spCreateDevice (deviceCreateInfo);
+
+    if (device == NULL) LOG_ERROR("Failed to create device");
 
     while (!spWindowShouldClose (window)) {
     }
 
+    spDestroyDevice(device);
     spDestroyWindow (window);
 }
