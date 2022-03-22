@@ -100,7 +100,6 @@ typedef struct t_SpiritDevice {
 typedef struct t_SpiritDeviceCreateInfo {
     SpiritBool powerSaveMode; // prefer integrated GPU, and limit framerate
     SpiritBool enableValidation; // enable vulkan validation layers
-    SpiritBool verbose; // print info messeges
 
     char *appName;
     u32 appVersion;
@@ -120,7 +119,6 @@ typedef struct t_SpiritDeviceCreateInfo {
 
 // swapchain
 typedef struct t_SpiritSwapchainCreateInfo {
-    SpiritBool verbose; // many messeges
 
     SpiritBool selectedPresentMode;
     VkPresentModeKHR preferredPresentMode;
@@ -140,6 +138,12 @@ typedef struct t_SpiritSwapchain {
     VkSurfaceFormatKHR format;
     VkPresentModeKHR presentMode;
 
+    VkSwapchainCreateInfoKHR createInfo; // used to recreate
+
+    // images
+    VkImage *images;
+    u32 imageCount;
+    VkImageView *imageViews;
 } *SpiritSwapchain;
 
 // pipeline
@@ -148,3 +152,32 @@ typedef struct t_SpiritPipeline {
     VkRenderPass *renderPasses;
     uint32_t renderPassCount;
 } *SpiritPipeline;
+
+// render pass
+typedef enum e_SpiritRenderPassType {
+    SPIRIT_RENDER_PASS_TYPE_COLOUR,
+    SPIRIT_RENDER_PASS_TYPE_SHADOW,
+    SPIRIT_RENDER_PASS_TYPE_STENCIL,
+
+    SPIRIT_RENDER_PASS_MAX
+} SpiritRenderPassType;
+
+// simplified render pass creation settings. can be converted to render pass create info using spRenderPassExpandSettings
+typedef struct t_SpiritRenderPassSettings {
+
+    SpiritRenderPassType type;
+    f32 colourFactors[3]; // multiply colour values by this
+
+} SpiritRenderPassSettings;
+
+// complex render pass create info
+typedef struct t_SpiritRenderPassCreateInfo {
+
+} SpiritRenderPassCreateInfo;
+
+// convert render pass settings into render pass create info
+SpiritRenderPassCreateInfo spRenderPassExpandSettings (SpiritRenderPassSettings settings);
+
+typedef struct t_SpiritRenderPass {
+    VkRenderPass renderPass;
+} *SpiritRenderPass;

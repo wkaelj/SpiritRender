@@ -2,8 +2,6 @@
 
 // swapchain implementation
 
-#define log_verbose(messege, ...) if(createInfo.verbose) LOG_INFO(messege, ##__VA_ARGS__)
-
 //
 // Structs
 //
@@ -22,7 +20,7 @@ VkPresentModeKHR chooseSwapPresentMode (uint32_t presentModeCount, const VkPrese
 // Public functions
 //
 
-SpiritSwapchain spCreateSwapchain (SpiritSwapchainCreateInfo createInfo, SpiritDevice device) {
+SpiritSwapchain spCreateSwapchain (SpiritSwapchainCreateInfo createInfo, SpiritDevice device, SpiritSwapchain optionalSwapchain) {
 
     // failure
     if (device == SPIRIT_NULL) {
@@ -40,10 +38,10 @@ SpiritSwapchain spCreateSwapchain (SpiritSwapchainCreateInfo createInfo, SpiritD
     }
 
     // clamp window resolution to capabilties
-    clamp_value(createInfo.windowWidthPx,
+    createInfo.windowWidthPx = clamp_value(createInfo.windowWidthPx,
             device->swapchainDetails.capabilties.minImageExtent.width,
             device->swapchainDetails.capabilties.maxImageExtent.width);
-    clamp_value(createInfo.windowHeightPx,
+    createInfo.windowWidthPx = clamp_value(createInfo.windowHeightPx,
             device->swapchainDetails.capabilties.minImageExtent.height,
             device->swapchainDetails.capabilties.maxImageExtent.height);
     log_verbose("Window resolution '%ix%i'", createInfo.windowWidthPx, createInfo.windowHeightPx);
@@ -92,13 +90,76 @@ SpiritSwapchain spCreateSwapchain (SpiritSwapchainCreateInfo createInfo, SpiritD
     swapInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     swapInfo.clipped = VK_TRUE;
 
+    // old swapchain
+    if (optionalSwapchain != SPIRIT_NULL) swapInfo.oldSwapchain = optionalSwapchain->swapchain;
+
+    // TODO fix swapchain create info
+    //out->createInfo = swapInfo;
+    // acctualy created swapchain
     if (vkCreateSwapchainKHR(device->device, &swapInfo, SPIRIT_NULL, &out->swapchain)) {
-        log_verbose("Created Swapchain");
+        log_verbose("swapchain failure");
         return SPIRIT_NULL;
     }
 
+    // images
+    vkGetSwapchainImagesKHR(device->device, out->swapchain, &out->imageCount, NULL);
+    out->images = new_array(VkImage, out->imageCount);
+    vkGetSwapchainImagesKHR(device->device, out->swapchain, &out->imageCount, out->images);
+
+    // image views
+    VkImageViewCreateInfo imageViewInfo = {};
+    imageViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+
+    imageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    imageViewInfo.format = out->format.format;
+    imageViewInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+    imageViewInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+    imageViewInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+    imageViewInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+    imageViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    imageViewInfo.subresourceRange.baseMipLevel = 0;
+    imageViewInfo.subresourceRange.levelCount = 1;
+    imageViewInfo.subresourceRange.baseArrayLayer = 0;
+    imageViewInfo.subresourceRange.layerCount = 1;
+    out->imageCount = swapImageCount;
+    out->imageViews = new_array(VkImageView, out->imageCount);
+
+    for (u8 i = 0; i < out->imageCount; i++) {
+        imageViewInfo.image = out->images[i];
+        if (vkCreateImageView(device->device, &imageViewInfo, SPIRIT_NULL, &out->imageViews[i]) != VK_SUCCESS) {
+            LOG_ERROR("Failed to create swapchain image views");
+            return SPIRIT_NULL;
+        }
+    }
+
+    log_verbose("Created Swapchain");
     return out;
 
+}
+
+SpiritResult spDestroySwapchain (SpiritSwapchain swapchain, SpiritDevice device) {
+
+    if (swapchain == SPIRIT_NULL || device == SPIRIT_NULL) {
+        if (swapchain == SPIRIT_NULL) LOG_ERROR("Cannot destroy swapchain, swapchain is NULL");
+        if (device == SPIRIT_NULL) LOG_ERROR("Cannot destroy swapchain, device is NULL");
+        return SPIRIT_FAILURE;
+    }
+
+    vkDestroySwapchainKHR(device->device, swapchain->swapchain, SPIRIT_NULL);
+
+    for (u32 i = 0; i < swapchain->imageCount; i++) {
+        vkDestroyImageView(device->device, swapchain->imageViews[i], SPIRIT_NULL);
+        vkDestroyImage(device->device, swapchain->images[i], SPIRIT_NULL);
+    }
+
+    swapchain->imageViews = SPIRIT_NULL;
+    swapchain->images = SPIRIT_NULL;
+    swapchain->swapchain = SPIRIT_NULL;
+
+    spMemFree (swapchain);
+
+    return SPIRIT_SUCCESS;
 }
 
 //

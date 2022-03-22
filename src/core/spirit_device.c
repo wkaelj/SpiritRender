@@ -5,8 +5,6 @@
 //
 // Kael Johnston Feb 27 2022
 
-#define log_verbose(messege, ...) if(createInfo.verbose)LOG_INFO(messege, ##__VA_ARGS__);
-
 //
 // Structures
 //
@@ -274,11 +272,11 @@ static VkPhysicalDevice selectPhysicalDevice (SpiritDeviceCreateInfo createInfo,
         }
     }
 
-    if (createInfo.verbose) {
+#ifdef ENABLE_VERBOSE
         VkPhysicalDeviceProperties properties;
         vkGetPhysicalDeviceProperties (outputDevice.physicalDevice, &properties);
         LOG_INFO("Selected GPU '%s'", properties.deviceName);
-    }
+#endif
     // set device to highest ranking device
     return outputDevice.physicalDevice;
 

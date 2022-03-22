@@ -3,6 +3,7 @@
 #include <spirit_header.h>
 #include "core/spirit_window.h"
 #include "core/spirit_device.h"
+#include "core/spirit_swapchain.h"
 
 #include "mem/spirit_memTree.h"
 
@@ -28,7 +29,6 @@ void mainlooptest (void) {
 
     SpiritDeviceCreateInfo deviceCreateInfo = {};
     deviceCreateInfo.enableValidation = SPIRIT_TRUE;
-    deviceCreateInfo.verbose = SPIRIT_TRUE;
     deviceCreateInfo.powerSaveMode = SPIRIT_FALSE;
 
     deviceCreateInfo.appName = "TestApp";
@@ -41,12 +41,19 @@ void mainlooptest (void) {
 
 
     SpiritDevice device = spCreateDevice (deviceCreateInfo);
-
     if (device == NULL) LOG_ERROR("Failed to create device");
 
-    while (!spWindowShouldClose (window)) {
-    }
 
+    SpiritSwapchainCreateInfo swapCreateInfo = {};
+    spWindowGetPixelSize(window, &swapCreateInfo.windowWidthPx, &swapCreateInfo.windowHeightPx);
+
+    SpiritSwapchain swapchain = spCreateSwapchain(swapCreateInfo, device, SPIRIT_NULL);
+
+    if (swapchain == SPIRIT_NULL) LOG_ERROR("Failure to create swapchain");
+
+    while (!spWindowShouldClose (window));
+
+    spDestroySwapchain(swapchain, device);
     spDestroyDevice(device);
     spDestroyWindow (window);
 }

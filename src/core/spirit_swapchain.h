@@ -6,8 +6,8 @@
 //
 // Kael Johnston Mar 10 2022
 
-SpiritSwapchain spCreateSwapchain (SpiritSwapchainCreateInfo createInfo, SpiritDevice device);
+// create a new swapchain. Can optionaly pass a old swapchain, which will be recreated with new window resolution
+SpiritSwapchain spCreateSwapchain (SpiritSwapchainCreateInfo createInfo, SpiritDevice device, SpiritSwapchain optionalSwapchain);
 
-SpiritResult spSwapchainRecreate (SpiritSwapchain swapchain, SpiritDevice device);
-
-SpiritResult spDestroySwapchain (SpiritSwapchain, SpiritDevice);
+// destroy a swapchain and free associated memory
+SpiritResult spDestroySwapchain (SpiritSwapchain swapchain, SpiritDevice device);

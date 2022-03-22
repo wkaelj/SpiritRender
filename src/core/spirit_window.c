@@ -57,8 +57,7 @@ SpiritResult spDestroyWindow (SpiritWindow window) {
     }
     glfwTerminate ();
 
-    
-
+    log_verbose("Closing window");
     return SPIRIT_SUCCESS;
 }
 
@@ -75,7 +74,6 @@ SpiritBool spWindowShouldClose (SpiritWindow window) {
             LOG_ERROR("GLFW error: %s", description);
             return SPIRIT_FAILURE;
         }
-        LOG_DEBUG("Closing window");
         return SPIRIT_TRUE;
     } else {
         return SPIRIT_FALSE;
