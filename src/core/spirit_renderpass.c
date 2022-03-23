@@ -27,9 +27,30 @@ SpiritRenderPass spCreateRenderPass (SpiritRenderPassCreateInfo createInfo, Spir
     attachmentRef.attachment = 0;
     attachmentRef.layout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL;
 
+    VkSubpassDescription subpass = {};
+    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpass.colorAttachmentCount = 1;
+    subpass.pColorAttachments = &attachmentRef;
 
+    VkRenderPassCreateInfo renderPassInfo = {};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    renderPassInfo.attachmentCount = 1;
+    renderPassInfo.pAttachments = &attachmentInfo;
+    renderPassInfo.subpassCount = 1;
+    renderPassInfo.pSubpasses = &subpass;
 
-
+    if (vkCreateRenderPass(device->device, &renderPassInfo, SPIRIT_NULL, &out->renderPass) != VK_SUCCESS) return SPIRIT_NULL;
+    log_verbose("Created render pass\n");
 
     return out;
+}
+
+SpiritResult spDestroyRenderPass (SpiritRenderPass renderPass, SpiritDevice device) {
+
+    if (renderPass == SPIRIT_NULL) return SPIRIT_FAILURE;
+    vkDestroyRenderPass(device->device, renderPass->renderPass, SPIRIT_NULL);
+
+    dalloc(renderPass);
+
+     return SPIRIT_SUCCESS;
 }
