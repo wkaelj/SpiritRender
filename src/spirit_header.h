@@ -34,6 +34,10 @@
 #define log_verbose(messege, ...) ;
 #endif
 
+// tmp memory alocator
+#define alloc(ptr) malloc(ptr);
+#define dalloc(ptr) free(ptr);
+
 // debug
 #ifndef DEBUG
 #define db_assert(statement) \
