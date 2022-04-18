@@ -35,6 +35,7 @@ SpiritWindow spCreateWindow (SpiritWindowCreateInfo createInfo) {
         window->w = createInfo.w;
         window->h = createInfo.h;
     }
+
     glfwWindowHint (GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint (GLFW_RESIZABLE, GLFW_FALSE);
 
@@ -50,10 +51,13 @@ SpiritWindow spCreateWindow (SpiritWindowCreateInfo createInfo) {
 SpiritResult spDestroyWindow (SpiritWindow window) {
 
     glfwDestroyWindow (window->window);
+    // handle error
     if (glfwGetError (NULL) != GLFW_NO_ERROR) {
         const char *description;
         glfwGetError (&description);
-        LOG_ERROR(description);
+        LOG_ERROR("Failed to close window: %s", description);
+        glfwTerminate ();
+        return SPIRIT_FAILURE;
     }
     glfwTerminate ();
 

@@ -9,5 +9,11 @@
 #SPIRV
 *.spv
 
+#vscode
+*[V][v][S][s][C][c][O][o][D][d][E][e]*
+.vscode
+*.vscode
+vscode*
+
 #project
 build

@@ -70,7 +70,7 @@ SpiritSwapchain spCreateSwapchain (SpiritSwapchainCreateInfo createInfo, SpiritD
     swapInfo.imageFormat = out->format.format;
     swapInfo.imageColorSpace= out->format.colorSpace;
     swapInfo.imageExtent = out->extent;
-    swapInfo.imageArrayLayers = 1; // FIXME
+    swapInfo.imageArrayLayers = 1;
     swapInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
     swapInfo.surface = device->windowSurface;
@@ -150,7 +150,6 @@ SpiritResult spDestroySwapchain (SpiritSwapchain swapchain, SpiritDevice device)
 
     for (u32 i = 0; i < swapchain->imageCount; i++) {
         vkDestroyImageView(device->device, swapchain->imageViews[i], SPIRIT_NULL);
-        vkDestroyImage(device->device, swapchain->images[i], SPIRIT_NULL);
     }
 
     swapchain->imageViews = SPIRIT_NULL;

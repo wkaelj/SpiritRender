@@ -5,7 +5,10 @@
 //
 // Kael Johnston March 22 2022
 
-SpiritRenderPass spCreateRenderPass (SpiritRenderPassCreateInfo createInfo, SpiritDevice device, SpiritSwapchain swapchain) {
+SpiritRenderPass spCreateRenderPass (
+    SpiritRenderPassCreateInfo createInfo, 
+    SpiritDevice device,
+    SpiritSwapchain swapchain) {
 
     SpiritRenderPass out = new_var(SpiritRenderPass);
 

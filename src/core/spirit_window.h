@@ -6,6 +6,26 @@
 // 
 // Kael Johnston Feb 26 2022
 
+//
+// types
+// 
+// actual window information is kept private because of 
+// platform specific details
+typedef struct t_SpiritWindow *SpiritWindow;
+
+typedef struct t_SpiritWindowCreateInfo {
+    int32_t w, h; // size of window in screen units
+    char   *title;
+    bool    fullscreen;
+} SpiritWindowCreateInfo;
+
+typedef struct t_SpiritWindowExtensions {
+    const u32    count;
+    const char **names;
+} SpiritWindowExtensions;
+
+
+
 // create a window
 SpiritWindow spCreateWindow (SpiritWindowCreateInfo createInfo);
 

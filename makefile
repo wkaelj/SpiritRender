@@ -9,6 +9,9 @@ default:
 run:
 	./$(BUILDFDR)/$(EXEC)
 
+debug:
+	gdb -tui $(BUILDFDR)/$(EXEC)
+
 cmake:
 	mkdir -p $(BUILDFDR)/Config/shaders
 	cp Config/*.txt $(BUILDFDR)/Config/

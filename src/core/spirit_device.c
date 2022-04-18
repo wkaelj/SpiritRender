@@ -10,7 +10,7 @@
 //
 
 // queue info
-
+// I defined them this way so more queues could be added in the future
 #define QUEUE_COUNT 2
 #define QUEUE_NAMES(varname) {varname.graphicsQueue, varname.presentQueue}
 
@@ -119,6 +119,7 @@ SpiritResult spDestroyDevice (SpiritDevice device) {
     vkDestroyDevice(device->device, SPIRIT_NULL);
 
     vkDestroySurfaceKHR(device->instance, device->windowSurface, SPIRIT_NULL);
+
     // debug messenger
     if (device->validationEnabled) {
         PFN_vkDestroyDebugUtilsMessengerEXT func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(device->instance, "vkDestroyDebugUtilsMessengerExt");
