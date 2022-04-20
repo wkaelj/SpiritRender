@@ -75,7 +75,14 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY C_STANDARD 99)
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/build")
 
+# BUILD TYPE
 set(CMAKE_BUILD_TYPE "Debug")
+set(CMAKE_C_STANDARD "c2x")
+
+
+# link dmalloc
+#add_compile_definitions("DMALLOC" "DMALLOC_FUNC_CHECK")
+#target_link_libraries(${PROJECT_NAME} dmalloc)
 
 if (WIN32)
   message(STATUS "CREATING BUILD FOR WINDOWS")

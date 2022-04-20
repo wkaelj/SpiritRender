@@ -11,15 +11,23 @@
 //
 
 // choose desired or best swap chain mode
-VkSurfaceFormatKHR chooseSwapSurfaceFormat (uint32_t formatCount, const VkSurfaceFormatKHR *availableFormats, VkSurfaceFormatKHR preferedFormat);
+VkSurfaceFormatKHR chooseSwapSurfaceFormat (
+    uint32_t                  formatCount, 
+    const VkSurfaceFormatKHR *availableFormats, 
+    VkSurfaceFormatKHR        preferedFormat);
 
 
 // choose best or desired surface format
-VkPresentModeKHR chooseSwapPresentMode (uint32_t presentModeCount, const VkPresentModeKHR *availablePresentModes, VkPresentModeKHR preferredPresentMode);
+VkPresentModeKHR chooseSwapPresentMode (
+    uint32_t                presentModeCount, 
+    const VkPresentModeKHR *availablePresentModes,
+    VkPresentModeKHR        preferredPresentMode);
+
 //
 // Public functions
 //
 
+// create swapchain instance
 SpiritSwapchain spCreateSwapchain (SpiritSwapchainCreateInfo createInfo, SpiritDevice device, SpiritSwapchain optionalSwapchain) {
 
     // failure
@@ -38,12 +46,14 @@ SpiritSwapchain spCreateSwapchain (SpiritSwapchainCreateInfo createInfo, SpiritD
     }
 
     // clamp window resolution to capabilties
-    createInfo.windowWidthPx = clamp_value(createInfo.windowWidthPx,
-            device->swapchainDetails.capabilties.minImageExtent.width,
-            device->swapchainDetails.capabilties.maxImageExtent.width);
-    createInfo.windowWidthPx = clamp_value(createInfo.windowHeightPx,
-            device->swapchainDetails.capabilties.minImageExtent.height,
-            device->swapchainDetails.capabilties.maxImageExtent.height);
+    createInfo.windowWidthPx = clamp_value(
+        createInfo.windowWidthPx,
+        device->swapchainDetails.capabilties.minImageExtent.width,
+        device->swapchainDetails.capabilties.maxImageExtent.width);
+    createInfo.windowWidthPx = clamp_value(
+        createInfo.windowHeightPx,
+        device->swapchainDetails.capabilties.minImageExtent.height,
+        device->swapchainDetails.capabilties.maxImageExtent.height);
     log_verbose("Window resolution '%ix%i'", createInfo.windowWidthPx, createInfo.windowHeightPx);
 
     SpiritSwapchain out = new_var(SpiritSwapchain);
@@ -94,7 +104,7 @@ SpiritSwapchain spCreateSwapchain (SpiritSwapchainCreateInfo createInfo, SpiritD
     if (optionalSwapchain != SPIRIT_NULL) swapInfo.oldSwapchain = optionalSwapchain->swapchain;
 
     // TODO fix swapchain create info
-    //out->createInfo = swapInfo;
+    // out->createInfo = swapInfo;
     // acctualy created swapchain
     if (vkCreateSwapchainKHR(device->device, &swapInfo, SPIRIT_NULL, &out->swapchain)) {
         log_verbose("swapchain failure");
@@ -138,13 +148,16 @@ SpiritSwapchain spCreateSwapchain (SpiritSwapchainCreateInfo createInfo, SpiritD
 
 }
 
+// destroy swapchain instance
 SpiritResult spDestroySwapchain (SpiritSwapchain swapchain, SpiritDevice device) {
 
-    if (swapchain == SPIRIT_NULL || device == SPIRIT_NULL) {
-        if (swapchain == SPIRIT_NULL) LOG_ERROR("Cannot destroy swapchain, swapchain is NULL");
-        if (device == SPIRIT_NULL) LOG_ERROR("Cannot destroy swapchain, device is NULL");
-        return SPIRIT_FAILURE;
-    }
+    // if (swapchain == SPIRIT_NULL || device == SPIRIT_NULL) {
+    //     if (swapchain == SPIRIT_NULL) LOG_ERROR("Cannot destroy swapchain, swapchain is NULL");
+    //     if (device == SPIRIT_NULL) LOG_ERROR("Cannot destroy swapchain, device is NULL");
+    //     return SPIRIT_FAILURE;
+    // }
+    db_assert(swapchain != SPIRIT_NULL, "swapchain cannot be null <- spDestroySwapchain()");
+    db_assert(device != SPIRIT_NULL, "device cannot be null <- spDestroySwapchain()");
 
     vkDestroySwapchainKHR(device->device, swapchain->swapchain, SPIRIT_NULL);
 
@@ -156,7 +169,7 @@ SpiritResult spDestroySwapchain (SpiritSwapchain swapchain, SpiritDevice device)
     swapchain->images = SPIRIT_NULL;
     swapchain->swapchain = SPIRIT_NULL;
 
-    spMemFree (swapchain);
+    dalloc(swapchain);
 
     return SPIRIT_SUCCESS;
 }

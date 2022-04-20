@@ -72,11 +72,11 @@ typedef struct t_SpiritDevice {
 
     VkQueue    graphicsQueue;
     VkQueue    presentQueue;
-    const u32  queueCount;
+    u32        queueCount;
     const u32 *queueIndices;
 
     const char *const *deviceExtensions;
-    const u32          deviceExtensionCount;
+    u32                deviceExtensionCount;
 
     SpiritBool powerSaveMode;
     SpiritBool validationEnabled;
@@ -104,7 +104,7 @@ typedef struct t_SpiritSwapchain {
 
     // images
     VkImage     *images;
-    const u32    imageCount;
+    u32          imageCount;
     VkImageView *imageViews;
 } *SpiritSwapchain;
 

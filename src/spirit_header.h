@@ -1,6 +1,11 @@
 #pragma once
 // Header file stores global dependencies for project
 
+// dmalloc
+#ifdef DMALLOC
+#include "dmalloc.h"
+#endif
+
 // std
 #include <stdlib.h>
 #include <stdint.h>
@@ -13,10 +18,10 @@
 // custom 
 #include "debug/messenger.h" // debug messenging functions
 #include "core/spirit_types.h" // custom types
-#include "mem/spirit_mem.h" // heap memory allocator
 #include "utils/spirit_string.h"
 
-// enable sum stuff
+// enable messeges upon success, not just failure
+// object creation will log succesful creation as well as failure
 #define ENABLE_VERBOSE
 
 // definitions
@@ -31,7 +36,7 @@
 #ifdef ENABLE_VERBOSE
 #define log_verbose(messege, ...) LOG_INFO(messege, ##__VA_ARGS__)
 #else
-#define log_verbose(messege, ...) ;
+#define log_verbose(messege, ...) ((void)0);
 #endif
 
 // tmp memory alocator
@@ -40,11 +45,11 @@
 
 // debug
 #ifndef DEBUG
-#define db_assert(statement) \
+#define db_assert(statement, errmsg) \
     if (!(statement)) { \
-        LOG_FATAL("Assertion '%s' failed", #statement); \
-        exit (1); \
+        LOG_FATAL("Assertion '%s' failed: %s", #statement, #errmsg); \
+        abort (); \
     }
 #else
-#define db_assert(statement)
+#define db_assert(statement, errmsg)
 #endif

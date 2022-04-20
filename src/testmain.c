@@ -5,8 +5,6 @@
 #include "core/spirit_device.h"
 #include "core/spirit_swapchain.h"
 
-#include "mem/spirit_memTree.h"
-
 void mainlooptest (void);
 
 int main (int argc, char **argv) {

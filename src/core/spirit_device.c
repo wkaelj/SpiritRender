@@ -129,7 +129,7 @@ SpiritResult spDestroyDevice (SpiritDevice device) {
 
     vkDestroyInstance(device->instance, SPIRIT_NULL);
 
-    spMemFree(device);
+    dalloc(device);
 
     return SPIRIT_SUCCESS;
 }

@@ -1,5 +1,7 @@
 # cmake wrapper
 
+DEBUGGER = gdb -tui
+
 BUILDFDR = build
 EXEC = SpiritRender
 
@@ -10,7 +12,12 @@ run:
 	./$(BUILDFDR)/$(EXEC)
 
 debug:
-	gdb -tui $(BUILDFDR)/$(EXEC)
+	$(DEBUGGER) $(BUILDFDR)/$(EXEC)
+
+# use dmalloc sometimes because memory is hard
+dmalloc:
+	dmalloc -gdb -V -l malloclog -i 1 high
+	$(DEBUGGER) $(BUILDFDR)/$(EXEC)
 
 cmake:
 	mkdir -p $(BUILDFDR)/Config/shaders

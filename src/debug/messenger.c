@@ -1,7 +1,6 @@
 #include "messenger.h"
 #include <stdio.h>
 #include <stdarg.h>
-#include <string.h>
 
 // debug.h implementation
 #define BUFFER_LENGTH 512
@@ -21,7 +20,7 @@ int debug_log (DebugSeverity severity, const char *file, const char *func, const
         "\033[1;31m[FATAL]: \033[0m", // fatal
         "\033[1;33m[ERROR]: \033[0m", // error
         "\033[1,56m[WARNING]: \033[0m", // warning
-	"\033[1;96m[VALIDATION]: \033[0m", // validation
+	    "\033[1;96m[VALIDATION]: \033[0m", // validation
         "\033[1;32m[INFO]: \033[0m", // info
         "\033[1;35m[DEBUG]: \033[0m" // debug
     };

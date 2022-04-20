@@ -20,7 +20,7 @@ typedef struct t_SpiritWindowCreateInfo {
 } SpiritWindowCreateInfo;
 
 typedef struct t_SpiritWindowExtensions {
-    const u32    count;
+    u32          count;
     const char **names;
 } SpiritWindowExtensions;
 
