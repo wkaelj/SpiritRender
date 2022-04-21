@@ -100,7 +100,7 @@ typedef struct t_SpiritSwapchain {
     VkSurfaceFormatKHR format;
     VkPresentModeKHR   presentMode;
 
-    VkSwapchainCreateInfoKHR createInfo; // used to recreate
+    // VkSwapchainCreateInfoKHR createInfo; // used to recreate
 
     // images
     VkImage     *images;

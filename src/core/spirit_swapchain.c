@@ -63,17 +63,29 @@ SpiritSwapchain spCreateSwapchain (SpiritSwapchainCreateInfo createInfo, SpiritD
 
     // image count
     u32 swapImageCount = device->swapchainDetails.capabilties.minImageCount + 1;
-    if (device->swapchainDetails.capabilties.maxImageCount > 0 && swapImageCount > device->swapchainDetails.capabilties.maxImageCount) {
+    if (device->swapchainDetails.capabilties.maxImageCount > 0 &&
+    swapImageCount > device->swapchainDetails.capabilties.maxImageCount) {
         swapImageCount = device->swapchainDetails.capabilties.maxImageCount;
     }
     swapInfo.minImageCount = swapImageCount;
 
     // output info
-    out->extent = (VkExtent2D){ createInfo.windowWidthPx, createInfo.windowHeightPx };
-    out->presentMode = chooseSwapPresentMode(device->swapchainDetails.presentModeCount,
-            device->swapchainDetails.presentModes,
-            createInfo.preferredPresentMode);
-    out->format = chooseSwapSurfaceFormat(device->swapchainDetails.formatCount, device->swapchainDetails.formats, createInfo.preferedFormat);
+    VkExtent2D outExtent = {
+        createInfo.windowWidthPx,
+        createInfo.windowHeightPx
+    };
+    out->extent = outExtent;
+
+    // present mode
+    out->presentMode = chooseSwapPresentMode(
+        device->swapchainDetails.presentModeCount,
+        device->swapchainDetails.presentModes,
+        createInfo.preferredPresentMode);
+    // surface format
+    out->format = chooseSwapSurfaceFormat(
+        device->swapchainDetails.formatCount, 
+        device->swapchainDetails.formats, 
+        createInfo.preferedFormat);
     out->supportInfo = device->swapchainDetails;
 
     swapInfo.imageExtent = out->extent;
@@ -105,16 +117,25 @@ SpiritSwapchain spCreateSwapchain (SpiritSwapchainCreateInfo createInfo, SpiritD
 
     // TODO fix swapchain create info
     // out->createInfo = swapInfo;
-    // acctualy created swapchain
+    // actually created swapchain
     if (vkCreateSwapchainKHR(device->device, &swapInfo, SPIRIT_NULL, &out->swapchain)) {
-        log_verbose("swapchain failure");
+        LOG_ERROR("Failed to create swapchain");
         return SPIRIT_NULL;
     }
 
     // images
-    vkGetSwapchainImagesKHR(device->device, out->swapchain, &out->imageCount, NULL);
+    vkGetSwapchainImagesKHR(
+        device->device,
+        out->swapchain, 
+        &out->imageCount, 
+        NULL);
+    // allocate new array of images, and populate it
     out->images = new_array(VkImage, out->imageCount);
-    vkGetSwapchainImagesKHR(device->device, out->swapchain, &out->imageCount, out->images);
+    vkGetSwapchainImagesKHR(
+        device->device,
+        out->swapchain,
+        &out->imageCount,
+        out->images);
 
     // image views
     VkImageViewCreateInfo imageViewInfo = {};
@@ -135,9 +156,16 @@ SpiritSwapchain spCreateSwapchain (SpiritSwapchainCreateInfo createInfo, SpiritD
     out->imageCount = swapImageCount;
     out->imageViews = new_array(VkImageView, out->imageCount);
 
+    // cannot overflow imageviews, because imageviews was initialized
+    // with out->imageCount, which is what we count against
     for (u8 i = 0; i < out->imageCount; i++) {
         imageViewInfo.image = out->images[i];
-        if (vkCreateImageView(device->device, &imageViewInfo, SPIRIT_NULL, &out->imageViews[i]) != VK_SUCCESS) {
+        if (vkCreateImageView (
+            device->device, // vulkan device
+            &imageViewInfo, // ptr to stack address
+            SPIRIT_NULL,    // nullptr
+            &out->imageViews[i] // ptr to stack adress
+            )) {
             LOG_ERROR("Failed to create swapchain image views");
             return SPIRIT_NULL;
         }

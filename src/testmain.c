@@ -14,6 +14,8 @@ int main (int argc, char **argv) {
     return 0;
 }
 void mainlooptest (void) {
+
+    // create window
     SpiritWindowCreateInfo windowCreateInfo;
     windowCreateInfo.w = 800;
     windowCreateInfo.h = 600;
@@ -25,6 +27,7 @@ void mainlooptest (void) {
         LOG_FATAL("No window");
     }
 
+    // create device
     SpiritDeviceCreateInfo deviceCreateInfo = {};
     deviceCreateInfo.enableValidation = SPIRIT_TRUE;
     deviceCreateInfo.powerSaveMode = SPIRIT_FALSE;
@@ -37,11 +40,10 @@ void mainlooptest (void) {
     deviceCreateInfo.windowExtensions = spWindowGetExtensions(window);
     deviceCreateInfo.window = window;
 
-
     SpiritDevice device = spCreateDevice (deviceCreateInfo);
     if (device == NULL) LOG_ERROR("Failed to create device");
 
-
+    // create swapchain
     SpiritSwapchainCreateInfo swapCreateInfo = {};
     spWindowGetPixelSize(window, &swapCreateInfo.windowWidthPx, &swapCreateInfo.windowHeightPx);
 
