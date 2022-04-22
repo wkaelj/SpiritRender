@@ -29,12 +29,8 @@ VkPresentModeKHR chooseSwapPresentMode (
 
 // create swapchain instance
 SpiritSwapchain spCreateSwapchain (SpiritSwapchainCreateInfo createInfo, SpiritDevice device, SpiritSwapchain optionalSwapchain) {
-
-    // failure
-    if (device == SPIRIT_NULL) {
-        LOG_ERROR("device == NULL, cannot create swapchain");
-        return SPIRIT_NULL;
-    }
+    
+    db_assert(device, "Device cannot be null when creating swapchain");
 
     // set present and format to fallback values
     if (!createInfo.selectedFormat) {
@@ -50,13 +46,18 @@ SpiritSwapchain spCreateSwapchain (SpiritSwapchainCreateInfo createInfo, SpiritD
         createInfo.windowWidthPx,
         device->swapchainDetails.capabilties.minImageExtent.width,
         device->swapchainDetails.capabilties.maxImageExtent.width);
-    createInfo.windowWidthPx = clamp_value(
+    createInfo.windowHeightPx = clamp_value(
         createInfo.windowHeightPx,
         device->swapchainDetails.capabilties.minImageExtent.height,
         device->swapchainDetails.capabilties.maxImageExtent.height);
+
+    LOG_DEBUG("here");
+    LOG_DEBUG("Maximum swapchain dimensions %ux%u",
+        device->swapchainDetails.capabilties.maxImageExtent.width,
+        device->swapchainDetails.capabilties.maxImageExtent.height);
     log_verbose("Window resolution '%ix%i'", createInfo.windowWidthPx, createInfo.windowHeightPx);
 
-    SpiritSwapchain out = new_var(SpiritSwapchain);
+    SpiritSwapchain out = new_var(struct t_SpiritSwapchain);
 
     VkSwapchainCreateInfoKHR swapInfo = {};
     swapInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;

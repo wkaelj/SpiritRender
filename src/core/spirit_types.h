@@ -84,7 +84,6 @@ typedef struct t_SpiritDevice {
     SpiritSwapchainSupportInfo swapchainDetails;
 } *SpiritDevice;
 
-
 // render pass
 typedef struct t_SpiritRenderPass {
     VkRenderPass renderPass;

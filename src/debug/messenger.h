@@ -10,13 +10,13 @@
  */
 
 
-// should enable 
-#define ENABLE_FATAL 1 // log a unrecoverable error
-#define ENABLE_ERROR 1 // log a failure that might not crash, but behavoir is undefined
-#define ENABLE_WARNING 1
-#define ENABLE_VALIDATION 1
-#define ENABLE_INFO 1
-#define ENABLE_DEBUG 1
+//should enable 
+#define ENABLE_FATAL // log a unrecoverable error
+#define ENABLE_ERROR // log a failure that might not crash, but behavoir is undefined
+#define ENABLE_WARNING
+#define ENABLE_VALIDATION
+#define ENABLE_INFO
+#define ENABLE_DEBUG
 
 typedef enum {
     DEBUG_FATAL,

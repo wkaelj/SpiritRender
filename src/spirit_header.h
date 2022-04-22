@@ -25,8 +25,8 @@
 #define ENABLE_VERBOSE
 
 // definitions
-#define new_var(typename) malloc(sizeof(typename))
-#define new_array(typename, count) malloc(sizeof(typename) * count)
+#define new_var(typename) (typename*)malloc(sizeof(typename))
+#define new_array(typename, count) (typename**)malloc(sizeof(typename) * count)
 #define array_length(array) = (sizeof(array)/sizeof(array[0]))
 
 #define min_value(x, y) ((x < y) ? x : y)

@@ -10,7 +10,7 @@ SpiritRenderPass spCreateRenderPass (
     const SpiritDevice         device,
     const SpiritSwapchain      swapchain) {
 
-    SpiritRenderPass out = new_var(SpiritRenderPass);
+    SpiritRenderPass out = new_var(struct t_SpiritRenderPass);
 
     // colour attachment
     VkAttachmentDescription attachmentInfo = {};

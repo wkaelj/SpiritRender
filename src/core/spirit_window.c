@@ -10,7 +10,7 @@ struct t_SpiritWindow {
 
 SpiritWindow spCreateWindow (SpiritWindowCreateInfo createInfo) {
 
-    SpiritWindow window = new_var(SpiritWindow); 
+    SpiritWindow window = new_var(struct t_SpiritWindow); 
 
     const char *glfwError;
     if (glfwInit () != GLFW_TRUE) {
@@ -37,9 +37,15 @@ SpiritWindow spCreateWindow (SpiritWindowCreateInfo createInfo) {
     }
 
     glfwWindowHint (GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint (GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint (GLFW_RESIZABLE, GLFW_FALSE); // RESIZABLE
 
-    window->window = glfwCreateWindow (window->w, window->h, window->title, windowMonitor, NULL);
+    window->window = glfwCreateWindow (
+        window->w, 
+        window->h, 
+        window->title, 
+        windowMonitor, 
+        NULL);
+    
     if (window->window == NULL) {
         glfwGetError (&glfwError);
         LOG_FATAL("Failed to create window. GLFW Error: %s", glfwError);
@@ -60,6 +66,8 @@ SpiritResult spDestroyWindow (SpiritWindow window) {
         return SPIRIT_FAILURE;
     }
     glfwTerminate ();
+
+    dalloc(window);
 
     log_verbose("Closing window");
     return SPIRIT_SUCCESS;
@@ -98,7 +106,7 @@ SpiritResult spResizeWindow (SpiritWindow window, uint32_t w, uint32_t h) {
 SpiritResult spWindowGetPixelSize (SpiritWindow window, uint32_t *w, uint32_t *h) {
 
     const char *glfwError;
-    glfwGetFramebufferSize (window->window, (int32_t*) w, (int32_t*) h);
+    glfwGetFramebufferSize (window->window, w, h);
     if (glfwGetError (&glfwError) != GLFW_NO_ERROR) {
         LOG_ERROR ("Failed to get framebuffer size. GLFW error: %s", glfwError);
         return SPIRIT_FAILURE;
@@ -108,9 +116,10 @@ SpiritResult spWindowGetPixelSize (SpiritWindow window, uint32_t *w, uint32_t *h
 
 VkSurfaceKHR spWindowGetSurface (SpiritWindow window, VkInstance instance) {
 
-    VkSurfaceKHR surface;
+    VkSurfaceKHR surface = SPIRIT_NULL;
 
-    if (glfwCreateWindowSurface (instance, window->window, SPIRIT_NULL, &surface) != VK_SUCCESS) LOG_FATAL("Failed to create window surface");
+    if (glfwCreateWindowSurface (instance, window->window, SPIRIT_NULL, &surface)) LOG_FATAL("Failed to create window surface");
+    db_assert (surface, "Surface cannot be null");
     return surface;
 }
 

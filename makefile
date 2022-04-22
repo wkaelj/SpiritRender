@@ -1,22 +1,25 @@
 # cmake wrapper
 
-DEBUGGER = gdb -tui
+DEBUGGER = gdb
 
 BUILDFDR = build
 EXEC = SpiritRender
 
 default:
-	make -C $(BUILDFDR)/
+	make config=debug verbose=1 -C $(BUILDFDR)/
 
 run:
 	./$(BUILDFDR)/$(EXEC)
 
 debug:
+	$(DEBUGGER) -tui $(BUILDFDR)/$(EXEC)
+
+debugngui:
 	$(DEBUGGER) $(BUILDFDR)/$(EXEC)
 
 # use dmalloc sometimes because memory is hard
 dmalloc:
-	dmalloc -gdb -V -l malloclog -i 1 high
+	dmalloc -g -V -l malloclog -i 1 high
 	$(DEBUGGER) $(BUILDFDR)/$(EXEC)
 
 cmake:

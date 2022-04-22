@@ -57,6 +57,10 @@ static SpiritSwapchainSupportInfo querySwapChainSupport (SpiritDeviceCreateInfo 
 
 SpiritDevice spCreateDevice (SpiritDeviceCreateInfo createInfo) {
 
+    // asserts
+    db_assert(createInfo.window, "Must have window to create instance");
+
+
     SpiritDevice out = new_var(struct t_SpiritDevice);
 
     out->deviceExtensionCount = createInfo.windowExtensions.count;
@@ -70,8 +74,14 @@ SpiritDevice spCreateDevice (SpiritDeviceCreateInfo createInfo) {
         createInfo.requiredValidationLayers = &backupLayer;
         createInfo.requiredValidationLayerCount = 1;
     }
-    if (createInfo.enableValidation && !checkValidationLayerSupport(createInfo.requiredValidationLayers, createInfo.requiredValidationLayerCount)) {
+    if (createInfo.enableValidation &&
+    !checkValidationLayerSupport(
+        createInfo.requiredValidationLayers, 
+        createInfo.requiredValidationLayerCount)) {
+        
+        // disable validation
         createInfo.enableValidation = SPIRIT_FALSE;
+        LOG_VALIDATION ("Automatically disabling validation");
     }
 
     // fallback device extensions
@@ -128,6 +138,7 @@ SpiritResult spDestroyDevice (SpiritDevice device) {
     }
 
     vkDestroyInstance(device->instance, SPIRIT_NULL);
+    LOG_DEBUG("Device ptr id=%p", device->device); // trying to free device?
 
     dalloc(device);
 
@@ -152,7 +163,7 @@ static SpiritBool checkDeviceExtensionSupport (SpiritDeviceCreateInfo createInfo
 
 static VkInstance createInstance (const SpiritDeviceCreateInfo createInfo, VkDebugUtilsMessengerEXT *debugMessenger) {
 
-    if (createInfo.enableValidation && debugMessenger == NULL) debugMessenger = new_var (VkDebugUtilsMessengerEXT);
+    if (createInfo.enableValidation && debugMessenger == NULL)debugMessenger = new_var(VkDebugUtilsMessengerEXT); // FIXME
 
     VkApplicationInfo appInfo = {};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;

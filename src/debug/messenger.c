@@ -9,8 +9,8 @@
 // debug_log function
 int debug_log (DebugSeverity severity, const char *file, const char *func, const int line, const char *format, ...) {
 
-    char bufferString1[BUFFER_LENGTH]; // bufferstring preallocated for stack storage
-    char bufferString2[BUFFER_LENGTH]; // I need 2
+    static char bufferString1[BUFFER_LENGTH]; // bufferstring preallocated for stack storage
+    static char bufferString2[BUFFER_LENGTH * 2];
 
     va_list args;
     va_start (args, format);
@@ -28,7 +28,7 @@ int debug_log (DebugSeverity severity, const char *file, const char *func, const
     // pupulate bufferstring 1 with messege and args and all that
     vsnprintf (bufferString1, BUFFER_LENGTH, format, args);
 
-    snprintf (
+    uint16_t strlen = snprintf (
         bufferString2,
         BUFFER_LENGTH,
         ">>> %s:%s->%i\n\t%s%s\n",
@@ -38,6 +38,10 @@ int debug_log (DebugSeverity severity, const char *file, const char *func, const
         messegeSeverity[severity],
         bufferString1
     );
+
+    if (strlen >= BUFFER_LENGTH) {
+        LOG_WARNING ("Debug called on line %i:%s overflowed buffer.", line, file);
+    }
 
     // TODO fancy output
     printf ("%s", bufferString2);
