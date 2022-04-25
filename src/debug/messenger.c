@@ -12,7 +12,6 @@ int debug_log (DebugSeverity severity, const char *file, const char *func, const
 
     static char bufferString1[BUFFER_LENGTH]; // bufferstring preallocated for stack storage
     static char bufferString2[BUFFER_LENGTH_FINAL]; // add extra room for prefix
-
     va_list args;
     va_start (args, format);
 

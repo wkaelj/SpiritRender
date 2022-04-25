@@ -313,25 +313,44 @@ static VkDevice createDevice (const SpiritDeviceCreateInfo *createInfo, const Vk
     QueueFamilyIndices indices = findDeviceQueues (createInfo, physicalDevice);
 
     // create queues
-    float queuePriority = 1.0f; // float pointer for later
-    uint32_t queueCount = QUEUE_COUNT; // queue count
-    uint32_t queueFamilies[QUEUE_COUNT] = QUEUE_NAMES(indices); // queue indices
-    VkDeviceQueueCreateInfo queueCreateInfos[queueCount]; // queue create infos
-
-    for (uint32_t i = 0; i < queueCount; i++) {
+    f32 queuePriority = 1.0f; // float to be referenced (&queuePriority)
+    u32 queueCount = QUEUE_COUNT;
+    u32 queueFamilies[QUEUE_COUNT] = QUEUE_NAMES(indices);
+    VkDeviceQueueCreateInfo queueCreateInfos[queueCount];
+    u32 addedQueues[QUEUE_COUNT];
+    u32 skippedQueueCount = 0;    
+    for (u32 i = 0; i < queueCount; i++) {
+        bool isDuplicateQueue = false;
+        // avoid adding duplicate queues
+        // the < i is to ensure that we don't check indexes of
+        // addedQueues that have not been set yet (false positives with 0)
+        for (u32 n = 0; n < queueCount && n < i; n++) {
+            if (queueFamilies[i] == addedQueues[n]) {
+                isDuplicateQueue = true;
+            }
+        }
+        if (isDuplicateQueue) {
+            log_verbose("Skipping duplicate queue index: %u",
+                queueFamilies[i]);
+            skippedQueueCount++;
+            continue;
+        }
         VkDeviceQueueCreateInfo queueCreateInfo = {};
         queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
         queueCreateInfo.queueFamilyIndex = queueFamilies[i];
         queueCreateInfo.queueCount = 1;
         queueCreateInfo.pQueuePriorities = &queuePriority;
-        queueCreateInfos[i] = queueCreateInfo;
+        // subtract skipped queues to avoid blank spaces
+        // [set, set, duplicate, set] -> [set, set, set]
+        queueCreateInfos[i - skippedQueueCount] = queueCreateInfo;
+        addedQueues[i - skippedQueueCount] = queueFamilies[i];
     }
 
     VkPhysicalDeviceFeatures deviceFeatures = {}; // populate later
 
     VkDeviceCreateInfo deviceCreateInfo = {};
     deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    deviceCreateInfo.queueCreateInfoCount = queueCount;
+    deviceCreateInfo.queueCreateInfoCount = queueCount - skippedQueueCount;
     deviceCreateInfo.pQueueCreateInfos = queueCreateInfos;
 
     deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
