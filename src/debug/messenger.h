@@ -30,44 +30,44 @@ typedef enum {
 
 // check if debug messeges are enabled, otherwise disable the corrospining messege
 #ifdef ENABLE_FATAL
-#define LOG_FATAL(messege, ...) debug_log (DEBUG_FATAL, __FILE__, __func__, __LINE__, messege, ##__VA_ARGS__)
+#define log_fatal(messege, ...) debug_log (DEBUG_FATAL, __FILE__, __func__, __LINE__, messege, ##__VA_ARGS__)
 #else
-#define LOG_FATAL(messege, ...)
+#define log_fatal(messege, ...)
 #endif
 
 // a failure within a function that may cause a crash or undefined behavior
 #ifdef ENABLE_ERROR
-#define LOG_ERROR(messege, ...) debug_log (DEBUG_ERROR, __FILE__, __func__, __LINE__, messege, ##__VA_ARGS__)
+#define log_error(messege, ...) debug_log (DEBUG_ERROR, __FILE__, __func__, __LINE__, messege, ##__VA_ARGS__)
 #else
-#define LOG_ERROR(messege, ...)
+#define log_error(messege, ...)
 #endif
 
 // warn about improper parameters, or other trivial errors
 #ifdef ENABLE_WARNING
-#define LOG_WARNING(messege, ...) debug_log (DEBUG_WARNING, __FILE__, __func__, __LINE__, messege, ##__VA_ARGS__)
+#define log_warning(messege, ...) debug_log (DEBUG_WARNING, __FILE__, __func__, __LINE__, messege, ##__VA_ARGS__)
 #else
-#define LOG_WARNING(messege, ...)
+#define log_warning(messege, ...)
 #endif
 
 // log vulkan validation layer errors
 #ifdef ENABLE_VALIDATION
-#define LOG_VALIDATION(messege, ...) debug_log (DEBUG_VALIDATION, __FILE__, __func__, __LINE__, messege, ##__VA_ARGS__)
+#define log_validation(messege, ...) debug_log (DEBUG_VALIDATION, __FILE__, __func__, __LINE__, messege, ##__VA_ARGS__)
 #else
-#define LOG_VALIDATION(messege, ...)
+#define log_validation(messege, ...)
 #endif
 
 // log basic info, like hardware selections
 #ifdef ENABLE_INFO
-#define LOG_INFO(messege, ...) debug_log (DEBUG_INFO, __FILE__, __func__, __LINE__, messege, ##__VA_ARGS__)
+#define log_info(messege, ...) debug_log (DEBUG_INFO, __FILE__, __func__, __LINE__, messege, ##__VA_ARGS__)
 #else
-#define LOG_INFO(messege, ...)
+#define log_info(messege, ...)
 #endif
 
 // log debug messeges, that will be removed for final builds
 #ifdef ENABLE_DEBUG
-#define LOG_DEBUG(messege, ...) debug_log (DEBUG_DEBUG, __FILE__, __func__, __LINE__, messege, ##__VA_ARGS__)
+#define log_debug(messege, ...) debug_log (DEBUG_DEBUG, __FILE__, __func__, __LINE__, messege, ##__VA_ARGS__)
 #else
-#define LOG_DEBUG(messege, ...)
+#define log_debug(messege, ...)
 #endif
 
 // log debugging messege

@@ -110,6 +110,22 @@ typedef struct t_SpiritSwapchain {
 // pipeline
 typedef struct t_SpiritPipeline {
     VkPipeline    pipeline;
+
+    // render passes
     VkRenderPass *renderPasses;
     uint32_t      renderPassCount;
 } *SpiritPipeline;
+
+// shaders
+// store wether a shader is frag or vert shader
+typedef enum t_SpiritShaderType {
+    SPIRIT_SHADER_TYPE_VERTEX,
+    SPIRIT_SHADER_TYPE_FRAGMENT
+} SpiritShaderType;
+
+// store a vulkan (.spv) shader
+typedef struct t_SpiritShader {
+    VkShaderModule shaderModule;
+    SpiritShaderType type;
+    void *shaderCode;
+} *SpiritShader;

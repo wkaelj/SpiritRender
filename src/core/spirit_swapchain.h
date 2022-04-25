@@ -26,4 +26,6 @@ SpiritSwapchain spCreateSwapchain (
     SpiritSwapchain           optionalSwapchain);
 
 // destroy a swapchain and free associated memory
-SpiritResult spDestroySwapchain (SpiritSwapchain swapchain, SpiritDevice device);
+SpiritResult spDestroySwapchain (
+    SpiritSwapchain swapchain, 
+    SpiritDevice device);

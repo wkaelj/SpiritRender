@@ -51,8 +51,8 @@ SpiritSwapchain spCreateSwapchain (SpiritSwapchainCreateInfo createInfo, SpiritD
         device->swapchainDetails.capabilties.minImageExtent.height,
         device->swapchainDetails.capabilties.maxImageExtent.height);
 
-    LOG_DEBUG("here");
-    LOG_DEBUG("Maximum swapchain dimensions %ux%u",
+    log_debug("here");
+    log_debug("Maximum swapchain dimensions %ux%u",
         device->swapchainDetails.capabilties.maxImageExtent.width,
         device->swapchainDetails.capabilties.maxImageExtent.height);
     log_verbose("Window resolution '%ix%i'", createInfo.windowWidthPx, createInfo.windowHeightPx);
@@ -120,7 +120,7 @@ SpiritSwapchain spCreateSwapchain (SpiritSwapchainCreateInfo createInfo, SpiritD
     // out->createInfo = swapInfo;
     // actually created swapchain
     if (vkCreateSwapchainKHR(device->device, &swapInfo, SPIRIT_NULL, &out->swapchain)) {
-        LOG_ERROR("Failed to create swapchain");
+        log_error("Failed to create swapchain");
         return SPIRIT_NULL;
     }
 
@@ -167,7 +167,7 @@ SpiritSwapchain spCreateSwapchain (SpiritSwapchainCreateInfo createInfo, SpiritD
             SPIRIT_NULL,    // nullptr
             &out->imageViews[i] // ptr to stack adress
             )) {
-            LOG_ERROR("Failed to create swapchain image views");
+            log_error("Failed to create swapchain image views");
             return SPIRIT_NULL;
         }
     }
@@ -181,8 +181,8 @@ SpiritSwapchain spCreateSwapchain (SpiritSwapchainCreateInfo createInfo, SpiritD
 SpiritResult spDestroySwapchain (SpiritSwapchain swapchain, SpiritDevice device) {
 
     // if (swapchain == SPIRIT_NULL || device == SPIRIT_NULL) {
-    //     if (swapchain == SPIRIT_NULL) LOG_ERROR("Cannot destroy swapchain, swapchain is NULL");
-    //     if (device == SPIRIT_NULL) LOG_ERROR("Cannot destroy swapchain, device is NULL");
+    //     if (swapchain == SPIRIT_NULL) log_error("Cannot destroy swapchain, swapchain is NULL");
+    //     if (device == SPIRIT_NULL) log_error("Cannot destroy swapchain, device is NULL");
     //     return SPIRIT_FAILURE;
     // }
     db_assert(swapchain != SPIRIT_NULL, "swapchain cannot be null <- spDestroySwapchain()");

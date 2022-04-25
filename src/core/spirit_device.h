@@ -35,7 +35,7 @@ typedef struct t_SpiritDeviceCreateInfo {
 
 
 // create a spirit device
-SpiritDevice spCreateDevice (SpiritDeviceCreateInfo createInfo);
+SpiritDevice spCreateDevice (SpiritDeviceCreateInfo *createInfo);
 
 // destroy spirit device
 SpiritResult spDestroyDevice (SpiritDevice device);

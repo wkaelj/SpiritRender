@@ -22,12 +22,8 @@ void mainlooptest (void) {
     windowCreateInfo.title = "Hello Spirit";
     windowCreateInfo.fullscreen = SPIRIT_FALSE;
 
-    
-
     SpiritWindow window = spCreateWindow (windowCreateInfo);
-    if (window == SPIRIT_NULL) {
-        LOG_FATAL("No window");
-    }
+    db_assert(window, "Must have window");
 
     // create device
     SpiritDeviceCreateInfo deviceCreateInfo = {};
@@ -42,15 +38,15 @@ void mainlooptest (void) {
     deviceCreateInfo.windowExtensions = spWindowGetExtensions(window);
     deviceCreateInfo.window = window;
 
-    SpiritDevice device = spCreateDevice (deviceCreateInfo);
-    if (device == NULL) LOG_ERROR("Failed to create device");
+    SpiritDevice device = spCreateDevice (&deviceCreateInfo);
+    db_assert(device, "Must have device");
 
     // create swapchain
     SpiritSwapchainCreateInfo swapCreateInfo = {};
     spWindowGetPixelSize(window, &swapCreateInfo.windowWidthPx, &swapCreateInfo.windowHeightPx);
 
     SpiritSwapchain swapchain = spCreateSwapchain(swapCreateInfo, device, SPIRIT_NULL);
-    if (swapchain == SPIRIT_NULL) LOG_ERROR("Failure to create swapchain");
+    db_assert(swapchain, "Must have swapchain");
 
     while (!spWindowShouldClose (window));
 

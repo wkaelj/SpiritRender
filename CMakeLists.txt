@@ -77,7 +77,7 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CM
 
 # BUILD TYPE
 set(CMAKE_BUILD_TYPE "Debug")
-add_compile_options(-Wall -Wextra -pedantic -Werror -02 -D_FORTIFY_SOURCE=2)
+add_compile_options(-Wall -Wextra -pedantic -Werror -02 -D_FORTIFY_SOURCE=2 -fsanitize=address)
 set(CMAKE_C_STANDARD "c2x")
 
 

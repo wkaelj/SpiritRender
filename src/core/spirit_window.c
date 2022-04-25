@@ -15,7 +15,7 @@ SpiritWindow spCreateWindow (SpiritWindowCreateInfo createInfo) {
     const char *glfwError;
     if (glfwInit () != GLFW_TRUE) {
         glfwGetError (&glfwError);
-        LOG_ERROR("GLFW error: %s", glfwError);
+        log_error("GLFW error: %s", glfwError);
         return SPIRIT_NULL;
     }
 
@@ -25,7 +25,7 @@ SpiritWindow spCreateWindow (SpiritWindowCreateInfo createInfo) {
     if (createInfo.fullscreen) windowMonitor = glfwGetPrimaryMonitor ();
     if (createInfo.fullscreen && windowMonitor == NULL) {
         glfwGetError (&glfwError);
-        LOG_ERROR("No fullscreen monitor available! GLFW error %s", glfwError);
+        log_error("No fullscreen monitor available! GLFW error %s", glfwError);
         createInfo.fullscreen = SPIRIT_FALSE;
     }
 
@@ -48,8 +48,8 @@ SpiritWindow spCreateWindow (SpiritWindowCreateInfo createInfo) {
     
     if (window->window == NULL) {
         glfwGetError (&glfwError);
-        LOG_FATAL("Failed to create window. GLFW Error: %s", glfwError);
-    } else LOG_DEBUG("Created Window");
+        log_fatal("Failed to create window. GLFW Error: %s", glfwError);
+    } else log_debug("Created Window");
 
     return window;
 }
@@ -61,7 +61,7 @@ SpiritResult spDestroyWindow (SpiritWindow window) {
     if (glfwGetError (NULL) != GLFW_NO_ERROR) {
         const char *description;
         glfwGetError (&description);
-        LOG_ERROR("Failed to close window: %s", description);
+        log_error("Failed to close window: %s", description);
         glfwTerminate ();
         return SPIRIT_FAILURE;
     }
@@ -78,12 +78,12 @@ SpiritBool spWindowShouldClose (SpiritWindow window) {
     assert (window->window != NULL);
     glfwPollEvents ();
     if (glfwGetError (&description) != GLFW_NO_ERROR) {
-        LOG_ERROR("GLFW error: %s", description);
+        log_error("GLFW error: %s", description);
         return SPIRIT_FAILURE;
     }
     if (glfwWindowShouldClose (window->window)) {
         if (glfwGetError (&description) != GLFW_NO_ERROR) {
-            LOG_ERROR("GLFW error: %s", description);
+            log_error("GLFW error: %s", description);
             return SPIRIT_FAILURE;
         }
         return SPIRIT_TRUE;
@@ -95,7 +95,7 @@ SpiritBool spWindowShouldClose (SpiritWindow window) {
 SpiritResult spResizeWindow (SpiritWindow window, uint32_t w, uint32_t h) {
 
     if (window->window == SPIRIT_NULL) {
-        LOG_ERROR("spResizeWindow: window passed is NULL");
+        log_error("spResizeWindow: window passed is NULL");
     }
 
     glfwSetWindowSize (window->window, w, h);
@@ -108,7 +108,7 @@ SpiritResult spWindowGetPixelSize (SpiritWindow window, uint32_t *w, uint32_t *h
     const char *glfwError;
     glfwGetFramebufferSize (window->window, w, h);
     if (glfwGetError (&glfwError) != GLFW_NO_ERROR) {
-        LOG_ERROR ("Failed to get framebuffer size. GLFW error: %s", glfwError);
+        log_error ("Failed to get framebuffer size. GLFW error: %s", glfwError);
         return SPIRIT_FAILURE;
     }
     return SPIRIT_SUCCESS;
@@ -118,7 +118,7 @@ VkSurfaceKHR spWindowGetSurface (SpiritWindow window, VkInstance instance) {
 
     VkSurfaceKHR surface = SPIRIT_NULL;
 
-    if (glfwCreateWindowSurface (instance, window->window, SPIRIT_NULL, &surface)) LOG_FATAL("Failed to create window surface");
+    if (glfwCreateWindowSurface (instance, window->window, SPIRIT_NULL, &surface)) log_fatal("Failed to create window surface");
     db_assert (surface, "Surface cannot be null");
     return surface;
 }
