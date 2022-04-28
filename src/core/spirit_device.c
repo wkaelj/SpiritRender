@@ -134,10 +134,12 @@ SpiritResult spDestroyDevice (SpiritDevice device) {
 
     // debug messenger
     if (device->validationEnabled) {
-        PFN_vkDestroyDebugUtilsMessengerEXT func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(device->instance, "vkDestroyDebugUtilsMessengerExt");
-        if (func == SPIRIT_NULL) log_error("Failed to load debug messenger destroy function");
-        else func (device->instance, device->debugMessenger, SPIRIT_NULL);
+        PFN_vkDestroyDebugUtilsMessengerEXT pfnDebugMessengerDestroy = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(device->instance, "vkDestroyDebugUtilsMessengerEXT");
+        if (pfnDebugMessengerDestroy == SPIRIT_NULL) log_error("Failed to load debug messenger destroy function");
+        else pfnDebugMessengerDestroy (device->instance, device->debugMessenger, SPIRIT_NULL);
+        log_debug("Destroyed debug messenger");
     }
+    device->debugMessenger = SPIRIT_NULL;
 
     vkDestroyInstance(device->instance, SPIRIT_NULL);
     dalloc(device);

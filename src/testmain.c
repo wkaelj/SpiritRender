@@ -4,14 +4,32 @@
 #include "core/spirit_window.h"
 #include "core/spirit_device.h"
 #include "core/spirit_swapchain.h"
+#include "glsl-loader/glsl_loader.h"
 
 void mainlooptest (void);
 
 int main (int argc, char **argv) {
 
-    mainlooptest ();
+    // mainlooptest ();
 
-    return 0;
+    const char *container = "Hello /World.vert";
+
+    if (spStringContains (container, "World", 18)) {
+        log_info ("Container works");
+    }
+
+    log_info (spStringStrip (container, '/'));
+    log_info (spStringStrip(container, '.'));
+
+    SpiritShader vert, frag;
+    frag = loadSourceShader (
+        "shaders / simple_shader.frag", 
+        SPIRIT_SHADER_TYPE_FRAGMENT);
+    vert = loadSourceShader (
+        "shaders/simple_shader.vert",
+        SPIRIT_SHADER_TYPE_VERTEX);
+
+        return 0;
 }
 void mainlooptest (void) {
 
@@ -22,7 +40,7 @@ void mainlooptest (void) {
     windowCreateInfo.title = "Hello Spirit";
     windowCreateInfo.fullscreen = SPIRIT_FALSE;
 
-    SpiritWindow window = spCreateWindow (windowCreateInfo);
+    SpiritWindow window = spCreateWindow (&windowCreateInfo);
     db_assert(window, "Must have window");
 
     // create device
@@ -38,6 +56,12 @@ void mainlooptest (void) {
     deviceCreateInfo.windowExtensions = spWindowGetExtensions(window);
     deviceCreateInfo.window = window;
 
+    const char *deviceExtensions[1] = {
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+    };
+
+    deviceCreateInfo.requiredDeviceExtensions = deviceExtensions;
+    deviceCreateInfo.requiredDeviceExtensionCount = 1;
     SpiritDevice device = spCreateDevice (&deviceCreateInfo);
     db_assert(device, "Must have device");
 

@@ -54,20 +54,13 @@ else()
 	message(STATUS "Using glfw lib at: ${GLFW_LIB}")
 endif()
 
-include_directories(libs/*)
-include_directories(src)
-
-#libs
-add_subdirectory(libs/liblist)
-target_link_libraries(linkedlist)
-
 # If TINYOBJ_PATH not specified in .env.cmake, try fetching from git repo
 if (NOT TINYOBJ_PATH)
   message(STATUS "TINYOBJ_PATH not specified in .env.cmake, using external/tinyobjloader")
   set(TINYOBJ_PATH external/tinyobjloader)
 endif()
 
-file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.c ${PROJECT_SOURCE_DIR}/src/*.cpp)
+file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.c)
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
@@ -80,10 +73,18 @@ set(CMAKE_BUILD_TYPE "Debug")
 add_compile_options(-Wall -Wextra -pedantic -Werror -02 -D_FORTIFY_SOURCE=2 -fsanitize=address)
 set(CMAKE_C_STANDARD "c2x")
 
+# libraries
+set(LIBRARY libs)
+target_include_directories(${PROJECT_NAME} PUBLIC
+  src,
+  ${LIBRARY}/liblist,
+  ${LIBRARY}/shaderc/libshaderc/include
+)
+target_link_libraries(${PROJECT_NAME} PUBLIC
+  ${LIBRARY}/liblist,
+  ${LIBRARY}/shaderc
+)
 
-# link dmalloc
-#add_compile_definitions("DMALLOC" "DMALLOC_FUNC_CHECK")
-#target_link_libraries(${PROJECT_NAME} dmalloc)
 
 if (WIN32)
   message(STATUS "CREATING BUILD FOR WINDOWS")
@@ -117,7 +118,9 @@ elseif (UNIX)
       ${PROJECT_SOURCE_DIR}/src
       ${TINYOBJ_PATH}
     )
-    target_link_libraries(${PROJECT_NAME} glfw ${Vulkan_LIBRARIES})
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+      glfw,
+      ${Vulkan_LIBRARIES})
 endif()
 
 

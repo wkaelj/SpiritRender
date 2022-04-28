@@ -119,13 +119,18 @@ typedef struct t_SpiritPipeline {
 // shaders
 // store wether a shader is frag or vert shader
 typedef enum t_SpiritShaderType {
+    SPIRIT_SHADER_TYPE_AUTO_DETECT, // not recommended
     SPIRIT_SHADER_TYPE_VERTEX,
-    SPIRIT_SHADER_TYPE_FRAGMENT
+    SPIRIT_SHADER_TYPE_FRAGMENT,
+    SPIRIT_SHADER_TYPE_COMPUTE,
+
+    SPIRIT_SHADER_TYPE_MAX
 } SpiritShaderType;
 
 // store a vulkan (.spv) shader
 typedef struct t_SpiritShader {
-    VkShaderModule shaderModule;
     SpiritShaderType type;
-    void *shaderCode;
-} *SpiritShader;
+    void            *shader;
+    u64              shaderSize;
+    const char      *shaderPath;
+} SpiritShader;

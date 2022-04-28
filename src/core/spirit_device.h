@@ -26,10 +26,10 @@ typedef struct t_SpiritDeviceCreateInfo {
     u32                    requiredValidationLayerCount;
     const char *const     *requiredValidationLayers;
 
-    VkSurfaceKHR windowSurface; // will be overridden
+    VkSurfaceKHR windowSurface; // will be overridden   
 
-    u32                requiredDeviceExtensionCount; // required GPU extension count
-    const char *const *requiredDeviceExtensions; // required GPU extensions
+    u32                requiredDeviceExtensionCount;
+    const char *const *requiredDeviceExtensions;
 
 } SpiritDeviceCreateInfo;
 

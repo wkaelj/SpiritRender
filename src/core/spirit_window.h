@@ -27,7 +27,7 @@ typedef struct t_SpiritWindowExtensions {
 
 
 // create a window
-SpiritWindow spCreateWindow (SpiritWindowCreateInfo createInfo);
+SpiritWindow spCreateWindow (SpiritWindowCreateInfo *createInfo);
 
 // close and destroy window
 SpiritResult spDestroyWindow (SpiritWindow window);

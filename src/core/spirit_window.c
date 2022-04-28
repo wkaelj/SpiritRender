@@ -8,7 +8,7 @@ struct t_SpiritWindow {
     char *title;
 };
 
-SpiritWindow spCreateWindow (SpiritWindowCreateInfo createInfo) {
+SpiritWindow spCreateWindow (SpiritWindowCreateInfo *createInfo) {
 
     SpiritWindow window = new_var(struct t_SpiritWindow); 
 
@@ -19,21 +19,21 @@ SpiritWindow spCreateWindow (SpiritWindowCreateInfo createInfo) {
         return SPIRIT_NULL;
     }
 
-    window->title = createInfo.title;
+    window->title = createInfo->title;
 
     GLFWmonitor *windowMonitor = NULL;
-    if (createInfo.fullscreen) windowMonitor = glfwGetPrimaryMonitor ();
-    if (createInfo.fullscreen && windowMonitor == NULL) {
+    if (createInfo->fullscreen) windowMonitor = glfwGetPrimaryMonitor ();
+    if (createInfo->fullscreen && windowMonitor == NULL) {
         glfwGetError (&glfwError);
         log_error("No fullscreen monitor available! GLFW error %s", glfwError);
-        createInfo.fullscreen = SPIRIT_FALSE;
+        createInfo->fullscreen = SPIRIT_FALSE;
     }
 
-    if (createInfo.fullscreen) {
+    if (createInfo->fullscreen) {
         glfwGetMonitorWorkarea (windowMonitor, NULL, NULL,  &window->w, &window->h);
     } else {
-        window->w = createInfo.w;
-        window->h = createInfo.h;
+        window->w = createInfo->w;
+        window->h = createInfo->h;
     }
 
     glfwWindowHint (GLFW_CLIENT_API, GLFW_NO_API);
