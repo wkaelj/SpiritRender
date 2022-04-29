@@ -130,7 +130,7 @@ typedef enum t_SpiritShaderType {
 // store a vulkan (.spv) shader
 typedef struct t_SpiritShader {
     SpiritShaderType type;
-    void            *shader;
+    const void            *shader;
     u64              shaderSize;
     const char      *shaderPath;
 } SpiritShader;

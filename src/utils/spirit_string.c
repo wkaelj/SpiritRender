@@ -52,14 +52,17 @@ SpiritBool spStringContains (
 
 // it will strip everything before the last instance of stripper
 // Example: "/home/path/to/file/config.txt" -> "config.txt"
-const char *spStringStrip (const char *filename, const char stripper)
+char *spStringStrip (const char *filename, const char stripper)
 {
+
+    char *out = filename;
     // iterate through filename
     for (size_t i = 0;true; i++)
     {
-        if (filename[i] == '\0')
+        if (out[i] == '\0')
             return filename;
-        else if (filename[i] == stripper)
-            return spStringStrip ((char *) &filename[++i], stripper);
+        else if (out[i] == stripper)
+            return spStringStrip ((char *) &out[++i], stripper);
     }
+    return out;
 }

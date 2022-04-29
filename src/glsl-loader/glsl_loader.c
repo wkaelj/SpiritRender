@@ -54,8 +54,13 @@ extern SpiritShader loadSourceShader (const char *filepath, SpiritShaderType typ
         SpiritShader out;
         out.type = type;
         out.shaderPath = shaderCodePath;
-        out.shader = alloc (shaderCodeSize);
-        out.shaderSize = fread (out.shader, shaderCodeSize, 1, shaderCodeFile);
+        void *readShaderBinary = alloc (shaderCodeSize);
+        out.shaderSize = fread (
+            readShaderBinary,
+            shaderCodeSize,
+            1, // number of array elements to divide shader into
+            shaderCodeFile);
+        out.shader = readShaderBinary;
 
         fclose (shaderCodeFile);
 
@@ -82,7 +87,7 @@ extern SpiritShader loadSourceShader (const char *filepath, SpiritShaderType typ
         db_assert(compiler, "Failure to create compiler");
 
         settings = shaderc_compile_options_initialize ();
-        db_asset(settings, "Failed to create shader settings");
+        db_assert(settings, "Failed to create shader settings");
 
         // optimize for performance
         shaderc_compile_options_set_optimization_level (
@@ -113,7 +118,7 @@ extern SpiritShader loadSourceShader (const char *filepath, SpiritShaderType typ
         // attempt to automatically detect a shader based on file extensions
         else if(SPIRIT_SHADER_TYPE_AUTO_DETECT || 1)
         {
-            const char *fileExtension = stripFileName (filepath, '.');
+            const char *fileExtension = spStringStrip (filepath, '.');
             // I do this because switch only supports integral types
             switch (fileExtension[0]) {
                 case 'v' /* vert */:
@@ -148,7 +153,7 @@ extern SpiritShader loadSourceShader (const char *filepath, SpiritShaderType typ
         
         size_t compiledShaderSize = shaderc_result_get_length (result);
 
-        void *compiledShader = shaderc_result_get_bytes (result);
+        const void *compiledShader = shaderc_result_get_bytes (result);
 
         // write result to spv file
         char *outputFilepath;
@@ -176,7 +181,7 @@ extern SpiritShader loadSourceShader (const char *filepath, SpiritShaderType typ
         out.type =       type;
         out.shader =     compiledShader;
         out.shaderSize = compiledShaderSize;
-        out.shaderPath = outputFile;
+        out.shaderPath = outputFilepath;
 
 
         return out;

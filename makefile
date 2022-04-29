@@ -2,11 +2,11 @@
 
 DEBUGGER = gdb
 
-BUILDFDR = build
+BUILDFDR = bin
 EXEC = SpiritRender
 
 default:
-	make config=debug verbose=1 -C $(BUILDFDR)/
+	cmake --build $(BUILDFDR)
 
 run:
 	./$(BUILDFDR)/$(EXEC)
@@ -23,6 +23,5 @@ dmalloc:
 	$(DEBUGGER) $(BUILDFDR)/$(EXEC)
 
 cmake:
-	mkdir -p $(BUILDFDR)/Config/shaders
-	cp Config/*.txt $(BUILDFDR)/Config/
-	cmake -B $(BUILDFDR)
+	mkdir -p $(BUILDFDR)
+	cmake $(BUILDFDR)
