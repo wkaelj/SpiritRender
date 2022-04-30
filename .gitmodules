@@ -1,3 +1,9 @@
 [submodule "libs/shaderc"]
 	path = libs/shaderc
 	url = https://github.com/google/shaderc.git
+[submodule "libs/glfw"]
+	path = libs/glfw
+	url = https://github.com/glfw/glfw.git
+[submodule "libs/spirv-tools"]
+	path = libs/spirv-tools
+	url = https://github.com/KhronosGroup/SPIRV-Tools.git
