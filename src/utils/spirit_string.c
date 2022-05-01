@@ -2,7 +2,8 @@
 
 
 // compare two strings
-SpiritBool spStringCmp (const char *str1, const char *str2, u32 max) {
+SpiritBool spStringCmp (const char *str1, const char *str2, u32 max)
+{
 
     u32 parsingIndex = 0; // current char
     while (str1[parsingIndex] != '\0' && str2[parsingIndex] != '\0') {
@@ -17,28 +18,46 @@ SpiritBool spStringCmp (const char *str1, const char *str2, u32 max) {
     return SPIRIT_FALSE;
 }
 
-u32 spStringLen (const char *str, u32 max) {
+u32 spStringLen (const char *str, u32 max)
+{
     u32 i = 0;
     for (; str[i] != '\0'; i++) if (max != 0 && i > max) return max;
     return i;
 }
 
+u32 spStringCpy (const char *copy, char *paste, u32 max)
+{
+
+#define CHECK_UNDER_MAX (max == 0 || i < max)
+
+    u32 i;
+    for (i = 0; copy[i] && CHECK_UNDER_MAX; i++)
+    {
+        paste[i] = copy[i];
+    } 
+
+#undef CHECK_UNDER_MAX
+}
+
 SpiritBool spStringContains (
     const char *container,
     const char *token,
-    u32 max) {
+    u32 max)
+{
     
     char parsingChar = 0;
     u32  i = 0; // current index of container
 
     // u32 containerLength = spStringLen (container, 0);
-    u32 tokenLength =     spStringLen (token,     0);
+    u32 tokenLength = spStringLen (token,     0);
 
     u32 matchedCount = 0; // number of correct chars in a row
 
-    while ((parsingChar = container[i]) != '\0') {
+    while ((parsingChar = container[i]) != '\0')
+    {
 
-        if (parsingChar == token[matchedCount]) {
+        if (parsingChar == token[matchedCount])
+        {
             matchedCount++;
             if (matchedCount >= tokenLength) return SPIRIT_TRUE;
         } else matchedCount = 0;
@@ -52,17 +71,16 @@ SpiritBool spStringContains (
 
 // it will strip everything before the last instance of stripper
 // Example: "/home/path/to/file/config.txt" -> "config.txt"
-char *spStringStrip (const char *filename, const char stripper)
+const char *spStringStrip (const char *filename, const char stripper)
 {
-
-    char *out = filename;
+    
     // iterate through filename
     for (size_t i = 0;true; i++)
     {
-        if (out[i] == '\0')
+        if (filename[i] == '\0')
             return filename;
-        else if (out[i] == stripper)
-            return spStringStrip ((char *) &out[++i], stripper);
+        else if (filename[i] == stripper)
+            return spStringStrip ((char *) &filename[++i], stripper);
     }
-    return out;
+    return filename;
 }

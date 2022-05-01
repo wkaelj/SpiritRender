@@ -12,7 +12,7 @@ int main (int argc, char **argv) {
 
     // mainlooptest ();
 
-    const char *container = "Hello /World.vert";
+    char *container = "Hello /World.vert";
 
     if (spStringContains (container, "World", 18)) {
         log_info ("Container works");

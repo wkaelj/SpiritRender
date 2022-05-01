@@ -35,7 +35,7 @@ extern SpiritShader loadSourceShader (const char *filepath, SpiritShaderType typ
     FILE *shaderSrcFile = NULL;
     size_t shaderSrcLength;
     // shader filename, without path
-    char *strippedShaderName = spStringStrip (filepath, '/');
+    const char *strippedShaderName = spStringStrip (filepath, '/');
 
     // check if shader has been precompiled
     char *shaderCodePath;
