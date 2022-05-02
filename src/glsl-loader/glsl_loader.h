@@ -5,6 +5,10 @@
 // Supports compiled and uncompiled shaders
 // Automaticaly stores compiled shaders a cache next to the executable
 // 
+// All filepaths that do not start with ./ or / will be relative to the
+// executable file, not the CWD. This is to make finding program files
+// more intuitive.
+// 
 // 
 // Kael Johnston April 25 2022
 

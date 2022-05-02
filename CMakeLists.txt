@@ -34,6 +34,15 @@ endif()
 
 file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.c)
 
+# libraries
+set(LIBRARY libs)
+
+add_subdirectory(${LIBRARY}/liblist)
+add_subdirectory(${LIBRARY}/glslang)
+add_subdirectory(${LIBRARY}/spirv-tools)
+add_subdirectory(${LIBRARY}/shaderc)
+add_subdirectory(${LIBRARY}/glfw)
+
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY C_STANDARD 99)
@@ -45,14 +54,7 @@ set(CMAKE_BUILD_TYPE "Debug")
 add_compile_options(-Wall -pedantic -O2 -D_FORTIFY_SOURCE=2 -fsanitize=address)
 set(CMAKE_C_STANDARD 23)
 
-# libraries
-set(LIBRARY libs)
 
-add_subdirectory(${LIBRARY}/liblist)
-add_subdirectory(${LIBRARY}/glslang)
-add_subdirectory(${LIBRARY}/spirv-tools)
-add_subdirectory(${LIBRARY}/shaderc)
-add_subdirectory(${LIBRARY}/glfw)
 
 # set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 # set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -67,10 +69,9 @@ add_subdirectory(${LIBRARY}/glfw)
 # set(SPIRV_HEADERS_SKIP_EXAMPLES ON)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
-  glslang
-  spirv-tools
-  linkedlist
   shaderc
+  linkedlist
+  glfw
 )
 
 
@@ -89,14 +90,10 @@ if (WIN32)
   target_include_directories(${PROJECT_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${Vulkan_INCLUDE_DIRS}
-    ${TINYOBJ_PATH}
-    ${GLFW_INCLUDE_DIRS}
-    ${GLM_PATH}
     )
 
   target_link_directories(${PROJECT_NAME} PUBLIC
     ${Vulkan_LIBRARIES}
-    ${GLFW_LIB}
   )
 
   target_link_libraries(${PROJECT_NAME} glfw3 vulkan-1)
@@ -104,10 +101,8 @@ elseif (UNIX)
     message(STATUS "CREATING BUILD FOR UNIX")
     target_include_directories(${PROJECT_NAME} PUBLIC
       ${PROJECT_SOURCE_DIR}/src
-      ${TINYOBJ_PATH}
     )
     target_link_libraries(${PROJECT_NAME} PRIVATE
-      glfw,
       ${Vulkan_LIBRARIES})
 endif()
 

@@ -21,22 +21,29 @@ SpiritBool spStringCmp (const char *str1, const char *str2, u32 max)
 u32 spStringLen (const char *str, u32 max)
 {
     u32 i = 0;
-    for (; str[i] != '\0'; i++) if (max != 0 && i > max) return max;
+    for (; str[i] != '\0'; i++)
+        if (max != 0 && i > max) return max;
     return i;
 }
 
-u32 spStringCpy (const char *copy, char *paste, u32 max)
+SpiritResult spStringCpy(
+    const char *restrict src,
+    char *restrict       dest,
+    u32                  max)
 {
-
+    if (!src || !dest) return SPIRIT_FAILURE;
 #define CHECK_UNDER_MAX (max == 0 || i < max)
 
     u32 i;
-    for (i = 0; copy[i] && CHECK_UNDER_MAX; i++)
+    for (i = 0; src[i] && CHECK_UNDER_MAX; i++)
     {
-        paste[i] = copy[i];
-    } 
+        dest[i] = src[i];
+        if (src[i] == '\0') return SPIRIT_SUCCESS;
+    }
 
 #undef CHECK_UNDER_MAX
+
+    return SPIRIT_SUCCESS;
 }
 
 SpiritBool spStringContains (

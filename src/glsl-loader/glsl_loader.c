@@ -1,82 +1,98 @@
 #include "../glsl-loader/glsl_loader.h"
 
 #include <shaderc/shaderc.h>
-#include <stdio.h>
+#include <utils/spirit_file.h>
+
+
+// return SPIRIT_SHADER_TYPE_MAX on failure
+static SpiritShaderType autoDetectShaderType (const char *path)
+{
+    const char *fileExtension = spStringStrip(path, '.');
+
+    if (spStringCmp ("vert", fileExtension, 4))
+    {
+        return SPIRIT_SHADER_TYPE_VERTEX;
+    } else if (spStringCmp ("frag", fileExtension, 4))
+    {
+        return SPIRIT_SHADER_TYPE_FRAGMENT;
+    } else if (spStringCmp ("comp", fileExtension, 4))
+    {
+        return SPIRIT_SHADER_TYPE_COMPUTE;
+    } else return SPIRIT_SHADER_TYPE_MAX;
+}
 
 extern SpiritShader loadCompiledShader (const char *path, SpiritShaderType type) {
 
-    // open shader readonly
-    FILE *shaderSrc = fopen (path, "r");
+    u64 shaderCodeSize = 0;
+    // get file size
+    if (!spReadFileBinary(SPIRIT_NULL, path, &shaderCodeSize))
+    {
+        return (SpiritShader) {
+            SPIRIT_SHADER_TYPE_AUTO_DETECT, 
+            (void*) 0, 
+            0ll, 
+            (char*) 0
+        };
+    }
 
-    fseek (shaderSrc, 0, SEEK_END);
-    u64 fileSize = ftell (shaderSrc);
+    db_assert(shaderCodeSize, "shaderCodeSize was 0");
 
-    fseek (shaderSrc, 0, SEEK_SET);
-
-    void *shaderBinary = alloc (fileSize);
-    fread (shaderBinary, fileSize, 1, shaderSrc);
+    void *shaderCodeBinary = alloc(shaderCodeSize);
+    spReadFileBinary(shaderCodeBinary, path, shaderCodeSize);
 
     SpiritShader out;
-    out.type =       type;
-    out.shader =     shaderBinary;
-    out.shaderSize = fileSize;
+    out.type = type;
     out.shaderPath = path;
+    out.shader = shaderCodeBinary;
+    out.shaderSize = shaderCodeSize;
 
-    fclose (shaderSrc);
     return out;
-
 }
 
 // load a shader from glsl source code
-extern SpiritShader loadSourceShader (const char *filepath, SpiritShaderType type) {
+extern SpiritShader loadSourceShader (
+    const char      *path,
+    SpiritShaderType type)
+{
     SpiritShader out = {};
 
+    // TODO update filepath to reference executable directory
+    char filepath[] = path;
+
+    if (path[0] != '/' || path[0] != '.')
+    {
+
+    }
+
     const char *shaderSrc;
-    FILE *shaderSrcFile = NULL;
     size_t shaderSrcLength;
     // shader filename, without path
     const char *strippedShaderName = spStringStrip (filepath, '/');
 
     // check if shader has been precompiled
-    char *shaderCodePath;
-    sprintf (shaderCodePath, "%s%s%s",
-    GLSL_LOADER_CACHE_FOLDER,
-    strippedShaderName,
-    ".spv");
+    char shaderCodePath[npf_snprintf(NULL, 0, "%s%s%s%s",
+                                     spGetExecutableFolder(),
+                                     GLSL_LOADER_CACHE_FOLDER,
+                                     strippedShaderName,
+                                     ".spv")
+    ];
+    npf_snprintf (shaderCodePath, 0, "%s%s%s%s",
+        spGetExecutableFolder (),
+        GLSL_LOADER_CACHE_FOLDER,
+        strippedShaderName,
+        ".spv");
 
-    FILE *shaderCodeFile = fopen(shaderCodePath, "r");
-    if (shaderCodeFile) {
+    if (spTestForFile (shaderCodePath))
+    {
+        return loadCompiledShader (shaderCodePath, type);
+        
+    } else // otherwise compile shader
+    {
 
-        fseek (shaderCodeFile, 0, SEEK_END);
-        size_t shaderCodeSize = ftell (shaderCodeFile);
-        fseek (shaderCodeFile, 0, SEEK_SET);
-
-        SpiritShader out;
-        out.type = type;
-        out.shaderPath = shaderCodePath;
-        void *readShaderBinary = alloc (shaderCodeSize);
-        out.shaderSize = fread (
-            readShaderBinary,
-            shaderCodeSize,
-            1, // number of array elements to divide shader into
-            shaderCodeFile);
-        out.shader = readShaderBinary;
-
-        fclose (shaderCodeFile);
-
-        return out;
-    }
-    else
-    { // otherwise compile shader
-
-        shaderSrcFile = fopen (filepath, "r");
-        if (!shaderSrcFile) {
-            log_error("Failed to open shader source file '%s'", filepath);
+        if (!spTestForFile (filepath))
+        {
             goto failure;
         }
-
-        fseek (shaderSrcFile, 0, SEEK_END);
-        shaderSrcLength = ftell (shaderSrcFile);
 
         // initialize a shaderc compiler
         shaderc_compilation_result_t result = NULL;
@@ -104,6 +120,7 @@ extern SpiritShader loadSourceShader (const char *filepath, SpiritShaderType typ
             settings,
             false);
         
+        // get shader type
         shaderc_shader_kind shaderType;
         if (type == SPIRIT_SHADER_TYPE_VERTEX)
             shaderType = shaderc_vertex_shader;
@@ -116,7 +133,9 @@ extern SpiritShader loadSourceShader (const char *filepath, SpiritShaderType typ
             goto failure;
         }
         // attempt to automatically detect a shader based on file extensions
-        else if(SPIRIT_SHADER_TYPE_AUTO_DETECT || 1)
+        // this is here so that it is obvous that you can intend for detection
+        // to happen. It is not always a fallback case
+        else if (SPIRIT_SHADER_TYPE_AUTO_DETECT || 1) // do no matter what
         {
             const char *fileExtension = spStringStrip (filepath, '.');
             // I do this because switch only supports integral types
@@ -188,10 +207,6 @@ extern SpiritShader loadSourceShader (const char *filepath, SpiritShaderType typ
         
         failure:
         // release resources
-        if (shaderSrcFile)
-            fclose(shaderSrcFile);
-        if (outputFile)
-            fclose(outputFile);
         if (result)
             shaderc_result_release(result);
         if (settings)

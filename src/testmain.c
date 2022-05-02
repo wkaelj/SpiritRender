@@ -5,11 +5,15 @@
 #include "core/spirit_device.h"
 #include "core/spirit_swapchain.h"
 #include "glsl-loader/glsl_loader.h"
+#include "utils/spirit_file.h"
+#include "utils/platform.h"
 
 void mainlooptest (void);
 
 int main (int argc, char **argv) {
 
+    spSetExecutableFolder (argv[0]);
+    
     // mainlooptest ();
 
     char *container = "Hello /World.vert";
@@ -24,13 +28,14 @@ int main (int argc, char **argv) {
 
     SpiritShader vert, frag;
     frag = loadSourceShader (
-        "shaders / simple_shader.frag", 
+        "shaders/simple_shader.frag", 
         SPIRIT_SHADER_TYPE_FRAGMENT);
     vert = loadSourceShader (
         "shaders/simple_shader.vert",
         SPIRIT_SHADER_TYPE_VERTEX);
 
-        return 0;
+
+    return 0;
 }
 void mainlooptest (void) {
 

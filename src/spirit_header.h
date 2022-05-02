@@ -19,6 +19,7 @@
 #include "debug/messenger.h" // debug messenging functions
 #include "core/spirit_types.h" // custom types
 #include "utils/spirit_string.h"
+#include "utils/platform.h" // usefull stuff, like time and whatnot
 
 // enable messeges upon success, not just failure
 // object creation will log succesful creation as well as failure
