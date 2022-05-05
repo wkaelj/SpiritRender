@@ -3,46 +3,47 @@
 #include <shaderc/shaderc.h>
 #include <utils/spirit_file.h>
 
-
 // return SPIRIT_SHADER_TYPE_MAX on failure
-static SpiritShaderType autoDetectShaderType (const char *path)
+static SpiritShaderType autoDetectShaderType(const char *path)
 {
     const char *fileExtension = spStringStrip(path, '.');
 
-    if (spStringCmp ("vert", fileExtension, 4))
+    if (spStringCmp("vert", fileExtension, 4))
     {
         return SPIRIT_SHADER_TYPE_VERTEX;
-    } else if (spStringCmp ("frag", fileExtension, 4))
+    }
+    else if (spStringCmp("frag", fileExtension, 4))
     {
         return SPIRIT_SHADER_TYPE_FRAGMENT;
-    } else if (spStringCmp ("comp", fileExtension, 4))
+    }
+    else if (spStringCmp("comp", fileExtension, 4))
     {
         return SPIRIT_SHADER_TYPE_COMPUTE;
-    } else return SPIRIT_SHADER_TYPE_MAX;
+    }
+    else
+        return SPIRIT_SHADER_TYPE_MAX;
 }
 
-extern SpiritShader loadCompiledShader (const char *path, SpiritShaderType type) {
+extern SpiritShader loadCompiledShader(const char *path, SpiritShaderType type)
+{
 
     u64 shaderCodeSize = 0;
     // get file size
-    if (!spReadFileBinary(SPIRIT_NULL, path, &shaderCodeSize))
+    if (!(shaderCodeSize = spReadFileSize (path)))
     {
-        return (SpiritShader) {
-            SPIRIT_SHADER_TYPE_AUTO_DETECT, 
-            (void*) 0, 
-            0ll, 
-            (char*) 0
-        };
+        return (SpiritShader){
+            SPIRIT_SHADER_TYPE_AUTO_DETECT,
+            (void *)0,
+            0ll};
     }
 
     db_assert(shaderCodeSize, "shaderCodeSize was 0");
 
     void *shaderCodeBinary = alloc(shaderCodeSize);
-    spReadFileBinary(shaderCodeBinary, path, shaderCodeSize);
+    spReadFileBinary(shaderCodeBinary, path, &shaderCodeSize);
 
     SpiritShader out;
     out.type = type;
-    out.shaderPath = path;
     out.shader = shaderCodeBinary;
     out.shaderSize = shaderCodeSize;
 
@@ -50,197 +51,217 @@ extern SpiritShader loadCompiledShader (const char *path, SpiritShaderType type)
 }
 
 // load a shader from glsl source code
-extern SpiritShader loadSourceShader (
-    const char      *path,
+extern SpiritShader loadSourceShader(
+    const char *path,
     SpiritShaderType type)
 {
     SpiritShader out = {};
 
-    // TODO update filepath to reference executable directory
-    char filepath[] = path;
+    u32 filepathLength = spPlatformLocalizeFileName(NULL, path, 0);
+    char filepath[filepathLength];
+    spPlatformLocalizeFileName(filepath, path, filepathLength);
 
-    if (path[0] != '/' || path[0] != '.')
-    {
-
-    }
-
-    const char *shaderSrc;
-    size_t shaderSrcLength;
+    
     // shader filename, without path
-    const char *strippedShaderName = spStringStrip (filepath, '/');
+    const char *strippedShaderName = spStringStrip(path, SPIRIT_PLATFORM_FOLDER_BREAK);
+    const u32 strippedShaderNameLength = spStringLen (strippedShaderName, 0);
 
     // check if shader has been precompiled
-    char shaderCodePath[npf_snprintf(NULL, 0, "%s%s%s%s",
-                                     spGetExecutableFolder(),
-                                     GLSL_LOADER_CACHE_FOLDER,
-                                     strippedShaderName,
-                                     ".spv")
-    ];
-    npf_snprintf (shaderCodePath, 0, "%s%s%s%s",
-        spGetExecutableFolder (),
+    const u32 shaderCodePathLength = (
+        spPlatformGetExecutableFolderStrLen() +
+        sizeof (GLSL_LOADER_CACHE_FOLDER) - 1 +
+        strippedShaderNameLength +
+        sizeof (".spv") - 1);
+
+    char shaderCodePath[shaderCodePathLength + 1];
+    npf_snprintf(shaderCodePath, shaderCodePathLength + 1, "%s%s%s%s",
+        spPlatformGetExecutableFolder(),
         GLSL_LOADER_CACHE_FOLDER,
         strippedShaderName,
         ".spv");
 
-    if (spTestForFile (shaderCodePath))
+    if (spPlatformTestForFile(shaderCodePath))
     {
-        return loadCompiledShader (shaderCodePath, type);
+        log_verbose ("Loading compiled shader '%s'",
+            shaderCodePath);
+        return loadCompiledShader(shaderCodePath, type);
+    }
+    else // is a else rather then guard statment to save memory
+    {
         
-    } else // otherwise compile shader
-    {
+        // compile the shader from source code
 
-        if (!spTestForFile (filepath))
+        if (!spReadFileExists(filepath))
         {
-            goto failure;
+            return (SpiritShader) {0, 0, 0};
         }
 
-        // initialize a shaderc compiler
-        shaderc_compilation_result_t result = NULL;
-        shaderc_compiler_t compiler =         NULL;
-        shaderc_compile_options_t settings =  NULL;
-
-        compiler = shaderc_compiler_initialize();
-        db_assert(compiler, "Failure to create compiler");
-
-        settings = shaderc_compile_options_initialize ();
-        db_assert(settings, "Failed to create shader settings");
-
-        // optimize for performance
-        shaderc_compile_options_set_optimization_level (
-            settings, 
-            shaderc_optimization_level_performance);
-        
-        // set shader type
-        shaderc_compile_options_set_target_env (
-            settings, 
-            shaderc_target_env_vulkan, 
-            shaderc_env_version_vulkan_1_3);
-
-        shaderc_compile_options_set_auto_map_locations(
-            settings,
-            false);
-        
         // get shader type
         shaderc_shader_kind shaderType;
         if (type == SPIRIT_SHADER_TYPE_VERTEX)
             shaderType = shaderc_vertex_shader;
         else if (type == SPIRIT_SHADER_TYPE_FRAGMENT)
             shaderType = shaderc_fragment_shader;
-        else if (type == SPIRIT_SHADER_TYPE_COMPUTE) {
-            log_error ("Could not invalid shader type '%d' loading shader '%s'",
-                type,
-                filepath);
-            goto failure;
+        else if (type == SPIRIT_SHADER_TYPE_COMPUTE)
+        {
+            log_error("Could not validate shader type '%d' loading shader '%s'",
+                      type,
+                      filepath);
+            return (SpiritShader){0, 0, 0};
         }
+
         // attempt to automatically detect a shader based on file extensions
         // this is here so that it is obvous that you can intend for detection
         // to happen. It is not always a fallback case
         else if (SPIRIT_SHADER_TYPE_AUTO_DETECT || 1) // do no matter what
         {
-            const char *fileExtension = spStringStrip (filepath, '.');
-            // I do this because switch only supports integral types
-            switch (fileExtension[0]) {
-                case 'v' /* vert */:
-                    shaderType = shaderc_vertex_shader;
-                    type = SPIRIT_SHADER_TYPE_VERTEX;
-                    break;
-                case 'f' /* frag */:
-                    shaderType = shaderc_fragment_shader;
-                    type = SPIRIT_SHADER_TYPE_FRAGMENT;
-                    break;
-                case 'c' /* compute */:
-                    shaderType = shaderc_compute_shader;
-                    type = SPIRIT_SHADER_TYPE_COMPUTE;
-                    break;
-                default:
-                    log_error ("Cannot detect type of shader '%s' \
-                    based on file extension '%s'",
-                    fileExtension,
-                    filepath);
-                    goto failure;
+            type = autoDetectShaderType(path);
+            switch (type)
+            {
+            case SPIRIT_SHADER_TYPE_VERTEX:
+                shaderType = shaderc_vertex_shader;
+                break;
+            case SPIRIT_SHADER_TYPE_FRAGMENT:
+                shaderType = shaderc_fragment_shader;
+                break;
+            case SPIRIT_SHADER_TYPE_COMPUTE:
+                shaderType = shaderc_compute_shader;
+                break;
+            default:
+                log_error("Cannot detect type of shader '%s' \
+                    based on file extension'",
+                          filepath);
+                return (SpiritShader) {0, 0, 0};
             }
         }
 
-        result = shaderc_compile_into_spv(
-            compiler,
-            shaderSrc,
-            shaderSrcLength,
-            shaderType,
-            strippedShaderName,
-            "main",
-            settings);
+        // load source code
+        size_t shaderSrcLength = spReadFileSize (filepath);
+        char shaderSrc[shaderSrcLength];
         
-        size_t compiledShaderSize = shaderc_result_get_length (result);
+        spReadFileText (shaderSrc, filepath, &shaderSrcLength);
 
-        const void *compiledShader = shaderc_result_get_bytes (result);
-
-        // write result to spv file
-        char *outputFilepath;
-        sprintf (outputFilepath, "%s%s%s",
-            GLSL_LOADER_CACHE_FOLDER,
+        SpiritShader out = compileShader (
+            shaderSrc, 
+            shaderSrcLength, 
             strippedShaderName,
-            ".spv");
-        FILE *outputFile = fopen (outputFilepath, "w");
-        if (!outputFile) {
-            log_error ("Cannot write shader '%s', compiled from src '%s'",
-                outputFilepath,
-                filepath);
-            goto failure;
-        }
+            type);
 
-        fwrite (compiledShader, compiledShaderSize, 1, outputFile);
-        fclose (outputFile);
-        outputFile = NULL;
-        
-        // release resources
-        shaderc_result_release (result);
-        shaderc_compile_options_release (settings);
-        shaderc_compiler_release (compiler);
-
-        out.type =       type;
-        out.shader =     compiledShader;
-        out.shaderSize = compiledShaderSize;
-        out.shaderPath = outputFilepath;
-
+        // write output file
+        spWriteFileBinary(
+            shaderCodePath,
+            out.shader,
+            out.shaderSize);
+        log_verbose ("Compiled shader '%s'", shaderCodePath);
 
         return out;
-        
-        failure:
-        // release resources
-        if (result)
-            shaderc_result_release(result);
-        if (settings)
-            shaderc_compile_options_release(settings);
-        if (compiler)
-            shaderc_compiler_release(compiler);
-        SpiritShader fail = {
-            SPIRIT_SHADER_TYPE_MAX,
-            NULL,
-            0,
-            NULL};
-        return fail;
-        }
+    }
+}
+
+shaderc_shader_kind convertShaderType (SpiritShaderType type)
+{
+    shaderc_shader_kind shadercType;
+    switch (type)
+    {
+    case SPIRIT_SHADER_TYPE_VERTEX:
+        shadercType = shaderc_vertex_shader;
+        break;
+    case SPIRIT_SHADER_TYPE_FRAGMENT:
+        shadercType = shaderc_fragment_shader;
+        break;
+    case SPIRIT_SHADER_TYPE_COMPUTE:
+        shadercType = shaderc_compute_shader;
+        break;
+    case SPIRIT_SHADER_TYPE_AUTO_DETECT:
+        log_error("Must pass a valid shader type for shader compilation");
+    }
+
+    return shadercType;
+}
+
+extern SpiritShader compileShader (
+    const char      *src,
+    const u32        srcLength,
+    const char      *outputShaderName,
+    SpiritShaderType type)
+{
+    shaderc_shader_kind shadercType = convertShaderType(type);
+
+    // initialize a shaderc compiler
+    shaderc_compilation_result_t result = NULL;
+    shaderc_compiler_t compiler = NULL;
+    shaderc_compile_options_t settings = NULL;
+
+    compiler = shaderc_compiler_initialize();
+    db_assert(compiler, "Failure to create compiler");
+
+    settings = shaderc_compile_options_initialize();
+    db_assert(settings, "Failed to create shader settings");
+
+    // optimize for performance
+    shaderc_compile_options_set_optimization_level(
+        settings,
+        shaderc_optimization_level_performance);
+
+    // set shader type
+    shaderc_compile_options_set_target_env(
+        settings,
+        shaderc_target_env_vulkan,
+        shaderc_env_version_vulkan_1_3);
+
+    shaderc_compile_options_set_auto_map_locations(
+        settings,
+        false);
+
+    SpiritShader out;
+
+    // compile the shader
+    result = shaderc_compile_into_spv(
+        compiler,
+        src,
+        srcLength,
+        shadercType,
+        outputShaderName,
+        "main",
+        settings);
+
+    size_t compiledShaderSize = shaderc_result_get_length(result);
+
+    const void *compiledShader = shaderc_result_get_bytes(result);
+
+    out.shader = compiledShader;
+    out.shaderSize = compiledShaderSize;
+    out.type = type;
+
+    // release resources
+    shaderc_result_release(result);
+    shaderc_compile_options_release(settings);
+    shaderc_compiler_release(compiler);
+
+    return out;
 }
 
 // convert loaded shader to a VkShaderModule
 // Try not to do this often, it is not a fast process
 // Remember to destroy the shader module when you are done with them
 // vkDestroyShaderModule (device, shader, callback (NULL))
-extern VkShaderModule convertShaderToModule (
+extern VkShaderModule convertShaderToModule(
     SpiritDevice device,
-    SpiritShader *shader) {
+    SpiritShader *shader)
+{
 
     VkShaderModuleCreateInfo moduleInfo = {};
     moduleInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     moduleInfo.codeSize = shader->shaderSize;
     moduleInfo.pCode = shader->shader;
-    
+
     VkShaderModule out;
-    if (vkCreateShaderModule (
-        device->device, 
-        &moduleInfo, 
-        SPIRIT_NULL, 
-        &out) != VK_SUCCESS) return SPIRIT_NULL;
-    
+    if (vkCreateShaderModule(
+            device->device,
+            &moduleInfo,
+            SPIRIT_NULL,
+            &out) != VK_SUCCESS)
+        return SPIRIT_NULL;
+
     return out;
 }

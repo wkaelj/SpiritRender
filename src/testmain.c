@@ -12,9 +12,11 @@ void mainlooptest (void);
 
 int main (int argc, char **argv) {
 
-    spSetExecutableFolder (argv[0]);
+    spPlatformSetExecutableFolder (argv[0]);
     
     // mainlooptest ();
+
+    log_info ("Local directory = '%s'", spPlatformGetExecutableFolder ());
 
     char *container = "Hello /World.vert";
 

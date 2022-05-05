@@ -1,22 +1,38 @@
 #pragma once
 #include <spirit_header.h>
 
-// store the exectutable files directory
-// so that assets and other relative directories
-// can be located during runtime
-char *g_executableDirerctory = NULL;
+// platform file denominator ('/' or '\')
+#define SPIRIT_PLATFORM_FOLDER_BREAK '/'
 
-char *spGetCWD (void);
+char *spPlatformGetCWD (void);
 
 // set the folder that the program executable is stored in
 // should be the first argument of the main function strings
-void spSetExecutableFolder (const char *name);
+void spPlatformSetExecutableFolder (char *name);
 
 // get the folder the program executable is stored in
 // includes trailing '/' character
-const char *spGetExecutableFolder (void);
+// RETURNS the exectuable folder, but immutable
+const char *spPlatformGetExecutableFolder (void);
 
-u64 spGetUnixTime (void);
+// get the length of the executable directory string
+// it is faster then calling strlen, because it is stored
+u32 spPlatformGetExecutableFolderStrLen (void);
 
-// test if a file exists, and can be read
-SpiritBool spTestForFile (const char *filepath);
+// convert a filename such as 'config.txt' to be relative to the
+// exectuable rather then the CWD.
+// 
+// if max or ouput is 0/NULL it will just return the file length
+// It also handles system conversions, so '/' are converted to '\' on win32
+// RETURN - returns the length of the completed path
+// NOTE - returns 0 on failure, and cannot succeed if max is insufficient
+u32 spPlatformLocalizeFileName (char *output, const char *path, const u32 max);
+
+// it is 64 bit because FUTURE PROOF YEAH BABYYYY!
+u64 spPlatformGetUnixTime (void);
+
+// test if a file or folder exists, and can be read
+SpiritBool spPlatformTestForFile (const char *filepath);
+
+// return the size of a file, 0 for failure
+u64 spPlatformTestFileSize (const char *filepath);
