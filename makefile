@@ -6,7 +6,7 @@ BUILDFDR = bin
 EXEC = SpiritRender
 
 default:
-	make --quiet -C $(BUILDFDR)
+	make -s --quiet -C $(BUILDFDR)
 
 run:
 	cd $(BUILDFDR)

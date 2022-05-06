@@ -36,3 +36,5 @@ SpiritBool spPlatformTestForFile (const char *filepath);
 
 // return the size of a file, 0 for failure
 u64 spPlatformTestFileSize (const char *filepath);
+
+SpiritResult spPlatformCreateFolder(const char *path);

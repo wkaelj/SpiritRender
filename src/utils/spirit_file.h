@@ -58,4 +58,4 @@ SpiritResult spWriteFileBinary(
 // to the exectuable location
 // it will always be a FOLDER! adding .txt will just make folder.txt
 // it will not make a text doc
-SpiritResult spCreateFolder (const char *path);
+SpiritResult spWriteFileFolder (const char *path);

@@ -56,4 +56,12 @@ const char *spStringStrip (const char *filename, const char stripper);
 
 // cut off everything after the last instance of slicer
 // Example: "/home/path/to/file/file.txt -> /home/path/to/file/"
-SpiritResult spStringTruncate(char *str, const char slicer);
+// if dest is null will only set length
+// if length is null with go forever
+// if str is null will fail
+// otherwise sets dest to truncated str max length of length
+SpiritResult spStringTruncate(
+    char *restrict        dest,
+    u32 *restrict         length,
+    const char * restrict str, 
+    const char            slicer);

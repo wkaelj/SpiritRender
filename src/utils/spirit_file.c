@@ -101,36 +101,7 @@ SpiritResult spWriteFileBinary(
     return SPIRIT_SUCCESS;
 }
 
-SpiritResult spCreateFolder(const char *path)
+SpiritResult spWriteFileFolder(const char *path)
 {
-
-    db_assert(path, "Must pass a valid filepath");
-    const u32 pathLength = spStringLen(path, 1000);
-    // localize filepath
-    u32 localizerLength = spPlatformLocalizeFileName(
-        NULL,
-        path,
-        0);
-    char filepath[localizerLength + pathLength];
-    spPlatformLocalizeFileName(
-        filepath,
-        path,
-        localizerLength);
-
-    if (filepath[localizerLength + pathLength - 1] == SPIRIT_PLATFORM_FOLDER_BREAK)
-    {
-        filepath[localizerLength + pathLength - 1] = '\0';
-    }
-
-    for (char *p = &filepath[localizerLength]; p != '\0'; p++)
-    {
-        if (*p == SPIRIT_PLATFORM_FOLDER_BREAK)
-        {
-            *p = '\0';
-            mkdir(filepath, S_IRWXU);
-            *p = SPIRIT_PLATFORM_FOLDER_BREAK;
-        }
-    }
-
-    mkdir(filepath, S_IRWXU);
+    return spPlatformCreateFolder(path);
 }

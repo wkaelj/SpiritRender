@@ -67,11 +67,11 @@ extern SpiritShader loadSourceShader(
     const u32 strippedShaderNameLength = spStringLen (strippedShaderName, 0);
 
     // check if shader has been precompiled
-    const u32 shaderCodePathLength = (
+    u32 shaderCodePathLength = (
         spPlatformGetExecutableFolderStrLen() +
         sizeof (GLSL_LOADER_CACHE_FOLDER) - 1 +
         strippedShaderNameLength +
-        sizeof (".spv") - 1);
+        4); /* sizeof (".spv") - 1*/
 
     char shaderCodePath[shaderCodePathLength + 1];
     npf_snprintf(shaderCodePath, shaderCodePathLength + 1, "%s%s%s%s",
@@ -79,6 +79,8 @@ extern SpiritShader loadSourceShader(
         GLSL_LOADER_CACHE_FOLDER,
         strippedShaderName,
         ".spv");
+
+    log_verbose("Scanning for shader '%s'", shaderCodePath);
 
     if (spPlatformTestForFile(shaderCodePath))
     {
@@ -148,10 +150,30 @@ extern SpiritShader loadSourceShader(
             type);
 
         // write output file
-        spWriteFileBinary(
+        log_verbose("Caching shader '%s'", shaderCodePath);
+
+        // create folder
+        char outputFolderPath[shaderCodePathLength];
+        SpiritResult catchBuffer;
+        catchBuffer = spStringTruncate(
+            outputFolderPath,
+            &shaderCodePathLength,
+            shaderCodePath,
+            SPIRIT_PLATFORM_FOLDER_BREAK);
+        db_assert(catchBuffer == SPIRIT_SUCCESS, "Failed to truncate string");
+
+        catchBuffer = spWriteFileFolder (outputFolderPath);
+        log_debug("Created Folder '%s'", outputFolderPath);
+
+        db_assert (catchBuffer == SPIRIT_SUCCESS, "Failed to write folder");
+
+        // write file
+        catchBuffer = spWriteFileBinary(
             shaderCodePath,
             out.shader,
             out.shaderSize);
+        log_debug("Wrote code to '%s'", shaderCodePath);
+        db_assert(catchBuffer == SPIRIT_SUCCESS, "Failed to write file");
         log_verbose ("Compiled shader '%s'", shaderCodePath);
 
         return out;

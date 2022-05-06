@@ -101,23 +101,31 @@ const char *spStringStrip(const char *filename, const char stripper)
 
 // cut off everything after the last instance of slicer
 // Example: "/home/path/to/file/file.txt -> /home/path/to/file/"
-SpiritResult spStringTruncate(char *str, const char slicer)
+SpiritResult spStringTruncate(
+    char *restrict dest,
+    u32 *restrict length,
+    const char *restrict str,
+    const char slicer)
 {
 
-    u32 lastInstanceIndex = 0; // last instance of slicer
+    #define LTHN_MAX(x) (length && x < *length)
+    if (!str) return SPIRIT_FAILURE;
 
-    for (u32 i = 0; str[i] != '\0'; i++)
+    u32 lastInstanceIndex = 0;
+    for (u32 i = 0; LTHN_MAX(i) && str[i] != '\0'; i++)
     {
-        if (str[i] == slicer)
-        {
-            lastInstanceIndex = i;
-        }
+        if (str[i] == SPIRIT_PLATFORM_FOLDER_BREAK) lastInstanceIndex = i;
+
+        dest && (dest[i] = str[i]);
     }
 
-    // this is safe, because if i = '\0' the loop ends
-    // only goes if lastInstanceIndex isn't 0
-    if (lastInstanceIndex)
-        str[lastInstanceIndex + 1] = '\0';
+    if (dest && LTHN_MAX(lastInstanceIndex + 1))
+    {
+        dest[lastInstanceIndex + 1] = '\0';
+    }
+
+    length && !*length && (*length = lastInstanceIndex + 1);
 
     return SPIRIT_SUCCESS;
+    #undef LTHN_MAX
 }

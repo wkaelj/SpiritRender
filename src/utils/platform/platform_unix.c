@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <errno.h>
 
 // store the exectutable files directory
 // so that assets and other relative directories
@@ -11,11 +12,12 @@ u32 g_exectuableDirectoryStrLen = 0;
 
 void spPlatformSetExecutableFolder(char *name)
 {
-    spStringTruncate(name, '/'); // remove exectuable name from path
-    u32 pathLength = spStringLen(name, 0) + 1;
-    g_executableDirerctory = alloc(pathLength);
-    spStringCpy(name, g_executableDirerctory, pathLength);
-    g_exectuableDirectoryStrLen = spStringLen(name, 0);
+    u32 pathLength = 0;
+    spStringTruncate(NULL, &pathLength, name, '/'); // remove exectuable name from path
+    g_executableDirerctory = alloc(pathLength + 1);
+    spStringTruncate(g_executableDirerctory, &pathLength, name, '/');
+
+    g_exectuableDirectoryStrLen = pathLength;
     return;
 }
 
@@ -96,4 +98,45 @@ u64 spPlatformTestFileSize(const char *filepath)
 u64 spPlatformGetUnixTime(void)
 {
     return time(NULL);
+}
+
+SpiritResult spPlatformCreateFolder (const char *path)
+{
+
+    db_assert(path, "Must pass a valid filepath");
+    const u32 pathLength = spStringLen(path, 1000);
+    // localize filepath
+    u32 localizerLength = spPlatformLocalizeFileName(
+        NULL,
+        path,
+        0);
+    char filepath[localizerLength + pathLength];
+    spPlatformLocalizeFileName(
+        filepath,
+        path,
+        localizerLength);
+
+    if (filepath[localizerLength + pathLength - 1] == SPIRIT_PLATFORM_FOLDER_BREAK)
+    {
+        filepath[localizerLength + pathLength - 1] = '\0';
+    }
+
+    for (char *p = &filepath[localizerLength]; *p != '\0'; p++)
+    {
+        if (*p == SPIRIT_PLATFORM_FOLDER_BREAK)
+        {
+            *p = '\0';
+            if ((unsigned)mkdir(filepath, S_IRWXU) && errno != EEXIST)
+            {
+                log_fatal("Error creating file '%d'", errno);
+                abort();
+            }
+
+            *p = SPIRIT_PLATFORM_FOLDER_BREAK;
+        }
+    }
+
+    if (mkdir(filepath, S_IRWXU)) return SPIRIT_FAILURE;
+
+    return SPIRIT_SUCCESS;
 }

@@ -13,6 +13,10 @@ void mainlooptest (void);
 int main (int argc, char **argv) {
 
     spPlatformSetExecutableFolder (argv[0]);
+    if (spReadFileExists ("beep"))
+    {
+        log_info ("File 'beep' exists!");
+    }
     
     // mainlooptest ();
 
