@@ -90,31 +90,47 @@ SpiritResult spWriteFileBinary(
 {
 
     FILE *file = fopen(path, "w");
-    if (!file) return SPIRIT_FAILURE;
+    if (!file)
+        return SPIRIT_FAILURE;
 
-    if(fwrite(path, size, 1, file) != size) return SPIRIT_FAILURE;
-    
-    if(fclose (file)) return SPIRIT_UNDEFINED;
+    if (fwrite(path, size, 1, file) != size)
+        return SPIRIT_FAILURE;
+
+    if (fclose(file))
+        return SPIRIT_UNDEFINED;
     return SPIRIT_SUCCESS;
 }
 
-SpiritResult spCreateFolder (const char *path)
+SpiritResult spCreateFolder(const char *path)
 {
 
     db_assert(path, "Must pass a valid filepath");
-    
+    const u32 pathLength = spStringLen(path, 1000);
     // localize filepath
     u32 localizerLength = spPlatformLocalizeFileName(
         NULL,
         path,
-        0
-    );
-    char filepath[localizerLength];
+        0);
+    char filepath[localizerLength + pathLength];
     spPlatformLocalizeFileName(
         filepath,
         path,
-        localizerLength
-    );
+        localizerLength);
 
-    mkdir (filepath, S_IRWXU);
+    if (filepath[localizerLength + pathLength - 1] == SPIRIT_PLATFORM_FOLDER_BREAK)
+    {
+        filepath[localizerLength + pathLength - 1] = '\0';
+    }
+
+    for (char *p = &filepath[localizerLength]; p != '\0'; p++)
+    {
+        if (*p == SPIRIT_PLATFORM_FOLDER_BREAK)
+        {
+            *p = '\0';
+            mkdir(filepath, S_IRWXU);
+            *p = SPIRIT_PLATFORM_FOLDER_BREAK;
+        }
+    }
+
+    mkdir(filepath, S_IRWXU);
 }
