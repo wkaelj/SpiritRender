@@ -9,7 +9,6 @@ default:
 	make -s --quiet -C $(BUILDFDR)
 
 run:
-	cd $(BUILDFDR)
 	./$(BUILDFDR)/$(EXEC)
 
 debug:

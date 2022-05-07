@@ -108,14 +108,16 @@ SpiritResult spStringTruncate(
     const char slicer)
 {
 
-    #define LTHN_MAX(x) (length && x < *length)
+    #define LTHN_MAX(x) ((!length || *length == 0 || x < *length))
     if (!str) return SPIRIT_FAILURE;
 
     u32 lastInstanceIndex = 0;
     for (u32 i = 0; LTHN_MAX(i) && str[i] != '\0'; i++)
     {
+        // update last index to current index of string if char is matching
         if (str[i] == SPIRIT_PLATFORM_FOLDER_BREAK) lastInstanceIndex = i;
 
+        // if dest is not null set the current index of dest to string
         dest && (dest[i] = str[i]);
     }
 
@@ -124,7 +126,7 @@ SpiritResult spStringTruncate(
         dest[lastInstanceIndex + 1] = '\0';
     }
 
-    length && !*length && (*length = lastInstanceIndex + 1);
+    length && *length == 0 && (*length = lastInstanceIndex + 1);
 
     return SPIRIT_SUCCESS;
     #undef LTHN_MAX

@@ -13,24 +13,10 @@ void mainlooptest (void);
 int main (int argc, char **argv) {
 
     spPlatformSetExecutableFolder (argv[0]);
-    if (spReadFileExists ("beep"))
-    {
-        log_info ("File 'beep' exists!");
-    }
-    
+
     // mainlooptest ();
 
     log_info ("Local directory = '%s'", spPlatformGetExecutableFolder ());
-
-    char *container = "Hello /World.vert";
-
-    if (spStringContains (container, "World", 18)) {
-        log_info ("Container works");
-    }
-
-
-    log_info (spStringStrip (container, '/'));
-    log_info (spStringStrip(container, '.'));
 
     SpiritShader vert, frag;
     frag = loadSourceShader (
@@ -40,9 +26,9 @@ int main (int argc, char **argv) {
         "shaders/simple_shader.vert",
         SPIRIT_SHADER_TYPE_VERTEX);
 
-
     return 0;
 }
+
 void mainlooptest (void) {
 
     // create window

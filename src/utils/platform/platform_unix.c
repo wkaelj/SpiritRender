@@ -14,11 +14,11 @@ void spPlatformSetExecutableFolder(char *name)
 {
     u32 pathLength = 0;
     spStringTruncate(NULL, &pathLength, name, '/'); // remove exectuable name from path
+    log_info("Exectuable folder length = %u", pathLength);
     g_executableDirerctory = alloc(pathLength + 1);
     spStringTruncate(g_executableDirerctory, &pathLength, name, '/');
 
     g_exectuableDirectoryStrLen = pathLength;
-    return;
 }
 
 const char *spPlatformGetExecutableFolder(void)
