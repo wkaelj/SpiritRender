@@ -26,7 +26,7 @@ u32 spPlatformGetExecutableFolderStrLen (void);
 // It also handles system conversions, so '/' are converted to '\' on win32
 // RETURN - returns the length of the completed path
 // NOTE - returns 0 on failure, and cannot succeed if max is insufficient
-u32 spPlatformLocalizeFileName (char *output, const char *path, const u32 max);
+SpiritResult spPlatformLocalizeFileName (char *output, const char *path, u32* max);
 
 // it is 64 bit because FUTURE PROOF YEAH BABYYYY!
 u64 spPlatformGetUnixTime (void);

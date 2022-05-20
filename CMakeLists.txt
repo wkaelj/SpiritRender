@@ -51,7 +51,7 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CM
 
 # BUILD TYPE
 set(CMAKE_BUILD_TYPE "Debug")
-add_compile_options(-Wall -pedantic -O2 -D_FORTIFY_SOURCE=2 -fsanitize=address)
+add_compile_options(-Wall -pedantic -Og -D_FORTIFY_SOURCE=2 -fsanitize=address)
 set(CMAKE_C_STANDARD 23)
 
 

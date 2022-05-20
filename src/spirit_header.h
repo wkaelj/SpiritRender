@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <assert.h>
+#include <string.h>
 
 // vulkan
 #include <vulkan/vulkan.h>
@@ -18,8 +19,8 @@
 // custom 
 #include "debug/messenger.h" // debug messenging functions
 #include "core/spirit_types.h" // custom types
-#include "utils/spirit_string.h"
 #include "utils/platform.h" // usefull stuff, like time and whatnot
+#include "utils/spirit_string.h"
 
 // enable messeges upon success, not just failure
 // object creation will log succesful creation as well as failure

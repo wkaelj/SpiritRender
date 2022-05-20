@@ -6,17 +6,17 @@
 // return SPIRIT_SHADER_TYPE_MAX on failure
 static SpiritShaderType autoDetectShaderType(const char *path)
 {
-    const char *fileExtension = spStringStrip(path, '.');
+    const char *fileExtension = spStringStrip (path, '.');
 
-    if (spStringCmp("vert", fileExtension, 4))
+    if (strncmp ("vert", fileExtension, 4))
     {
         return SPIRIT_SHADER_TYPE_VERTEX;
     }
-    else if (spStringCmp("frag", fileExtension, 4))
+    else if (strncmp ("frag", fileExtension, 4))
     {
         return SPIRIT_SHADER_TYPE_FRAGMENT;
     }
-    else if (spStringCmp("comp", fileExtension, 4))
+    else if (strncmp ("comp", fileExtension, 4))
     {
         return SPIRIT_SHADER_TYPE_COMPUTE;
     }
@@ -64,7 +64,7 @@ extern SpiritShader loadSourceShader(
     
     // shader filename, without path
     const char *strippedShaderName = spStringStrip(path, SPIRIT_PLATFORM_FOLDER_BREAK);
-    const u32 strippedShaderNameLength = spStringLen (strippedShaderName, 0);
+    const u32 strippedShaderNameLength = strlen (strippedShaderName);
 
     // check if shader has been precompiled
     u32 shaderCodePathLength = (
@@ -159,7 +159,8 @@ extern SpiritShader loadSourceShader(
             outputFolderPath,
             &shaderCodePathLength,
             shaderCodePath,
-            SPIRIT_PLATFORM_FOLDER_BREAK);
+            SPIRIT_PLATFORM_FOLDER_BREAK,
+            SPIRIT_TRUE);
         db_assert(catchBuffer == SPIRIT_SUCCESS, "Failed to truncate string");
 
         catchBuffer = spWriteFileFolder (outputFolderPath);

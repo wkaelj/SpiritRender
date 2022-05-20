@@ -16,7 +16,26 @@ int main (int argc, char **argv) {
 
     // mainlooptest ();
 
-    log_info ("Local directory = '%s'", spPlatformGetExecutableFolder ());
+    //log_info ("Local directory = '%s'", spPlatformGetExecutableFolder ());
+
+    char *path = "shaders/vert_shader.vert";
+    u32 length = 31;
+
+    u32 finalLength = 0;
+    spPlatformLocalizeFileName (NULL, path, &finalLength);
+    char finalStr[finalLength];
+    spPlatformLocalizeFileName (finalStr, path, &finalLength);
+
+    if (spWriteFileFolder ("testfolder/folder/hello_world"))
+    {
+        log_debug ("Failed to create file");
+    }
+
+    log_debug("Final String = %s", finalStr);
+
+    return 0;
+
+    //spWriteFileFolder("testfolder");
 
     SpiritShader vert, frag;
     frag = loadSourceShader (
