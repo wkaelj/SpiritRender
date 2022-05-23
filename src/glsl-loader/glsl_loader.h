@@ -5,11 +5,15 @@
 // Supports compiled and uncompiled shaders
 // Automaticaly stores compiled shaders a cache next to the executable
 // 
+// All filepaths that do not start with ./ or / will be relative to the
+// executable file, not the CWD. This is to make finding program files
+// more intuitive.
+// 
 // 
 // Kael Johnston April 25 2022
 
 // file to store cached shaders, relative to the executable
-#define GLSL_LOADER_CACHE_FOLDER "glsl-loader-cache"
+#define GLSL_LOADER_CACHE_FOLDER "glsl-loader-cache/"
 
 // loading functions
 
@@ -30,8 +34,10 @@ extern SpiritShader loadSourceShader (
     SpiritShaderType type);
 
 // compile a shader from glsl source code string
-extern SpiritShader compileShader (
-    const char      *src, 
+extern SpiritShader compileShader(
+    const char      *src,
+    const u32        srcLength,
+    const char      *outputShaderName,
     SpiritShaderType type);
 
 // use functions

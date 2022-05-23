@@ -1,7 +1,7 @@
 include(./.env.cmake OPTIONAL RESULT_VARIABLE LOCAL_ENV)
 message(STATUS "Local .env.cmake: ${LOCAL_ENV}")
 
-cmake_minimum_required(VERSION 3.11.0)
+cmake_minimum_required(VERSION 3.23.0)
 
 set(NAME SpiritRender)
 
@@ -32,57 +32,46 @@ else()
 	message(STATUS "Using vulkan lib at: ${Vulkan_LIBRARIES}")
 endif()
 
-
-## 2. Set GLFW_PATH in .env.cmake to target specific glfw
-if (DEFINED GLFW_PATH)
-  message(STATUS "Using GLFW path specified in .env")
-  set(GLFW_INCLUDE_DIRS "${GLFW_PATH}/include")
-  if (MSVC)
-    set(GLFW_LIB "${GLFW_PATH}/lib-vc2019") # 2.1 Update lib-vc2019 to use same version as your visual studio
-  elseif (CMAKE_GENERATOR STREQUAL "MinGW Makefiles")
-    message(STATUS "USING MINGW")
-    set(GLFW_LIB "${GLFW_PATH}/lib-mingw-w64") # 2.1 make sure matches glfw mingw subdirectory
-  endif()
-else()
-  find_package(glfw3 3.3 REQUIRED)
-  set(GLFW_LIB glfw)
-  message(STATUS "Found GLFW")
-endif()
-if (NOT GLFW_LIB)
-	message(FATAL_ERROR "Could not find glfw library!")
-else()
-	message(STATUS "Using glfw lib at: ${GLFW_LIB}")
-endif()
-
-# If TINYOBJ_PATH not specified in .env.cmake, try fetching from git repo
-if (NOT TINYOBJ_PATH)
-  message(STATUS "TINYOBJ_PATH not specified in .env.cmake, using external/tinyobjloader")
-  set(TINYOBJ_PATH external/tinyobjloader)
-endif()
-
 file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.c)
+
+# libraries
+set(LIBRARY libs)
+
+add_subdirectory(${LIBRARY}/liblist)
+add_subdirectory(${LIBRARY}/glslang)
+add_subdirectory(${LIBRARY}/spirv-tools)
+add_subdirectory(${LIBRARY}/shaderc)
+add_subdirectory(${LIBRARY}/glfw)
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY C_STANDARD 99)
 
-set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/build")
+set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 
 # BUILD TYPE
 set(CMAKE_BUILD_TYPE "Debug")
-add_compile_options(-Wall -Wextra -pedantic -Werror -02 -D_FORTIFY_SOURCE=2 -fsanitize=address)
-set(CMAKE_C_STANDARD "c2x")
+add_compile_options(-Wall -pedantic -Og -D_FORTIFY_SOURCE=2 -fsanitize=address)
+set(CMAKE_C_STANDARD 23)
 
-# libraries
-set(LIBRARY libs)
-target_include_directories(${PROJECT_NAME} PUBLIC
-  src,
-  ${LIBRARY}/liblist,
-  ${LIBRARY}/shaderc/libshaderc/include
-)
+
+
+# set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+# set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+# set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+
+# set(SHADERC_SKIP_INSTALL ON)
+# set(SHADERC_SKIP_TESTS ON)
+# set(SHADERC_SKIP_EXAMPLES ON)
+# set(SHADERC_ENABLE_COPYRIGHT_CHECK OFF)
+
+# set(SPIRV_HEADERS_SKIP_INSTAL OFF)
+# set(SPIRV_HEADERS_SKIP_EXAMPLES ON)
+
 target_link_libraries(${PROJECT_NAME} PUBLIC
-  ${LIBRARY}/liblist,
-  ${LIBRARY}/shaderc
+  shaderc
+  linkedlist
+  glfw
 )
 
 
@@ -101,14 +90,10 @@ if (WIN32)
   target_include_directories(${PROJECT_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}/src
     ${Vulkan_INCLUDE_DIRS}
-    ${TINYOBJ_PATH}
-    ${GLFW_INCLUDE_DIRS}
-    ${GLM_PATH}
     )
 
   target_link_directories(${PROJECT_NAME} PUBLIC
     ${Vulkan_LIBRARIES}
-    ${GLFW_LIB}
   )
 
   target_link_libraries(${PROJECT_NAME} glfw3 vulkan-1)
@@ -116,10 +101,8 @@ elseif (UNIX)
     message(STATUS "CREATING BUILD FOR UNIX")
     target_include_directories(${PROJECT_NAME} PUBLIC
       ${PROJECT_SOURCE_DIR}/src
-      ${TINYOBJ_PATH}
     )
     target_link_libraries(${PROJECT_NAME} PRIVATE
-      glfw,
       ${Vulkan_LIBRARIES})
 endif()
 
@@ -147,7 +130,7 @@ file(GLOB_RECURSE GLSL_SOURCE_FILES
 
 foreach(GLSL ${GLSL_SOURCE_FILES})
   get_filename_component(FILE_NAME ${GLSL} NAME)
-  set(SPIRV "${PROJECT_SOURCE_DIR}/build/Config/shaders/${FILE_NAME}.spv")
+  set(SPIRV "${PROJECT_SOURCE_DIR}/bin/Config/shaders/${FILE_NAME}.spv")
   add_custom_command(
     OUTPUT ${SPIRV}
     COMMAND ${GLSL_VALIDATOR} -V ${GLSL} -o ${SPIRV}

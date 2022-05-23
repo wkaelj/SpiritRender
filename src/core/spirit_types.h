@@ -35,9 +35,9 @@ typedef enum e_SpiritBool {
 } SpiritBool;
 
 typedef enum e_SpiritResult {
-    SPIRIT_SUCCESS = 0,
-    SPIRIT_FAILURE = -1,
-    SPIRIT_UNDEFINED = 1
+    SPIRIT_SUCCESS = 0,  // total success
+    SPIRIT_FAILURE = 1,  // certain failure
+    SPIRIT_UNDEFINED = 2 // did not succeed, may not have failed
 } SpiritResult;
 
 //
@@ -130,7 +130,6 @@ typedef enum t_SpiritShaderType {
 // store a vulkan (.spv) shader
 typedef struct t_SpiritShader {
     SpiritShaderType type;
-    void            *shader;
+    const void      *shader;
     u64              shaderSize;
-    const char      *shaderPath;
 } SpiritShader;
