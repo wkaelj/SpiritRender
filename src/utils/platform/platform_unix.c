@@ -14,7 +14,6 @@ void spPlatformSetExecutableFolder(char *name)
 {
     u32 pathLength = 0;
     spStringTruncate(NULL, &pathLength, name, '/', true); // remove exectuable name from path
-    log_info("Exectuable folder length = %u", pathLength);
     g_executableDirectory = alloc(pathLength + 1);
     spStringTruncate(g_executableDirectory, &pathLength, name, '/', true);
 
@@ -49,15 +48,19 @@ SpiritResult spPlatformLocalizeFileName(char *output, const char *path, u32 *max
         path[0] == '\\' || // win thingy
         path[0] == '.')
     {
-        if (max == 0 || !output)
-            return pathLength;
+        if (*max == 0 || !output)
+        {
+            *max = pathLength;
+            return SPIRIT_SUCCESS;
+        }
         strncpy (output, path, *max);
         for (u32 i = 0; output[i] != '\0'; i++)
         {
             if (output[i] == '\\')
                 output[i] = SPIRIT_PLATFORM_FOLDER_BREAK;
         }
-        return pathLength;
+        *max = pathLength;
+        return SPIRIT_SUCCESS;
     }
 
     // catch cases
@@ -113,15 +116,15 @@ SpiritResult spPlatformCreateFolder (const char *path)
 
     db_assert(path, "Must pass a valid filepath");
     if (!path) return SPIRIT_FAILURE;
-    
+
     const u32 pathLength = strlen (path);
+
     // localize filepath
     u32 localizerLength = 0;
     spPlatformLocalizeFileName(
         NULL,
         path,
         &localizerLength);
-    log_debug("Localizer Length = %d", localizerLength);
     char filepath[localizerLength];
     spPlatformLocalizeFileName(
         filepath,
@@ -129,32 +132,26 @@ SpiritResult spPlatformCreateFolder (const char *path)
         &localizerLength);
 
     if (filepath[localizerLength - 1] == SPIRIT_PLATFORM_FOLDER_BREAK)
-    {
         filepath[localizerLength] = '\0';
-    }
 
-    for (char *p = &filepath[localizerLength]; *p != '\0'; p++)
-    {
+    for (char *p = filepath; *p != '\0'; p++)
         if (*p == SPIRIT_PLATFORM_FOLDER_BREAK)
         {
             *p = '\0';
-            if ((unsigned) mkdir(filepath, S_IRWXU) && errno != EEXIST)
+            if (mkdir(filepath, S_IRWXU) && errno != EEXIST)
             {
-                log_fatal("Error creating file '%d'", errno);
-                abort();
+                log_perror("Error creating file");
+                return SPIRIT_FAILURE;
             }
 
             *p = SPIRIT_PLATFORM_FOLDER_BREAK;
         }
-    }
 
-    if (mkdir(filepath, S_IRWXU))
+    if (mkdir(filepath, S_IRWXU) && errno != EEXIST)
     {
-        log_error ("Failed to create final directory");
+        log_perror("Failed to create file");
         return SPIRIT_FAILURE;
     }
-
-    log_debug("Creating Folder '%s'", filepath);
 
     return SPIRIT_SUCCESS;
 }

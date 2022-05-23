@@ -57,9 +57,10 @@ extern SpiritShader loadSourceShader(
 {
     SpiritShader out = {};
 
-    u32 filepathLength = spPlatformLocalizeFileName(NULL, path, 0);
+    u32 filepathLength = 0;
+    spPlatformLocalizeFileName(NULL, path, &filepathLength);
     char filepath[filepathLength];
-    spPlatformLocalizeFileName(filepath, path, filepathLength);
+    spPlatformLocalizeFileName(filepath, path, &filepathLength);
 
     
     // shader filename, without path
@@ -163,6 +164,7 @@ extern SpiritShader loadSourceShader(
             SPIRIT_TRUE);
         db_assert(catchBuffer == SPIRIT_SUCCESS, "Failed to truncate string");
 
+        log_debug ("Attempting to create cache folder '%s'", outputFolderPath);
         catchBuffer = spWriteFileFolder (outputFolderPath);
         log_debug("Created Folder '%s'", outputFolderPath);
 

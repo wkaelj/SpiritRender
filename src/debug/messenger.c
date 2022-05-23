@@ -8,7 +8,13 @@
 
 
 // debug_log function
-int debug_log (DebugSeverity severity, const char *file, const char *func, const int line, const char *format, ...) {
+int debug_log(
+    DebugSeverity        severity, 
+    const char *restrict file, 
+    const char *restrict func, 
+    const int            line, 
+    const char *restrict format, ...)
+{
 
     static char bufferString1[BUFFER_LENGTH]; // bufferstring preallocated for stack storage
     static char bufferString2[BUFFER_LENGTH_FINAL]; // add extra room for prefix
@@ -28,7 +34,7 @@ int debug_log (DebugSeverity severity, const char *file, const char *func, const
     // print error messege
     vsnprintf (bufferString1, BUFFER_LENGTH, format, args);
 
-    uint16_t strlen = snprintf (
+    uint16_t strlen = npf_snprintf (
         bufferString2,              // output
         BUFFER_LENGTH,              // max length
         ">>> %s:%s->%i\n\t%s%s\n",  // format string
@@ -48,5 +54,46 @@ int debug_log (DebugSeverity severity, const char *file, const char *func, const
     va_end (args);
 
     return 0;
+}
+
+#ifndef __GNUC__
+#warning Function may result in undefined behaivour passing NULL 'm' value
+#endif
+int unix_log_perror(
+    const char *restrict file,
+    const char *restrict func,
+    const char *restrict line,
+    const char *restrict m)
+{
+
+    if (!file || !func || !line) return SPIRIT_FAILURE;
+    // define the prefix
+    const char messegePrefix[] = "\033[1;34m[PERROR]: \033[0m Msg: ";
+    const char messegeSuffix[] = " | Error";
+
+    u32 fileLen = strlen(file);
+    u32 funcLen = strlen(func);
+    u32 lineLen = strlen(line);
+
+    u32 mLen;
+    m && (mLen = strlen (m));
     
+
+    // add 2 chars to make room for newline and tab
+    u32 length = fileLen + funcLen + lineLen + mLen;
+    length += sizeof (messegePrefix);
+    length += sizeof (messegeSuffix);
+    length += 10; // hardcoded number of extra chars in format (eg. ">>>")
+
+    if (m) length += sizeof (messegeSuffix);
+    char prefix[length];
+    npf_snprintf (prefix, length, ">>> %s:%s->%s\n\t%s%s%s",
+        file, func, line,
+        messegePrefix,
+        m,
+        messegeSuffix);
+    
+    perror(prefix);
+
+    return SPIRIT_SUCCESS;
 }
