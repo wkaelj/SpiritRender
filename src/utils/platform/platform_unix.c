@@ -101,14 +101,27 @@ u64 spPlatformTestFileSize(const char *filepath)
 {
     struct stat data;
     if (stat(filepath, &data))
+        log_perror("stat() failed");
         return 0;
 
     return data.st_size;
 }
 
-u64 spPlatformGetUnixTime(void)
+time_t spPlatformGetTime(void)
 {
     return time(NULL);
+}
+
+time_t spPlatformGetFileModifiedDate(const char *restrict filepath)
+{
+
+    struct stat data;
+    if (stat(filepath, &data))
+    {
+        log_perror("stat() failed");
+    }
+
+    return data.st_mtime;
 }
 
 SpiritResult spPlatformCreateFolder (const char *path)

@@ -69,21 +69,20 @@ extern SpiritShader loadSourceShader(
 
     // check if shader has been precompiled
     u32 shaderCodePathLength = (
-        spPlatformGetExecutableFolderStrLen() +
         sizeof (GLSL_LOADER_CACHE_FOLDER) - 1 +
         strippedShaderNameLength +
         4); /* sizeof (".spv") - 1*/
 
     char shaderCodePath[shaderCodePathLength + 1];
-    npf_snprintf(shaderCodePath, shaderCodePathLength + 1, "%s%s%s%s",
-        spPlatformGetExecutableFolder(),
+    npf_snprintf(shaderCodePath, shaderCodePathLength + 1, "%s%s%s",
         GLSL_LOADER_CACHE_FOLDER,
         strippedShaderName,
         ".spv");
 
     log_verbose("Scanning for shader '%s'", shaderCodePath);
 
-    if (spPlatformTestForFile(shaderCodePath))
+    if (spPlatformTestForFile(shaderCodePath) &&
+        spReadFileModifiedTime(shaderCodePath) < spReadFileModifiedTime (filepath))
     {
         log_verbose ("Loading compiled shader '%s'",
             shaderCodePath);

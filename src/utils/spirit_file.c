@@ -83,6 +83,11 @@ SpiritResult spReadFileText(
     return SPIRIT_SUCCESS;
 }
 
+time_t spReadFileModifiedTime(const char *restrict filepath)
+{
+    return spPlatformGetFileModifiedDate(filepath);
+}
+
 SpiritResult spWriteFileBinary(
     const char *path,
     const void *contents,

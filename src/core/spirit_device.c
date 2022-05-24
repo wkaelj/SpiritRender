@@ -409,7 +409,7 @@ static SpiritBool checkValidationLayerSupport (const char *const *requiredLayerN
 
         //iterate through available extensions
         for (u32 x = 0; x < layerCount; x++) {
-            if (strcmp (requiredLayerNames[i], availableLayers[x].layerName) == SPIRIT_TRUE) {
+            if (strcmp (requiredLayerNames[i], availableLayers[x].layerName) == 0) {
                 log_debug("Found layer: %s", availableLayers[x].layerName);
                 found = true;
                 break;
@@ -505,7 +505,7 @@ static SpiritBool checkDeviceExtensionSupport (const SpiritDeviceCreateInfo *cre
     for (u32 i = 0; i < createInfo->requiredDeviceExtensionCount; i++) {
         bool found = false; // if the current extension has been found
         for (uint32_t x = 0; x < availailableExtensionCount; x++) {
-            if (strcmp (createInfo->requiredDeviceExtensions[i], availableExtensionNames[x].extensionName) == SPIRIT_TRUE) {
+            if (strcmp (createInfo->requiredDeviceExtensions[i], availableExtensionNames[x].extensionName) == 0) {
                 log_verbose("Found required device extension '%s'", availableExtensionNames[x].extensionName);
                 found = true;
                 break;

@@ -37,6 +37,10 @@ SpiritResult spReadFileText(
     const char *filepath,
     u64 *restrict length);
 
+// read the last time a file was modified
+// unix time
+time_t spReadFileModifiedTime(const char *restrict filepath);
+
 // ===================================
 //              Writing
 // ===================================

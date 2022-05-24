@@ -14,50 +14,7 @@ int main (int argc, char **argv) {
 
     spPlatformSetExecutableFolder (argv[0]);
 
-    // mainlooptest ();
-
-    SpiritShader vert, frag;
-    frag = loadSourceShader (
-        "shaders/simple_shader.frag", 
-        SPIRIT_SHADER_TYPE_FRAGMENT);
-    vert = loadSourceShader (
-        "shaders/simple_shader.vert",
-        SPIRIT_SHADER_TYPE_VERTEX);
-
-    VkShaderModule shaderModules[2];
-
-    // create window
-    SpiritWindowCreateInfo windowCreateInfo;
-    windowCreateInfo.w = 800;
-    windowCreateInfo.h = 600;
-    windowCreateInfo.title = "Hello Spirit";
-    windowCreateInfo.fullscreen = SPIRIT_FALSE;
-    SpiritWindow window = spCreateWindow(&windowCreateInfo);
-    db_assert(window, "Must have window");
-    
-    // create device
-    SpiritDeviceCreateInfo deviceCreateInfo = {};
-    deviceCreateInfo.enableValidation = SPIRIT_TRUE;
-    deviceCreateInfo.powerSaveMode = SPIRIT_FALSE;
-
-    deviceCreateInfo.appName = "TestApp";
-    deviceCreateInfo.appVersion = VK_MAKE_VERSION(0, 0, 0);
-    deviceCreateInfo.engineName = "Spirit Render";
-    deviceCreateInfo.engineVersion = VK_MAKE_VERSION(0, 0, 0);
-
-    deviceCreateInfo.windowExtensions = spWindowGetExtensions(window);
-    deviceCreateInfo.window = window;
-
-    const char *deviceExtensions[1] = {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-    };
-
-    deviceCreateInfo.requiredDeviceExtensions = deviceExtensions;
-    deviceCreateInfo.requiredDeviceExtensionCount = 1;
-    SpiritDevice device = spCreateDevice(&deviceCreateInfo);
-
-    shaderModules[0] = convertShaderToModule(device, &vert);
-    shaderModules[1] = convertShaderToModule(device, &vert);
+    mainlooptest ();
 
     return 0;
 }

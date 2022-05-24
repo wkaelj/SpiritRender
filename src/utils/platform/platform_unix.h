@@ -29,12 +29,14 @@ u32 spPlatformGetExecutableFolderStrLen (void);
 SpiritResult spPlatformLocalizeFileName (char *output, const char *path, u32* max);
 
 // it is 64 bit because FUTURE PROOF YEAH BABYYYY!
-u64 spPlatformGetUnixTime (void);
+time_t spPlatformGetTime (void);
 
 // test if a file or folder exists, and can be read
 SpiritBool spPlatformTestForFile (const char *filepath);
 
 // return the size of a file, 0 for failure
 u64 spPlatformTestFileSize (const char *filepath);
+
+time_t spPlatformGetFileModifiedDate(const char *restrict filepath);
 
 SpiritResult spPlatformCreateFolder(const char *path);

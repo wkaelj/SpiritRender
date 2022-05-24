@@ -12,6 +12,7 @@
 #include <stdbool.h>
 #include <assert.h>
 #include <string.h>
+#include <time.h>
 
 // vulkan
 #include <vulkan/vulkan.h>
