@@ -16,17 +16,10 @@ it on Arch(Manjaro) Linux.
 
 ## Syntax
 This is the syntax I am using
- 1. funcName() - functions
- 2. func_name() - function macro
- 3. TypeName - typedef struct
- 4. t_TypeName - normal struct
- 5. EnumName - typedef enum
- 6. e_EnumName - normal enum
- 7. CONST_NAME - constant or definition
- 8. Brackets do the thing where you put them under
- ```c
-void funcName(void)
-{
- // stuffs
-}
-```
+ funcName () - functions
+ func_name() - function macro
+ TypeName - typedef struct
+ t_TypeName - normal struct
+ EnumName - typedef enum
+ e_EnumName - normal enum
+ CONST_NAME - constant or definition
