@@ -15,6 +15,11 @@
 *.vscode
 vscode*
 *.code-workspace
+.cache
+vgcore*
+
+compile_commands.json
+.clangd
 
 #project
 build

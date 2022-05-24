@@ -10,56 +10,81 @@
 //              Reading
 // ===================================
 
-// return the size of a file
-// using the stat function
-// returns 0 on failure
+/**
+ * @brief Read the size of a file
+ * 
+ * @param filepath the path to the file
+ * @return u64 will be 0 for failure or if the file does not exist
+ */
 u64 spReadFileSize(const char *filepath);
 
-// test if a file exits
-// returns size of file, 0 if it does not exist
-SpiritBool spReadFileExists(const char *filepath);
+/**
+ * @brief Test if a file exists. This function has no performance benefit
+ * compared to spReadFileSize
+ * 
+ * @param filepath 
+ * @return true the file exists
+ * @return false the file does not exist
+ */
+bool spReadFileExists(const char *filepath);
 
-// read a binary file
-// if dest it null it will only do size
-// if size is non 0 it will read a maximum of size bytes
-// if dest is null it does not matter if size is non 0
+/**
+ * @brief Read a file into the memory of dest, with a maximum size of size.
+ * If the file is larger then size, it will be truncated at size. You can check the
+ * size of the file using the spReadFileSize function.
+ * 
+ * @param dest the file will be read into this pointer, with no alignment.
+ * @param filepath the file to read
+ * @param size the maximum number of bytes to read.
+ * @return SpiritResult 
+ */
 SpiritResult spReadFileBinary(
-    void          *dest,
-    const char    *filepath,
-    u64 *restrict  size);
+    void       *restrict dest,
+    const char *restrict filepath,
+    const u64   size);
 
-// read a text file into a string
-// if dest is null it will only read size
-// if size is non 0 it will read a maximum of size
-// if dest is null it does not matter if size is non 0
+/**
+ * @brief Read the contents of a text file into the string pointed to by dest.
+ * 
+ * @param dest the file will be written here
+ * @param path the file to read
+ * @param length the mamixmum length of the string (including terminator)
+ * @return SpiritResult 
+ */
 SpiritResult spReadFileText(
-    char *dest,
-    const char *filepath,
-    u64 *restrict length);
+    char *restrict dest,
+    const char *restrict path,
+    const u64 length);
 
-// read the last time a file was modified
-// unix time
-time_t spReadFileModifiedTime(const char *restrict filepath);
+/**
+ * @brief get the last time a file was modified
+ * 
+ * @param filepath 
+ * @return time_t 
+ */
+time_t spReadFileModifiedTime(const char *filepath);
 
 // ===================================
 //              Writing
 // ===================================
 
-// Write data to a file
-// will create the file if it does not exist,
-// and will overwrite the file if it already exists
-// 
-// path - Path the the new file
-// contents - the data to write to the file
-// size - the size of contents in bytes
+/**
+ * @brief Write the contents of a pointer to a file.
+ * 
+ * @param path the file path
+ * @param contents the data to write
+ * @param size the amount of data to write
+ * @return SpiritResult 
+ */
 SpiritResult spWriteFileBinary(
-    const char *path, 
-    const void *contents,
+    const char *restrict path, 
+    const void *restrict contents,
     const u32   size);
 
-// creates a file and all parent files, if they do not exist
-// it will treat directories not starting with '.' or '/' relative
-// to the exectuable location
-// it will always be a FOLDER! adding .txt will just make folder.txt
-// it will not make a text doc
+/**
+ * @brief Create a folder with the name path. It is recursive.
+ * 
+ * @param path the folder to create
+ * @return SpiritResult 
+ */
 SpiritResult spWriteFileFolder (const char *path);

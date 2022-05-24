@@ -1,4 +1,7 @@
 #include "spirit_device.h"
+#include "core/spirit_types.h"
+#include "debug/messenger.h"
+#include <sys/cdefs.h>
 
 // Create and manage a rendering device rendering device
 //
@@ -17,11 +20,11 @@
 
 // structure to aid in queue family selection
 typedef struct t_QueueFamilyIndices {
-    
+
     u32 graphicsQueue;
-    SpiritBool foundGraphicsQueue;
+    bool foundGraphicsQueue;
     u32 presentQueue;
-    SpiritBool foundPresentQueue;
+    bool foundPresentQueue;
 } QueueFamilyIndices;
 
 // structure to manage rendering device candidates
@@ -35,30 +38,50 @@ typedef struct {
 //
 
 // create a vulkan instance
-static SpiritBool checkValidationLayerSupport (const char *const *requiredLayerNames, u32 requiredLayerCount);
-static VkInstance createInstance (const SpiritDeviceCreateInfo *createInfo, VkDebugUtilsMessengerEXT *debugMessenger); // create a vulkan device
-static VkPhysicalDevice selectPhysicalDevice (const SpiritDeviceCreateInfo *createInfo, const VkInstance instance); // select a gpu
-static VkDevice createDevice (const SpiritDeviceCreateInfo *createInfo, const VkPhysicalDevice physicalDevice, const VkInstance instance);
+static bool checkValidationLayerSupport (
+    const char *const *requiredLayerNames,
+    u32 requiredLayerCount);
+
+static VkInstance createInstance (
+    const SpiritDeviceCreateInfo *createInfo,
+    VkDebugUtilsMessengerEXT *debugMessenger); // create a vulkan device
+
+static VkPhysicalDevice selectPhysicalDevice (
+    const SpiritDeviceCreateInfo *createInfo,
+    const VkInstance instance); // select a gpu
+
+static VkDevice createDevice (
+    const SpiritDeviceCreateInfo *createInfo,
+    const VkPhysicalDevice physicalDevice);
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback (
     VkDebugUtilsMessageSeverityFlagBitsEXT           messageSeverity,
     VkDebugUtilsMessageTypeFlagsEXT                  messageTypes,
-    const VkDebugUtilsMessengerCallbackDataEXT*      pCallbackData,
+    VkDebugUtilsMessengerCallbackDataEXT*      pCallbackData,
     void*                                            pUserData);
 
 
 // find required device queues
-static QueueFamilyIndices findDeviceQueues (const SpiritDeviceCreateInfo *createInfo, VkPhysicalDevice questionedDevice);
-static SpiritSwapchainSupportInfo querySwapChainSupport (const SpiritDeviceCreateInfo *createInfo, VkPhysicalDevice questionedDevice);
+static QueueFamilyIndices findDeviceQueues (
+    const SpiritDeviceCreateInfo *createInfo,
+    VkPhysicalDevice questionedDevice);
+static SpiritSwapchainSupportInfo querySwapChainSupport (
+    const VkSurfaceKHR surface,
+    VkPhysicalDevice questionedDevice);
+
+static VkCommandPool createCommandPool(
+    VkDevice device,
+    QueueFamilyIndices queueFamilies);
 
 //
 // Public Functions
 //
 
-SpiritDevice spCreateDevice (SpiritDeviceCreateInfo *createInfo) {
+SpiritDevice spCreateDevice(SpiritDeviceCreateInfo *createInfo)
+{
 
     // asserts
-    db_assert(createInfo->window, "Must have window to create instance");
+    db_assert_msg(createInfo->window, "Must have window to create instance");
 
 
     SpiritDevice out = new_var(struct t_SpiritDevice);
@@ -66,11 +89,13 @@ SpiritDevice spCreateDevice (SpiritDeviceCreateInfo *createInfo) {
     out->deviceExtensionCount = createInfo->windowExtensions.count;
     out->deviceExtensions = createInfo->windowExtensions.names;
 
+
     // validation layers
 
     // default validation layers
-    if (createInfo->enableValidation && createInfo->requiredValidationLayerCount == 0) {
-        const char *backupLayer = "VK_LAYER_KHRONOS_validation";
+    const char *backupLayer = "VK_LAYER_KHRONOS_validation";
+    if (createInfo->enableValidation && createInfo->requiredValidationLayerCount == 0)
+    {
         createInfo->requiredValidationLayers = &backupLayer;
         createInfo->requiredValidationLayerCount = 1;
     }
@@ -78,16 +103,18 @@ SpiritDevice spCreateDevice (SpiritDeviceCreateInfo *createInfo) {
     // if they are not available
     if (createInfo->enableValidation &&
     !checkValidationLayerSupport(
-        createInfo->requiredValidationLayers, 
-        createInfo->requiredValidationLayerCount)) {
-        
+        createInfo->requiredValidationLayers,
+        createInfo->requiredValidationLayerCount))
+    {
+
         // disable validation
-        createInfo->enableValidation = SPIRIT_FALSE;
+        createInfo->enableValidation = false;
         log_validation ("Automatically disabling validation, because it is not supported by the GPU");
     }
 
     // fallback device extensions
-    if (createInfo->requiredDeviceExtensionCount == 0) {
+    if (createInfo->requiredDeviceExtensionCount == 0)
+    {
         const char *requiredDeviceExtensions[1] = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
         createInfo->requiredDeviceExtensionCount = 1;
         createInfo->requiredDeviceExtensions = requiredDeviceExtensions;
@@ -96,23 +123,29 @@ SpiritDevice spCreateDevice (SpiritDeviceCreateInfo *createInfo) {
     out->validationEnabled = createInfo->enableValidation;
 
     out->instance = createInstance(createInfo, &out->debugMessenger); // create vulkan instance
-    if (out->instance == SPIRIT_NULL) {
+    if (out->instance == NULL)
+    {
         log_fatal("Failed to create vulkan instance");
-        return SPIRIT_NULL;
-    }
-    out->windowSurface = spWindowGetSurface(createInfo->window, out->instance); // create window surface
-    createInfo->windowSurface = out->windowSurface;
-    out->physicalDevice = selectPhysicalDevice(createInfo, out->instance); // select physical device
-    if (out->physicalDevice == SPIRIT_NULL) {
-        log_fatal("Failed to select GPU");
-        return SPIRIT_NULL;
+        return NULL;
     }
 
-    out->swapchainDetails = querySwapChainSupport(createInfo, out->physicalDevice);
-    out->device = createDevice(createInfo, out->physicalDevice, out->instance);
-    if (out->device == SPIRIT_NULL) {
+    // get the window surface
+    out->windowSurface = spWindowGetSurface(createInfo->window, out->instance); // create window surface
+    createInfo->windowSurface = out->windowSurface;
+
+    out->physicalDevice = selectPhysicalDevice(createInfo, out->instance); // select physical device
+    if (out->physicalDevice == NULL)
+    {
+        log_fatal("Failed to select GPU");
+        return NULL;
+    }
+    out->swapchainDetails = (SpiritSwapchainSupportInfo) {};
+    spDeviceUpdateSwapchainSupport(out);
+    out->device = createDevice(createInfo, out->physicalDevice);
+    if (out->device == NULL)
+    {
         log_fatal("Failed to create logical device");
-        return SPIRIT_NULL;
+        return NULL;
     }
 
     QueueFamilyIndices indices = findDeviceQueues (createInfo, out->physicalDevice);
@@ -122,27 +155,210 @@ SpiritDevice spCreateDevice (SpiritDeviceCreateInfo *createInfo) {
     vkGetDeviceQueue (out->device, indices.graphicsQueue, 0, &out->graphicsQueue); // create graphics queue
     vkGetDeviceQueue (out->device, indices.presentQueue, 0, &out->presentQueue); // create present queue
 
+    // command pool
+    out->commandPool = createCommandPool(out->device, indices);
+
     return out;
 }
 
+// find the format supported by the device
+VkFormat spDeviceFindSupportedFormat(
+    const SpiritDevice device,
+    const VkFormat *candidates,
+    const u32 candidateCount,
+    const VkImageTiling tiling,
+    const VkFormatFeatureFlags features)
+{
+
+    for (u32 i = 0; i < candidateCount; i++) {
+        VkFormatProperties props;
+        vkGetPhysicalDeviceFormatProperties(
+        device->physicalDevice, candidates[i], &props);
+        if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
+            return candidates[i];
+        } else if (
+            tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features) {
+            return candidates[i];
+        }
+    }
+
+    log_error("Could not find supported format");
+    return VK_FORMAT_UNDEFINED;
+}
+
+u32 spDeviceFindMemoryType(
+    const SpiritDevice device,
+    const u32 typeFilter,
+    VkMemoryPropertyFlags properties)
+{
+    VkPhysicalDeviceMemoryProperties memProperties;
+    vkGetPhysicalDeviceMemoryProperties(device->physicalDevice, &memProperties);
+    for (u32 i = 0; i < memProperties.memoryTypeCount; i++)
+    {
+        if ((typeFilter & (1 << i)) &&
+            (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
+        {
+            return i;
+        }
+    }
+    log_fatal("Could not find memory typpe");
+    abort();
+    return -1;
+}
+
+SpiritResult spDeviceAllocateMemory(
+    const SpiritDevice device,
+    const size_t size,
+    const u32 memoryType,
+    VkDeviceMemory *memory)
+{
+    VkMemoryAllocateInfo allocationInfo = {
+        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        .allocationSize = size,
+        .memoryTypeIndex = memoryType
+    };
+
+    if (vkAllocateMemory(
+        device->device,
+        &allocationInfo,
+        ALLOCATION_CALLBACK,
+        memory))
+    {
+        log_error("Failed to allocate memory");
+        *memory = VK_NULL_HANDLE;
+        return SPIRIT_FAILURE;
+    }
+
+    return SPIRIT_SUCCESS;
+}
+
+SpiritResult spDeviceUpdateSwapchainSupport(const SpiritDevice device)
+{
+    if (device->swapchainDetails.presentModes)
+        free(device->swapchainDetails.presentModes);
+    if (device->swapchainDetails.formats)
+        free(device->swapchainDetails.formats);
+
+    device->swapchainDetails = querySwapChainSupport(
+        device->windowSurface,
+        device->physicalDevice);
+
+    return SPIRIT_SUCCESS;
+}
+
+SpiritResult spDeviceCreateImage(
+    const SpiritDevice device,
+    const VkImageCreateInfo *imageInfo,
+    VkMemoryPropertyFlags memoryFlags,
+    VkImage *image,
+    VkDeviceMemory *imageMemory)
+{
+    if(vkCreateImage(device->device, imageInfo, NULL, image))
+        return SPIRIT_FAILURE;
+
+    VkMemoryRequirements memoryRequirements = {};
+    vkGetImageMemoryRequirements(device->device, *image, &memoryRequirements);
+
+    VkMemoryAllocateInfo allocInfo = {};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memoryRequirements.size;
+    allocInfo.memoryTypeIndex = spDeviceFindMemoryType(
+        device,
+        memoryRequirements.memoryTypeBits,
+        memoryFlags);
+
+    if (vkAllocateMemory(device->device, &allocInfo, NULL, imageMemory) != VK_SUCCESS)
+    {
+        return SPIRIT_FAILURE;
+    }
+
+    if (vkBindImageMemory(device->device, *image, *imageMemory, 0) != VK_SUCCESS)
+    {
+        return SPIRIT_FAILURE;
+    }
+
+    return SPIRIT_SUCCESS;
+}
+
+SpiritResult spDeviceCreateBuffer(
+    SpiritDevice          device,
+    VkDeviceSize          size,
+    VkBufferUsageFlags    usage,
+    VkMemoryPropertyFlags properties __attribute_maybe_unused__,
+    VkBuffer             *buffer,
+    VkDeviceMemory       *bufferMemory)
+{
+    VkBufferCreateInfo bufferInfo = {};
+    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferInfo.size = size;
+    bufferInfo.usage = usage;
+    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    if (vkCreateBuffer(device->device, &bufferInfo, NULL, buffer) != VK_SUCCESS)
+    {
+        return SPIRIT_FAILURE;
+    }
+
+    VkMemoryRequirements req;
+    vkGetBufferMemoryRequirements(device->device, *buffer, &req);
+
+    u32 memType = spDeviceFindMemoryType(device, req.memoryTypeBits,  properties);
+
+    if (spDeviceAllocateMemory(device, req.size, memType, bufferMemory))
+    {
+        vkDestroyBuffer(device->device, *buffer, ALLOCATION_CALLBACK);
+        return SPIRIT_FAILURE;
+    }
+
+    if (vkBindBufferMemory(device->device, *buffer, *bufferMemory, 0))
+    {
+        spDeviceFreeMemory(device, *bufferMemory);
+        vkDestroyBuffer(device->device, *buffer, ALLOCATION_CALLBACK);
+        return SPIRIT_FAILURE;
+    }
+
+    return SPIRIT_SUCCESS;
+}
+
 // destroy a spirit device and free all memory whatever
-SpiritResult spDestroyDevice (SpiritDevice device) {
+SpiritResult spDestroyDevice (SpiritDevice device)
+{
 
-    vkDestroyDevice(device->device, SPIRIT_NULL);
+    vkDestroyCommandPool(device->device, device->commandPool, ALLOCATION_CALLBACK);
+    vkDestroyDevice(device->device, ALLOCATION_CALLBACK);
 
-    vkDestroySurfaceKHR(device->instance, device->windowSurface, SPIRIT_NULL);
+    vkDestroySurfaceKHR(device->instance, device->windowSurface, NULL);
 
     // debug messenger
-    if (device->validationEnabled) {
-        PFN_vkDestroyDebugUtilsMessengerEXT pfnDebugMessengerDestroy = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(device->instance, "vkDestroyDebugUtilsMessengerEXT");
-        if (pfnDebugMessengerDestroy == SPIRIT_NULL) log_error("Failed to load debug messenger destroy function");
-        else pfnDebugMessengerDestroy (device->instance, device->debugMessenger, SPIRIT_NULL);
-        log_debug("Destroyed debug messenger");
-    }
-    device->debugMessenger = SPIRIT_NULL;
+    if (device->validationEnabled)
+    {
 
-    vkDestroyInstance(device->instance, SPIRIT_NULL);
-    dalloc(device);
+        // load destroy function
+        PFN_vkDestroyDebugUtilsMessengerEXT pfnDebugMessengerDestroy =
+        (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(
+            device->instance,
+            "vkDestroyDebugUtilsMessengerEXT");
+
+        // if it fails
+        if (pfnDebugMessengerDestroy == NULL)
+            log_warning("Failed to load debug messenger destroy function");
+        else
+        {
+            pfnDebugMessengerDestroy(
+                device->instance,
+                device->debugMessenger,
+                ALLOCATION_CALLBACK);
+
+        }
+    }
+    device->debugMessenger = NULL;
+
+    vkDestroyInstance(device->instance, ALLOCATION_CALLBACK);
+
+    free(device->swapchainDetails.formats);
+    free(device->swapchainDetails.presentModes);
+
+    free(device);
 
     return SPIRIT_SUCCESS;
 }
@@ -155,7 +371,7 @@ SpiritResult spDestroyDevice (SpiritDevice device) {
 static u16 isDeviceSuitable (const SpiritDeviceCreateInfo *createInfo, VkPhysicalDevice questionedDevice);
 
 // check available GPU extensions
-static SpiritBool checkDeviceExtensionSupport (const SpiritDeviceCreateInfo *createInfo, VkPhysicalDevice questionedDevice);
+static bool checkDeviceExtensionSupport (const SpiritDeviceCreateInfo *createInfo, VkPhysicalDevice questionedDevice);
 
 
 
@@ -163,9 +379,9 @@ static SpiritBool checkDeviceExtensionSupport (const SpiritDeviceCreateInfo *cre
 // Helper Implementation
 //
 
-static VkInstance createInstance (const SpiritDeviceCreateInfo *createInfo, VkDebugUtilsMessengerEXT *debugMessenger) {
-
-
+static VkInstance createInstance (
+    const SpiritDeviceCreateInfo *createInfo,
+    VkDebugUtilsMessengerEXT *debugMessenger) {
 
     VkApplicationInfo appInfo = {};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -183,7 +399,7 @@ static VkInstance createInstance (const SpiritDeviceCreateInfo *createInfo, VkDe
     // extensions
     u32 extensionCount = createInfo->windowExtensions.count;
     if (createInfo->enableValidation) extensionCount += 1; // if using validation, make room for valiation extensions
-    const char **extensions = new_array(const char*, extensionCount);
+    const char *extensions[extensionCount];
     for (u32 i = 0; i < createInfo->windowExtensions.count && i < extensionCount; i++) {
         extensions[i] = createInfo->windowExtensions.names[i];
     }
@@ -193,13 +409,13 @@ static VkInstance createInstance (const SpiritDeviceCreateInfo *createInfo, VkDe
 
     // validation layers
     VkDebugUtilsMessengerCreateInfoEXT debugInfo = {}; // messenger create info
-    const char *const *validationLayers = SPIRIT_NULL;
+    const char *const *validationLayers = NULL;
     instanceInfo.enabledLayerCount = 0;
     if (createInfo->enableValidation) {
         log_verbose("Enabling Validation");
 
         // allocate memory for the debugmessenger if it is NULL
-        db_assert(debugMessenger, "debugMessenger was NULL, it should be a \
+        db_assert_msg(debugMessenger, "debugMessenger was NULL, it should be a \
             reference to the &SpiritDevice.debugMessenger variable");
         // layer names and whatnot
         instanceInfo.enabledLayerCount = createInfo->requiredValidationLayerCount;
@@ -208,39 +424,51 @@ static VkInstance createInstance (const SpiritDeviceCreateInfo *createInfo, VkDe
         instanceInfo.ppEnabledLayerNames = validationLayers;
 
         // debug messenger
-        debugInfo.sType = 
+        debugInfo.sType =
             VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-        debugInfo.messageSeverity =             
+        debugInfo.messageSeverity =
             VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
-            VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | 
+            VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
             VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-        debugInfo.messageType = 
-            VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | 
-            VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | 
+        debugInfo.messageType =
+            VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+            VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
             VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-        debugInfo.pfnUserCallback = debugCallback;
+        debugInfo.pfnUserCallback = (PFN_vkDebugUtilsMessengerCallbackEXT)
+            debugCallback;
 
         instanceInfo.pNext = &debugInfo;
 
     } else {
         instanceInfo.enabledLayerCount = 0;
-        instanceInfo.ppEnabledLayerNames = SPIRIT_NULL;
+        instanceInfo.ppEnabledLayerNames = NULL;
     }
 
     VkInstance instance;
 
-    if (vkCreateInstance(&instanceInfo, SPIRIT_NULL, &instance) != VK_SUCCESS) {
-        return SPIRIT_NULL;
+    if (vkCreateInstance(&instanceInfo, NULL, &instance) != VK_SUCCESS) {
+        return NULL;
     }
 
     if (createInfo->enableValidation) {
-        PFN_vkCreateDebugUtilsMessengerEXT pfnCreateDebugMesseger = SPIRIT_NULL;
-        pfnCreateDebugMesseger = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
+        PFN_vkCreateDebugUtilsMessengerEXT pfnCreateDebugMesseger = NULL;
+        pfnCreateDebugMesseger = (PFN_vkCreateDebugUtilsMessengerEXT)
+            vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
 
-        if (pfnCreateDebugMesseger == SPIRIT_NULL) log_error("Failed to load function vkCreateDebugUtilsMessengerEXT. Will log errors to stdout.");
-        else {
-            if (pfnCreateDebugMesseger (instance, &debugInfo, SPIRIT_NULL, debugMessenger) != VK_SUCCESS) log_error("Failed to create debug messenger");
-            *debugMessenger = NULL;
+        if (pfnCreateDebugMesseger == NULL)
+            log_error("Failed to load function "
+                "vkCreateDebugUtilsMessengerEXT. Will log errors to stdout.");
+        else
+        {
+            if (pfnCreateDebugMesseger(
+                instance,
+                &debugInfo,
+                NULL,
+                debugMessenger) != VK_SUCCESS)
+            {
+                log_error("Failed to create debug messenger");
+                *debugMessenger = NULL;
+            }
         }
     }
 
@@ -249,28 +477,27 @@ static VkInstance createInstance (const SpiritDeviceCreateInfo *createInfo, VkDe
 
 }
 
-static VkPhysicalDevice selectPhysicalDevice (const SpiritDeviceCreateInfo *createInfo, const VkInstance instance) {
-
-    // set device to null so i can mess with it
-    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+static VkPhysicalDevice selectPhysicalDevice (
+    const SpiritDeviceCreateInfo *createInfo,
+    const VkInstance instance) {
 
     // check available rendering devices
-    uint32_t availableDeviceCount = 0;
+    u32 availableDeviceCount = 0;
     vkEnumeratePhysicalDevices (instance, &availableDeviceCount, NULL);
     //throw error if there are no devices
     if (availableDeviceCount == 0) {
         log_fatal("No GPU detected.");
-        return SPIRIT_NULL;
+        return NULL;
     }
 
     VkPhysicalDevice availableDevices[availableDeviceCount];
     vkEnumeratePhysicalDevices (instance, &availableDeviceCount, availableDevices);
 
-    uint32_t suitableDeviceCount = 0;
+    u32 suitableDeviceCount = 0;
     SuitableDevice suitableDevices[availableDeviceCount];
 
     uint16_t tmpDeviceOutput = 0; // used to store function output in for loop
-    for (uint32_t i = 0; i < availableDeviceCount; i++) {
+    for (u32 i = 0; i < availableDeviceCount; i++) {
         tmpDeviceOutput = isDeviceSuitable (createInfo, availableDevices[i]);
         if (tmpDeviceOutput > 0) {
             suitableDevices[suitableDeviceCount].physicalDevice = availableDevices[i];
@@ -310,7 +537,10 @@ static VkPhysicalDevice selectPhysicalDevice (const SpiritDeviceCreateInfo *crea
 
 }
 
-static VkDevice createDevice (const SpiritDeviceCreateInfo *createInfo, const VkPhysicalDevice physicalDevice, const VkInstance instance) {
+static VkDevice createDevice (
+    const SpiritDeviceCreateInfo *createInfo,
+    const VkPhysicalDevice physicalDevice)
+{
 
     QueueFamilyIndices indices = findDeviceQueues (createInfo, physicalDevice);
 
@@ -320,20 +550,22 @@ static VkDevice createDevice (const SpiritDeviceCreateInfo *createInfo, const Vk
     u32 queueFamilies[QUEUE_COUNT] = QUEUE_NAMES(indices);
     VkDeviceQueueCreateInfo queueCreateInfos[queueCount];
     u32 addedQueues[QUEUE_COUNT];
-    u32 skippedQueueCount = 0;    
-    for (u32 i = 0; i < queueCount; i++) {
+    u32 skippedQueueCount = 0;
+    for (u32 i = 0; i < queueCount; i++)
+    {
         bool isDuplicateQueue = false;
         // avoid adding duplicate queues
         // the < i is to ensure that we don't check indexes of
         // addedQueues that have not been set yet (false positives with 0)
-        for (u32 n = 0; n < queueCount && n < i; n++) {
-            if (queueFamilies[i] == addedQueues[n]) {
+        for (u32 n = 0; n < queueCount && n < i; n++)
+        {
+            if (queueFamilies[i] == addedQueues[n])
+            {
                 isDuplicateQueue = true;
             }
         }
-        if (isDuplicateQueue) {
-            log_verbose("Skipping duplicate queue index: %u",
-                queueFamilies[i]);
+        if (isDuplicateQueue)
+        {
             skippedQueueCount++;
             continue;
         }
@@ -367,24 +599,48 @@ static VkDevice createDevice (const SpiritDeviceCreateInfo *createInfo, const Vk
 
     VkDevice device;
     VkResult errCode;
-    if (errCode = vkCreateDevice (physicalDevice, &deviceCreateInfo, NULL, &device) != VK_SUCCESS) {
+    if ((errCode = vkCreateDevice (physicalDevice, &deviceCreateInfo, NULL, &device)))
+    {
         // debug function
         log_info("Device failure code '%d'", errCode);
-        return SPIRIT_NULL;
+        return NULL;
     }
 
     log_verbose("Created logical device");
     return device;
 }
 
+static VkCommandPool createCommandPool(
+    VkDevice device,
+    QueueFamilyIndices queueFamilies)
+{
+
+    VkCommandPoolCreateInfo poolInfo = {};
+    poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    poolInfo.queueFamilyIndex = queueFamilies.graphicsQueue;
+    poolInfo.flags =
+        VK_COMMAND_POOL_CREATE_TRANSIENT_BIT |
+        VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+
+    VkCommandPool commandPool = VK_NULL_HANDLE;
+    if (vkCreateCommandPool(
+        device,
+        &poolInfo, NULL,
+        &commandPool) != VK_SUCCESS) {
+        log_error("Failed to create command pool");
+    }
+
+    return commandPool;
+}
+
 // debug callback function
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback (
-    VkDebugUtilsMessageSeverityFlagBitsEXT           messageSeverity,
-    VkDebugUtilsMessageTypeFlagsEXT                  messageTypes,
-    const VkDebugUtilsMessengerCallbackDataEXT      *pCallbackData,
-    void                                            *pUserData) {
-    
-    if (messageSeverity > VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+    VkDebugUtilsMessageTypeFlagsEXT messageTypes __attribute_maybe_unused__,
+    VkDebugUtilsMessengerCallbackDataEXT *pCallbackData __attribute_maybe_unused__,
+    void *pUserData __attribute_maybe_unused__) {
+
+    if (messageSeverity > VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
         log_validation("%s", pCallbackData->pMessage);
         return true;
     } else return false;
@@ -395,7 +651,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback (
 //
 
 // instance
-static SpiritBool checkValidationLayerSupport (const char *const *requiredLayerNames, u32 requiredLayerCount) {
+static bool checkValidationLayerSupport (const char *const *requiredLayerNames, u32 requiredLayerCount) {
 
     u32 layerCount;
     vkEnumerateInstanceLayerProperties(&layerCount, NULL);
@@ -407,22 +663,24 @@ static SpiritBool checkValidationLayerSupport (const char *const *requiredLayerN
     {
         bool found = false;
 
-        //iterate through available extensions
-        for (u32 x = 0; x < layerCount; x++) {
-            if (strcmp (requiredLayerNames[i], availableLayers[x].layerName) == 0) {
-                log_debug("Found layer: %s", availableLayers[x].layerName);
+        // iterate through available extensions
+        for (u32 x = 0; x < layerCount; x++)
+        {
+            if (strncmp(requiredLayerNames[i], availableLayers[x].layerName, 256) == 0)
+            {
                 found = true;
                 break;
             }
         }
 
-        if (found == false) {
-            log_debug("Unavailable valiation layer: %s", requiredLayerNames[i]);
-            return SPIRIT_FALSE;
+        if (found == false)
+        {
+            log_warning("Unavailable valiation layer: %s", requiredLayerNames[i]);
+            return false;
         }
     }
 
-    return SPIRIT_TRUE;
+    return true;
 }
 
 // Physical device
@@ -436,7 +694,7 @@ static u16 isDeviceSuitable (const SpiritDeviceCreateInfo *createInfo, VkPhysica
 
     VkPhysicalDeviceFeatures deviceFeatures;
     vkGetPhysicalDeviceFeatures (questionedDevice, &deviceFeatures);
-    
+
     uint16_t score = 0; // the device priority when selecting in future
 
     // requirment bools
@@ -445,7 +703,7 @@ static u16 isDeviceSuitable (const SpiritDeviceCreateInfo *createInfo, VkPhysica
     bool supportsSwapchain = false; // if device supports adequate swapchain functionality
 
     // check if device supports required extensions
-    if (checkDeviceExtensionSupport (createInfo, questionedDevice) == SPIRIT_TRUE) { hasExtensionSupport = true; }
+    if (checkDeviceExtensionSupport (createInfo, questionedDevice) == true) { hasExtensionSupport = true; }
 
     // check if device support graphics queue and presentation support
     QueueFamilyIndices deviceQueue = {};
@@ -453,8 +711,13 @@ static u16 isDeviceSuitable (const SpiritDeviceCreateInfo *createInfo, VkPhysica
     if ( deviceQueue.foundGraphicsQueue && deviceQueue.foundPresentQueue) { supportsQueues = true; }
 
     // check if device has swapchain support
-    SpiritSwapchainSupportInfo swapchainDetails = querySwapChainSupport (createInfo, questionedDevice);
+    SpiritSwapchainSupportInfo swapchainDetails = querySwapChainSupport(
+        createInfo->windowSurface,
+        questionedDevice);
     supportsSwapchain = swapchainDetails.formatCount > 0 && swapchainDetails.presentModeCount > 0;
+
+    free(swapchainDetails.formats);
+    free(swapchainDetails.presentModes);
 
 
     // DEBUG
@@ -495,7 +758,7 @@ static u16 isDeviceSuitable (const SpiritDeviceCreateInfo *createInfo, VkPhysica
 }
 
 // function to check if a physical device supports swapchain
-static SpiritBool checkDeviceExtensionSupport (const SpiritDeviceCreateInfo *createInfo, VkPhysicalDevice questionedDevice) {
+static bool checkDeviceExtensionSupport (const SpiritDeviceCreateInfo *createInfo, VkPhysicalDevice questionedDevice) {
 
     u32 availailableExtensionCount = 0;
     vkEnumerateDeviceExtensionProperties (questionedDevice, NULL, &availailableExtensionCount, NULL);
@@ -504,9 +767,8 @@ static SpiritBool checkDeviceExtensionSupport (const SpiritDeviceCreateInfo *cre
     // highly efficient iterator (two means twice the speed)
     for (u32 i = 0; i < createInfo->requiredDeviceExtensionCount; i++) {
         bool found = false; // if the current extension has been found
-        for (uint32_t x = 0; x < availailableExtensionCount; x++) {
+        for (u32 x = 0; x < availailableExtensionCount; x++) {
             if (strcmp (createInfo->requiredDeviceExtensions[i], availableExtensionNames[x].extensionName) == 0) {
-                log_verbose("Found required device extension '%s'", availableExtensionNames[x].extensionName);
                 found = true;
                 break;
             }
@@ -514,11 +776,11 @@ static SpiritBool checkDeviceExtensionSupport (const SpiritDeviceCreateInfo *cre
         // "handle" missing layer
         if (!found) {
             log_fatal("GPU does not support required extension: %s", createInfo->requiredDeviceExtensions[i]);
-            return SPIRIT_FALSE;
+            return false;
         }
     }
 
-    return SPIRIT_TRUE;
+    return true;
 }
 
 // helper function to access required device queues
@@ -527,14 +789,14 @@ static QueueFamilyIndices findDeviceQueues (const SpiritDeviceCreateInfo *create
     QueueFamilyIndices indices = {};
 
     // get device queue properties
-    uint32_t queueFamilyCount = 0;
+    u32 queueFamilyCount = 0;
     vkGetPhysicalDeviceQueueFamilyProperties (questionedDevice, &queueFamilyCount, NULL);
     VkQueueFamilyProperties deviceQueueProperties[queueFamilyCount];
     vkGetPhysicalDeviceQueueFamilyProperties (questionedDevice, &queueFamilyCount, deviceQueueProperties);
 
     // check for desired queue
     VkBool32 presentationSupport = false;
-    for (uint32_t i = 0; i < queueFamilyCount; i++) {
+    for (u32 i = 0; i < queueFamilyCount; i++) {
 
         // check for graphics queue support if not already found
         if (!indices.foundGraphicsQueue) {
@@ -549,7 +811,7 @@ static QueueFamilyIndices findDeviceQueues (const SpiritDeviceCreateInfo *create
         if (!indices.foundPresentQueue) {
             if (vkGetPhysicalDeviceSurfaceSupportKHR (questionedDevice, i, createInfo->windowSurface, &presentationSupport) != VK_SUCCESS)
                 log_info("Failed find presentation support!");
-            
+
             if (presentationSupport) {
                 assert (presentationSupport);
                 indices.foundPresentQueue = presentationSupport;
@@ -567,34 +829,48 @@ static QueueFamilyIndices findDeviceQueues (const SpiritDeviceCreateInfo *create
 }
 
 // function to check swapchain support
-static SpiritSwapchainSupportInfo querySwapChainSupport (const SpiritDeviceCreateInfo *createInfo, VkPhysicalDevice questionedDevice) {
+SpiritSwapchainSupportInfo querySwapChainSupport (
+    const VkSurfaceKHR surface,
+    VkPhysicalDevice questionedDevice)
+{
     SpiritSwapchainSupportInfo details = {};
 
     // check surface capabilities
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR (
         questionedDevice,
-        createInfo->windowSurface, 
+        surface,
         &details.capabilties);
 
     // formats
     vkGetPhysicalDeviceSurfaceFormatsKHR (
-        questionedDevice, 
-        createInfo->windowSurface, 
+        questionedDevice,
+        surface,
         &details.formatCount, NULL);
-    db_assert(details.formatCount, "Device surface has no format.");
-    details.formats = malloc (sizeof (VkSurfaceFormatKHR) * details.formatCount);
-    vkGetPhysicalDeviceSurfaceFormatsKHR (questionedDevice, createInfo->windowSurface, &details.formatCount, details.formats);
-    db_assert (details.formats, "Device surface has no formats");
+    db_assert_msg(details.formatCount, "Device surface has no format.");
+    details.formats = new_array(VkSurfaceFormatKHR, details.formatCount);
+    vkGetPhysicalDeviceSurfaceFormatsKHR (
+        questionedDevice,
+        surface,
+        &details.formatCount,
+        details.formats);
+    db_assert_msg (details.formats, "Device surface has no formats");
 
     if (details.formatCount == 0) { details.formats = NULL; }
 
     // present modes
-    vkGetPhysicalDeviceSurfacePresentModesKHR (questionedDevice, createInfo->windowSurface, &details.presentModeCount, NULL);
-    db_assert (details.presentModeCount > 0,
+    vkGetPhysicalDeviceSurfacePresentModesKHR (
+        questionedDevice,
+        surface,
+        &details.presentModeCount, NULL);
+    db_assert_msg (details.presentModeCount > 0,
         "Device surface has no present modes");
-    details.presentModes = malloc (sizeof (VkSurfaceFormatKHR) * details.presentModeCount);
-    vkGetPhysicalDeviceSurfacePresentModesKHR (questionedDevice, createInfo->windowSurface, &details.presentModeCount, details.presentModes);
-    db_assert (details.presentModes != NULL,
+    details.presentModes = new_array(VkPresentModeKHR, details.presentModeCount);
+    vkGetPhysicalDeviceSurfacePresentModesKHR(
+        questionedDevice,
+        surface,
+        &details.presentModeCount,
+        details.presentModes);
+    db_assert_msg (details.presentModes != NULL,
         "Device surface has no present modes");
 
     return details;

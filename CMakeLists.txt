@@ -1,13 +1,13 @@
 include(./.env.cmake OPTIONAL RESULT_VARIABLE LOCAL_ENV)
 message(STATUS "Local .env.cmake: ${LOCAL_ENV}")
 
-cmake_minimum_required(VERSION 3.23.0)
+cmake_minimum_required(VERSION 3.22.0)
 
 set(NAME SpiritRender)
 
 message(STATUS "using ${CMAKE_GENERATOR}")
 if (CMAKE_GENERATOR STREQUAL "MinGW Makefiles")
-    if (NOT MINGW_PATH) 
+    if (NOT MINGW_PATH)
       message(FATAL_ERROR "MINGW_PATH not set in .env.cmake")
     endif()
     set(USE_MINGW "True")
@@ -15,7 +15,7 @@ if (CMAKE_GENERATOR STREQUAL "MinGW Makefiles")
     set(CMAKE_CXX_COMPILER  ${MINGW_PATH}/bin/g++.exe)
 endif()
 
-project(${NAME} VERSION 0.23.0)
+project(${NAME} LANGUAGES C CXX VERSION 0.23.0)
 
 # 1. Set VULKAN_SDK_PATH in .env.cmake to target specific vulkan version
 if (DEFINED VULKAN_SDK_PATH)
@@ -34,44 +34,32 @@ endif()
 
 file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.c)
 
+# COMPILE OPTIONS
+set(LIB_COMPILE_FLAGS "-D_FORTIFY_SOURCE=2 -fsanitize=address")
+
 # libraries
 set(LIBRARY libs)
 
-add_subdirectory(${LIBRARY}/liblist)
-add_subdirectory(${LIBRARY}/glslang)
-add_subdirectory(${LIBRARY}/spirv-tools)
-add_subdirectory(${LIBRARY}/shaderc)
-add_subdirectory(${LIBRARY}/glfw)
+add_subdirectory(${LIBRARY})
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-set_property(TARGET ${PROJECT_NAME} PROPERTY C_STANDARD 99)
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 
 # BUILD TYPE
 set(CMAKE_BUILD_TYPE "Debug")
-add_compile_options(-Wall -pedantic -Og -D_FORTIFY_SOURCE=2 -fsanitize=address)
-set(CMAKE_C_STANDARD 23)
+# add_compile_options(-D_FORTIFY_SOURCE=2 -fsanitize=address)
 
+# address sanitizer
+target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=address)
+target_link_options(${PROJECT_NAME} PRIVATE -fsanitize=address)
 
-
-# set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-# set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-# set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-
-# set(SHADERC_SKIP_INSTALL ON)
-# set(SHADERC_SKIP_TESTS ON)
-# set(SHADERC_SKIP_EXAMPLES ON)
-# set(SHADERC_ENABLE_COPYRIGHT_CHECK OFF)
-
-# set(SPIRV_HEADERS_SKIP_INSTAL OFF)
-# set(SPIRV_HEADERS_SKIP_EXAMPLES ON)
+set(CMAKE_C_STANDARD gnu2x)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
-  shaderc
-  linkedlist
-  glfw
+  libs
 )
 
 
@@ -112,13 +100,13 @@ endif()
 # Find all vertex and fragment sources within shaders directory
 # taken from VBlancos vulkan tutorial
 # https://github.com/vblanco20-1/vulkan-guide/blob/all-chapters/CMakeLists.txt
-find_program(GLSL_VALIDATOR glslangValidator HINTS 
-  ${Vulkan_GLSLANG_VALIDATOR_EXECUTABLE} 
-  /usr/bin 
-  /usr/local/bin 
+find_program(GLSL_VALIDATOR glslangValidator HINTS
+  ${Vulkan_GLSLANG_VALIDATOR_EXECUTABLE}
+  /usr/bin
+  /usr/local/bin
   ${VULKAN_SDK_PATH}/Bin
   ${VULKAN_SDK_PATH}/Bin32
-  $ENV{VULKAN_SDK}/Bin/ 
+  $ENV{VULKAN_SDK}/Bin/
   $ENV{VULKAN_SDK}/Bin32/
 )
 

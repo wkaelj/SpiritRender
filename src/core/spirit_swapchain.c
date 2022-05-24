@@ -1,10 +1,7 @@
 #include "spirit_swapchain.h"
+#include "core/spirit_fence.h"
+#include "spirit_image.h"
 
-// swapchain implementation
-
-//
-// Structs
-//
 
 //
 // Helper functions
@@ -12,68 +9,97 @@
 
 // choose desired or best swap chain mode
 VkSurfaceFormatKHR chooseSwapSurfaceFormat (
-    uint32_t                  formatCount, 
-    const VkSurfaceFormatKHR *availableFormats, 
+    uint32_t                  formatCount,
+    const VkSurfaceFormatKHR *availableFormats,
     VkSurfaceFormatKHR        preferedFormat);
 
 
 // choose best or desired surface format
 VkPresentModeKHR chooseSwapPresentMode (
-    uint32_t                presentModeCount, 
+    uint32_t                presentModeCount,
     const VkPresentModeKHR *availablePresentModes,
     VkPresentModeKHR        preferredPresentMode);
 
+SpiritResult createImages(const SpiritDevice device, SpiritSwapchain swapchain);
+SpiritResult createDepthObjects(const SpiritDevice device, SpiritSwapchain swapchain);
+
+void destroyDepthObjects(const SpiritDevice device, SpiritSwapchain swapchain);
+void destroyImages(const SpiritDevice device, SpiritSwapchain swapchain);
+
+
+
+VkFormat findDepthFormat(const SpiritDevice device);
 //
 // Public functions
 //
 
 // create swapchain instance
-SpiritSwapchain spCreateSwapchain (SpiritSwapchainCreateInfo createInfo, SpiritDevice device, SpiritSwapchain optionalSwapchain) {
-    
-    db_assert(device, "Device cannot be null when creating swapchain");
+SpiritSwapchain spCreateSwapchain (
+        SpiritSwapchainCreateInfo *createInfo,
+        SpiritDevice device,
+        SpiritSwapchain optionalSwapchain)
+{
+
+    db_assert_msg(device, "Device cannot be NULL when creating swapchain");
 
     // set present and format to fallback values
-    if (!createInfo.selectedFormat) {
-        createInfo.preferedFormat.format = VK_FORMAT_R8G8B8_SRGB;
-        createInfo.preferedFormat.colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+    if (!createInfo->selectedFormat)
+    {
+        createInfo->preferedFormat.format = VK_FORMAT_R8G8B8_SRGB;
+        createInfo->preferedFormat.colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
     }
-    if (!createInfo.selectedPresentMode) {
-        createInfo.preferredPresentMode = VK_PRESENT_MODE_FIFO_KHR;
+    if (device->powerSaveMode)
+    {
+        createInfo->preferredPresentMode = VK_PRESENT_MODE_FIFO_KHR;
+    }
+    else if (!createInfo->selectedPresentMode)
+    {
+        createInfo->preferredPresentMode = VK_PRESENT_MODE_FIFO_KHR;
     }
 
+    spDeviceUpdateSwapchainSupport(device);
+
     // clamp window resolution to capabilties
-    createInfo.windowWidthPx = clamp_value(
-        createInfo.windowWidthPx,
+    createInfo->windowRes.w = clamp_value(
+        createInfo->windowRes.w,
         device->swapchainDetails.capabilties.minImageExtent.width,
         device->swapchainDetails.capabilties.maxImageExtent.width);
-    createInfo.windowHeightPx = clamp_value(
-        createInfo.windowHeightPx,
+    createInfo->windowRes.h = clamp_value(
+        createInfo->windowRes.h,
         device->swapchainDetails.capabilties.minImageExtent.height,
         device->swapchainDetails.capabilties.maxImageExtent.height);
 
-    log_debug("here");
-    log_debug("Maximum swapchain dimensions %ux%u",
-        device->swapchainDetails.capabilties.maxImageExtent.width,
-        device->swapchainDetails.capabilties.maxImageExtent.height);
-    log_verbose("Window resolution '%ix%i'", createInfo.windowWidthPx, createInfo.windowHeightPx);
+    if (!optionalSwapchain)
+    {
+        log_verbose("Window resolution '%lux%lu'",
+            createInfo->windowRes.w,
+            createInfo->windowRes.h);
+    }
 
-    SpiritSwapchain out = new_var(struct t_SpiritSwapchain);
+    // use old swapchain memory to save memory
+    SpiritSwapchain out;
+    if (optionalSwapchain)
+    {
+        destroyDepthObjects(device, optionalSwapchain);
+        destroyImages(device, optionalSwapchain);
+        out = optionalSwapchain;
+    } else
+        out = new_var(struct t_SpiritSwapchain);
 
     VkSwapchainCreateInfoKHR swapInfo = {};
     swapInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 
     // image count
-    u32 swapImageCount = device->swapchainDetails.capabilties.minImageCount + 1;
-    if (device->swapchainDetails.capabilties.maxImageCount > 0 &&
-    swapImageCount > device->swapchainDetails.capabilties.maxImageCount) {
-        swapImageCount = device->swapchainDetails.capabilties.maxImageCount;
-    }
+    const u32 maxImageCount = device->swapchainDetails.capabilties.maxImageCount;
+    const u32 minImageCount = device->swapchainDetails.capabilties.minImageCount;
+    const u32 swapImageCount = clamp_value(3, minImageCount, maxImageCount);
+
     swapInfo.minImageCount = swapImageCount;
 
     // output info
     VkExtent2D outExtent = {
-        createInfo.windowWidthPx,
-        createInfo.windowHeightPx
+        createInfo->windowRes.w,
+        createInfo->windowRes.h
     };
     out->extent = outExtent;
 
@@ -81,17 +107,17 @@ SpiritSwapchain spCreateSwapchain (SpiritSwapchainCreateInfo createInfo, SpiritD
     out->presentMode = chooseSwapPresentMode(
         device->swapchainDetails.presentModeCount,
         device->swapchainDetails.presentModes,
-        createInfo.preferredPresentMode);
+        createInfo->preferredPresentMode);
     // surface format
-    out->format = chooseSwapSurfaceFormat(
-        device->swapchainDetails.formatCount, 
-        device->swapchainDetails.formats, 
-        createInfo.preferedFormat);
+    out->surfaceFormat = chooseSwapSurfaceFormat(
+        device->swapchainDetails.formatCount,
+        device->swapchainDetails.formats,
+        createInfo->preferedFormat);
     out->supportInfo = device->swapchainDetails;
 
     swapInfo.imageExtent = out->extent;
-    swapInfo.imageFormat = out->format.format;
-    swapInfo.imageColorSpace= out->format.colorSpace;
+    swapInfo.imageFormat = out->surfaceFormat.format;
+    swapInfo.imageColorSpace= out->surfaceFormat.colorSpace;
     swapInfo.imageExtent = out->extent;
     swapInfo.imageArrayLayers = 1;
     swapInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
@@ -108,97 +134,117 @@ SpiritSwapchain spCreateSwapchain (SpiritSwapchainCreateInfo createInfo, SpiritD
         swapInfo.pQueueFamilyIndices = NULL; // Optional
     }
 
-    // viewport?
     swapInfo.preTransform = device->swapchainDetails.capabilties.currentTransform;
     swapInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     swapInfo.clipped = VK_TRUE;
 
-    // old swapchain
-    if (optionalSwapchain != SPIRIT_NULL) swapInfo.oldSwapchain = optionalSwapchain->swapchain;
 
-    // TODO fix swapchain create info
-    // out->createInfo = swapInfo;
-    // actually created swapchain
-    if (vkCreateSwapchainKHR(device->device, &swapInfo, SPIRIT_NULL, &out->swapchain)) {
+    // old swapchain
+    if (optionalSwapchain) swapInfo.oldSwapchain = optionalSwapchain->swapchain;
+
+    if (vkCreateSwapchainKHR(device->device, &swapInfo, NULL, &out->swapchain)) {
         log_error("Failed to create swapchain");
-        return SPIRIT_NULL;
+        free(optionalSwapchain);
+        return NULL;
     }
+
+    out->imageCount = 0;
 
     // images
-    vkGetSwapchainImagesKHR(
-        device->device,
-        out->swapchain, 
-        &out->imageCount, 
-        NULL);
-    // allocate new array of images, and populate it
-    out->images = new_array(VkImage, out->imageCount);
-    vkGetSwapchainImagesKHR(
-        device->device,
-        out->swapchain,
-        &out->imageCount,
-        out->images);
-
-    // image views
-    VkImageViewCreateInfo imageViewInfo = {};
-    imageViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-
-    imageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    imageViewInfo.format = out->format.format;
-    imageViewInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-    imageViewInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-    imageViewInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-    imageViewInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-
-    imageViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    imageViewInfo.subresourceRange.baseMipLevel = 0;
-    imageViewInfo.subresourceRange.levelCount = 1;
-    imageViewInfo.subresourceRange.baseArrayLayer = 0;
-    imageViewInfo.subresourceRange.layerCount = 1;
-    out->imageCount = swapImageCount;
-    out->imageViews = new_array(VkImageView, out->imageCount);
-
-    // cannot overflow imageviews, because imageviews was initialized
-    // with out->imageCount, which is what we count against
-    for (u8 i = 0; i < out->imageCount; i++) {
-        imageViewInfo.image = out->images[i];
-        if (vkCreateImageView (
-            device->device, // vulkan device
-            &imageViewInfo, // ptr to stack address
-            SPIRIT_NULL,    // nullptr
-            &out->imageViews[i] // ptr to stack adress
-            )) {
-            log_error("Failed to create swapchain image views");
-            return SPIRIT_NULL;
-        }
+    if (createImages(device, out))
+    {
+        log_error("Failed to create images");
+        return NULL;
     }
 
-    log_verbose("Created Swapchain");
+    db_assert_msg(out->imageCount != 0, "Swapchain must have images");
+    if (createDepthObjects(device, out))
+    {
+        log_error("Failed to create depth objects");
+        return NULL;
+    }
+
+    // store create info
+    out->createInfo = *createInfo;
+
+    if (!optionalSwapchain)
+    {
+        log_verbose("Created Swapchain, image count %u", out->imageCount);
+    }
+
     return out;
 
+} // spCreateSwapchain
+
+SpiritResult spSwapchainPresent(
+    const SpiritDevice device,
+    const SpiritSwapchain swapchain,
+    const VkSemaphore waitSemaphore,
+    const u32 imageIndex)
+{
+    VkPresentInfoKHR presentInfo = {};
+    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+    presentInfo.waitSemaphoreCount = 1;
+    presentInfo.pWaitSemaphores = &waitSemaphore;
+
+    VkSwapchainKHR swapchains[] = { swapchain->swapchain };
+    presentInfo.swapchainCount = 1;
+    presentInfo.pSwapchains = swapchains;
+
+    presentInfo.pImageIndices = &imageIndex;
+
+    if (vkQueuePresentKHR(device->presentQueue, &presentInfo))
+    {
+        return SPIRIT_FAILURE;
+    }
+
+    return SPIRIT_SUCCESS;
+}
+
+
+// get the next image to render too
+SpiritResult spSwapchainAquireNextImage(
+    const SpiritDevice device,
+    const SpiritSwapchain swapchain,
+    VkSemaphore waitSemaphore,
+    u32 *imageIndex)
+{
+
+    db_assert_msg(device, "Must have a valid devce");
+    db_assert_msg(swapchain, "Must have a valid swapchain");
+    db_assert_msg(imageIndex, "imageIndex must be a valid pointer to a u32");
+
+    if (vkAcquireNextImageKHR(
+        device->device,
+        swapchain->swapchain,
+        UINT64_MAX,
+        waitSemaphore,
+        VK_NULL_HANDLE,
+        imageIndex))
+    {
+        log_warning("Error attempting to aquire next image");
+        return SPIRIT_FAILURE;
+    }
+
+    return SPIRIT_SUCCESS;
 }
 
 // destroy swapchain instance
-SpiritResult spDestroySwapchain (SpiritSwapchain swapchain, SpiritDevice device) {
+SpiritResult spDestroySwapchain (SpiritSwapchain swapchain, const SpiritDevice device) {
 
-    // if (swapchain == SPIRIT_NULL || device == SPIRIT_NULL) {
-    //     if (swapchain == SPIRIT_NULL) log_error("Cannot destroy swapchain, swapchain is NULL");
-    //     if (device == SPIRIT_NULL) log_error("Cannot destroy swapchain, device is NULL");
-    //     return SPIRIT_FAILURE;
-    // }
-    db_assert(swapchain != SPIRIT_NULL, "swapchain cannot be null <- spDestroySwapchain()");
-    db_assert(device != SPIRIT_NULL, "device cannot be null <- spDestroySwapchain()");
+    db_assert_msg(swapchain != NULL, "swapchain cannot be NULL");
+    db_assert_msg(device != NULL, "device cannot be NULL");
 
-    vkDestroySwapchainKHR(device->device, swapchain->swapchain, SPIRIT_NULL);
+    spDeviceWaitIdle(device);
 
-    for (u32 i = 0; i < swapchain->imageCount; i++) {
-        vkDestroyImageView(device->device, swapchain->imageViews[i], SPIRIT_NULL);
-    }
+    destroyDepthObjects(device, swapchain);
+    destroyImages(device, swapchain);
 
-    swapchain->imageViews = SPIRIT_NULL;
-    swapchain->images = SPIRIT_NULL;
-    swapchain->swapchain = SPIRIT_NULL;
+    vkDestroySwapchainKHR(device->device, swapchain->swapchain, NULL);
 
-    dalloc(swapchain);
+
+    free(swapchain);
 
     return SPIRIT_SUCCESS;
 }
@@ -207,29 +253,159 @@ SpiritResult spDestroySwapchain (SpiritSwapchain swapchain, SpiritDevice device)
 // Helper implementation
 //
 
-// swapchain
-VkSurfaceFormatKHR chooseSwapSurfaceFormat (uint32_t formatCount, const VkSurfaceFormatKHR *availableFormats, VkSurfaceFormatKHR preferedFormat) {
+SpiritResult createImages(const SpiritDevice device, SpiritSwapchain swapchain)
+{
 
-    for (uint32_t i = 0; i < formatCount; i++) {
-        if (availableFormats[i].format == preferedFormat.format && availableFormats[i].colorSpace == preferedFormat.colorSpace) {
+    // images
+    vkGetSwapchainImagesKHR(
+        device->device,
+        swapchain->swapchain,
+        &swapchain->imageCount,
+        NULL);
+
+    if (swapchain->imageCount > 3)
+        log_warning("Unexpected image count %u", swapchain->imageCount);
+
+    // allocate new array of images, and populate it
+    VkImage imageBuf[swapchain->imageCount];
+    vkGetSwapchainImagesKHR(
+        device->device,
+        swapchain->swapchain,
+        &swapchain->imageCount,
+        imageBuf);
+
+    if (imageBuf[0] == NULL)
+    {
+        return SPIRIT_FAILURE;
+    }
+
+    swapchain->images = new_array(SpiritImage, swapchain->imageCount);
+
+    // convert swapchain images to SpiritImages, and create image views
+    for (u32 i = 0; i < swapchain->imageCount; ++i)
+    {
+        SpiritImage *image = &swapchain->images[i];
+        *image = (struct t_SpiritImage) {
+            .image = imageBuf[i],
+            .imageFormat = swapchain->surfaceFormat.format,
+            .memory = NULL,
+            .aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
+            .size.w = swapchain->extent.width,
+            .size.h = swapchain->extent.height
+        };
+
+        spCreateImageView(device, image);
+    }
+
+    return SPIRIT_SUCCESS;
+}
+
+void destroyImages(const SpiritDevice device, SpiritSwapchain swapchain)
+{
+    for (u32 i = 0; i < swapchain->imageCount; i++)
+    {
+        spDestroyImageView(device, &swapchain->images[i]);
+    }
+
+    free(swapchain->images);
+}
+
+SpiritResult createDepthObjects(const SpiritDevice device, SpiritSwapchain swapchain)
+{
+    VkFormat depthFormat = findDepthFormat(device);
+    VkExtent2D swapChainExtent = swapchain->extent;
+
+    swapchain->depthImages =
+        new_array(SpiritImage, swapchain->imageCount);
+
+    for (u32 i = 0; i < swapchain->imageCount; i++)
+    {
+
+        SpiritImageCreateInfo depthImageInfo = {
+            .flags = 0,
+            .size.w = swapChainExtent.width,
+            .size.h = swapChainExtent.height,
+            .format = depthFormat,
+            .tiling = VK_IMAGE_TILING_OPTIMAL,
+            .usageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+            .memoryFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            .aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT,
+            .mipLevels = 1,
+            .withImageView = true
+        };
+
+        spCreateImage(device, &depthImageInfo, &swapchain->depthImages[i]);
+
+    }
+
+    return SPIRIT_SUCCESS;
+}
+
+void destroyDepthObjects(const SpiritDevice device, SpiritSwapchain swapchain)
+{
+    for (u32 i = 0; i < swapchain->imageCount; i++)
+    {
+        spDestroyImage(device, & swapchain->depthImages[i]);
+    }
+
+    free(swapchain->depthImages);
+}
+
+// swapchain
+VkSurfaceFormatKHR chooseSwapSurfaceFormat (
+    uint32_t formatCount,
+    const VkSurfaceFormatKHR *availableFormats,
+    VkSurfaceFormatKHR preferedFormat)
+{
+
+    for (uint32_t i = 0; i < formatCount; i++)
+    {
+        if (
+            availableFormats[i].format == preferedFormat.format &&
+            availableFormats[i].colorSpace == preferedFormat.colorSpace)
+        {
             return availableFormats[i];
         }
     }
     return availableFormats[0];
 }
 
-VkPresentModeKHR chooseSwapPresentMode (uint32_t presentModeCount, const VkPresentModeKHR *availablePresentModes, VkPresentModeKHR preferredPresentMode) {
 
-    // return power saving present mode if using integrated GPU
-    // FIXME if (preferIntegratedGPU) { return VK_PRESENT_MODE_FIFO_KHR; }
+// extra functions
+VkPresentModeKHR chooseSwapPresentMode(
+    uint32_t presentModeCount,
+    const VkPresentModeKHR *availablePresentModes,
+    VkPresentModeKHR preferredPresentMode)
+{
+
+    bool foundFallback = false;
 
     // check if prefered render mode is available
-    for (uint32_t i = 0; i < presentModeCount; i++) {
-        if (availablePresentModes[i] == preferredPresentMode) {
+    for (uint32_t i = 0; i < presentModeCount; i++)
+    {
+        if (availablePresentModes[i] == preferredPresentMode)
             return availablePresentModes[i];
-        }
+
+        if (availablePresentModes[i] == VK_PRESENT_MODE_FIFO_KHR)
+            foundFallback = true;
     }
 
-    // fallback present mode
-    return VK_PRESENT_MODE_FIFO_KHR;
+    if (foundFallback)
+        return VK_PRESENT_MODE_FIFO_KHR;
+    else
+        return availablePresentModes[0];
+}
+
+VkFormat findDepthFormat(const SpiritDevice device)
+{
+    return spDeviceFindSupportedFormat(
+        device,
+        (VkFormat[]){
+            VK_FORMAT_D32_SFLOAT,
+            VK_FORMAT_D32_SFLOAT_S8_UINT,
+            VK_FORMAT_D24_UNORM_S8_UINT
+        },
+        3,
+        VK_IMAGE_TILING_OPTIMAL,
+        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 }
