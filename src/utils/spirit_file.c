@@ -10,7 +10,7 @@ u64 spReadFileSize(const char *filepath)
 
 SpiritBool spReadFileExists(const char *filepath)
 {
-    return spPlatformTestFileSize(filepath);
+    return spPlatformTestForFile(filepath);
 }
 
 SpiritResult spReadFileBinary(

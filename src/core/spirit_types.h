@@ -10,7 +10,8 @@
 // Definitions
 //
 
-#define SPIRIT_NULL ((void*)0)
+#undef NULL
+#define NULL ((void*)0)
 
 // types
 #define i8  int8_t
@@ -107,6 +108,9 @@ typedef struct t_SpiritSwapchain {
     VkImageView *imageViews;
 } *SpiritSwapchain;
 
+// store a pointer to compiled shader code
+typedef u32 *SpiritShaderCode;
+
 // pipeline
 typedef struct t_SpiritPipeline {
     VkPipeline    pipeline;
@@ -114,6 +118,10 @@ typedef struct t_SpiritPipeline {
     // render passes
     VkRenderPass *renderPasses;
     uint32_t      renderPassCount;
+
+    VkShaderModule   *shaders;
+    SpiritShaderCode *shaderCodes;
+    u32               shaderCount;
 } *SpiritPipeline;
 
 // shaders
@@ -130,6 +138,7 @@ typedef enum t_SpiritShaderType {
 // store a vulkan (.spv) shader
 typedef struct t_SpiritShader {
     SpiritShaderType type;
-    const void      *shader;
+    const char      *path;
+    SpiritShaderCode shader;
     u64              shaderSize;
 } SpiritShader;

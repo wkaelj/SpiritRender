@@ -48,7 +48,7 @@
 
 // tmp memory alocator
 // will be replaced with calles to a custom memory allocator
-#define alloc(ptr) malloc(ptr);
+#define alloc(size) malloc(size);
 #define dalloc(ptr) free(ptr);
 
 // debug

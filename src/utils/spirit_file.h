@@ -12,7 +12,8 @@
 
 // return the size of a file
 // using the stat function
-// returns 0 on failure
+// returns 0 if the file does not exist
+// returns 1 on a failure
 u64 spReadFileSize(const char *filepath);
 
 // test if a file exits

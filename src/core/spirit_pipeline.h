@@ -12,19 +12,24 @@
 // 
 
 typedef struct t_SpiritPipelineCreateInfo {
+    SpiritShader *shaderFilePaths;     // array of shader names
+    u32           shaderFilePathCount; // num of shaders
+
+    u32 windowWidth, windowHeight; // window size
+    u32 renderWidth, renderHeight; // rendering resolution
 
 } SpiritPipelineCreateInfo;
 
 // create a new render pass, can optionaly pass a old pipeline which will
 // be recreated
 SpiritPipeline spCreatePipeline (
+    const SpiritDevice        device,
     SpiritPipelineCreateInfo *createInfo,
-    SpiritDevice              device,
-    SpiritSwapchain           swapchain,
+    const SpiritSwapchain     swapchain,
     // renderpasses?
     SpiritPipeline            optionalPipeline);
 
 // destroy a pipeline and free associated memory
 SpiritResult spDestroyPipeline (
-    SpiritPipeline pipeline, 
-    SpiritDevice   device);
+    SpiritDevice   device,
+    SpiritPipeline pipeline);

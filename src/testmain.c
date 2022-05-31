@@ -4,6 +4,7 @@
 #include "core/spirit_window.h"
 #include "core/spirit_device.h"
 #include "core/spirit_swapchain.h"
+#include "core/spirit_pipeline.h"
 #include "glsl-loader/glsl_loader.h"
 #include "utils/spirit_file.h"
 #include "utils/platform.h"
@@ -14,7 +15,15 @@ int main (int argc, char **argv) {
 
     spPlatformSetExecutableFolder (argv[0]);
 
-    mainlooptest ();
+    SpiritShader o = compileShader (
+        "#version 450\nlayout (location = 0) out vec4 outColor;layout(location = 0) in vec3 fragColor;\n \
+void main () {outColor = vec4(fragColor, 1.0);}",
+142, "frag", SPIRIT_SHADER_TYPE_FRAGMENT
+    );
+
+    db_assert(o.shader, "Shader failed");
+
+    // mainlooptest ();
 
     return 0;
 }
@@ -57,11 +66,27 @@ void mainlooptest (void) {
     SpiritSwapchainCreateInfo swapCreateInfo = {};
     spWindowGetPixelSize(window, &swapCreateInfo.windowWidthPx, &swapCreateInfo.windowHeightPx);
 
-    SpiritSwapchain swapchain = spCreateSwapchain(swapCreateInfo, device, SPIRIT_NULL);
+    SpiritSwapchain swapchain = spCreateSwapchain(swapCreateInfo, device, NULL);
     db_assert(swapchain, "Must have swapchain");
+
+    SpiritPipelineCreateInfo pipelineCreateInfo = {};
+    pipelineCreateInfo.shaderFilePathCount = 2;
+    SpiritShader shaders[2];
+    shaders[0].path = "shaders/simple_shader.frag";
+    shaders[0].type = SPIRIT_SHADER_TYPE_FRAGMENT;
+    shaders[1].path = "shaders/simple_shader.vert";
+    shaders[1].type = SPIRIT_SHADER_TYPE_VERTEX;
+    pipelineCreateInfo.shaderFilePaths = shaders;
+    pipelineCreateInfo.windowWidth = swapCreateInfo.windowWidthPx;
+    pipelineCreateInfo.windowHeight = swapCreateInfo.windowHeightPx;
+    pipelineCreateInfo.renderWidth = swapCreateInfo.windowWidthPx;
+    pipelineCreateInfo.renderHeight = swapCreateInfo.windowHeightPx;
+
+    SpiritPipeline pipeline = spCreatePipeline (device, &pipelineCreateInfo, NULL, NULL);
 
     while (!spWindowShouldClose (window));
 
+    spDestroyPipeline (device, pipeline);
     spDestroySwapchain(swapchain, device);
     spDestroyDevice(device);
     spDestroyWindow (window);

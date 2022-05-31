@@ -45,7 +45,7 @@ SpiritRenderPass spCreateRenderPass (
     renderPassInfo.subpassCount = 1;
     renderPassInfo.pSubpasses = &subpass;
 
-    if (vkCreateRenderPass(device->device, &renderPassInfo, SPIRIT_NULL, &out->renderPass) != VK_SUCCESS) return SPIRIT_NULL;
+    if (vkCreateRenderPass(device->device, &renderPassInfo, NULL, &out->renderPass) != VK_SUCCESS) return NULL;
     log_verbose("Created render pass\n");
 
     return out;
@@ -53,8 +53,8 @@ SpiritRenderPass spCreateRenderPass (
 
 SpiritResult spDestroyRenderPass (SpiritRenderPass renderPass, SpiritDevice device) {
 
-    if (renderPass == SPIRIT_NULL) return SPIRIT_FAILURE;
-    vkDestroyRenderPass(device->device, renderPass->renderPass, SPIRIT_NULL);
+    if (renderPass == NULL) return SPIRIT_FAILURE;
+    vkDestroyRenderPass(device->device, renderPass->renderPass, NULL);
 
     dalloc(renderPass);
 

@@ -63,7 +63,8 @@ int unix_log_perror(
     const char *restrict file,
     const char *restrict func,
     const char *restrict line,
-    const char *restrict m)
+    const char *restrict m,
+    ...)
 {
 
     if (!file || !func || !line) return SPIRIT_FAILURE;
@@ -71,9 +72,9 @@ int unix_log_perror(
     const char messegePrefix[] = "\033[1;34m[PERROR]: \033[0m Msg: ";
     const char messegeSuffix[] = " | Error";
 
-    u32 fileLen = strlen(file);
-    u32 funcLen = strlen(func);
-    u32 lineLen = strlen(line);
+    u32 fileLen = strlen (file);
+    u32 funcLen = strlen (func);
+    u32 lineLen = strlen (line);
 
     u32 mLen;
     m && (mLen = strlen (m));
@@ -86,14 +87,26 @@ int unix_log_perror(
     length += 10; // hardcoded number of extra chars in format (eg. ">>>")
 
     if (m) length += sizeof (messegeSuffix);
+
+    va_list args;
+    va_start (args, m);
+
+    char consolidatedMessege[1024];
+    if (npf_vsnprintf (consolidatedMessege, 1024, m, args) > 1024)
+    {
+        log_error ("string length overflowed buffer!");
+    }
+
+    va_end (args);
+
     char prefix[length];
     npf_snprintf (prefix, length, ">>> %s:%s->%s\n\t%s%s%s",
         file, func, line,
         messegePrefix,
-        m,
+        consolidatedMessege,
         messegeSuffix);
     
-    perror(prefix);
+    perror (prefix);
 
     return SPIRIT_SUCCESS;
 }

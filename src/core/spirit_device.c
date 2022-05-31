@@ -96,23 +96,23 @@ SpiritDevice spCreateDevice (SpiritDeviceCreateInfo *createInfo) {
     out->validationEnabled = createInfo->enableValidation;
 
     out->instance = createInstance(createInfo, &out->debugMessenger); // create vulkan instance
-    if (out->instance == SPIRIT_NULL) {
+    if (out->instance == NULL) {
         log_fatal("Failed to create vulkan instance");
-        return SPIRIT_NULL;
+        return NULL;
     }
     out->windowSurface = spWindowGetSurface(createInfo->window, out->instance); // create window surface
     createInfo->windowSurface = out->windowSurface;
     out->physicalDevice = selectPhysicalDevice(createInfo, out->instance); // select physical device
-    if (out->physicalDevice == SPIRIT_NULL) {
+    if (out->physicalDevice == NULL) {
         log_fatal("Failed to select GPU");
-        return SPIRIT_NULL;
+        return NULL;
     }
 
     out->swapchainDetails = querySwapChainSupport(createInfo, out->physicalDevice);
     out->device = createDevice(createInfo, out->physicalDevice, out->instance);
-    if (out->device == SPIRIT_NULL) {
+    if (out->device == NULL) {
         log_fatal("Failed to create logical device");
-        return SPIRIT_NULL;
+        return NULL;
     }
 
     QueueFamilyIndices indices = findDeviceQueues (createInfo, out->physicalDevice);
@@ -128,20 +128,20 @@ SpiritDevice spCreateDevice (SpiritDeviceCreateInfo *createInfo) {
 // destroy a spirit device and free all memory whatever
 SpiritResult spDestroyDevice (SpiritDevice device) {
 
-    vkDestroyDevice(device->device, SPIRIT_NULL);
+    vkDestroyDevice(device->device, NULL);
 
-    vkDestroySurfaceKHR(device->instance, device->windowSurface, SPIRIT_NULL);
+    vkDestroySurfaceKHR(device->instance, device->windowSurface, NULL);
 
     // debug messenger
     if (device->validationEnabled) {
         PFN_vkDestroyDebugUtilsMessengerEXT pfnDebugMessengerDestroy = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(device->instance, "vkDestroyDebugUtilsMessengerEXT");
-        if (pfnDebugMessengerDestroy == SPIRIT_NULL) log_error("Failed to load debug messenger destroy function");
-        else pfnDebugMessengerDestroy (device->instance, device->debugMessenger, SPIRIT_NULL);
+        if (pfnDebugMessengerDestroy == NULL) log_error("Failed to load debug messenger destroy function");
+        else pfnDebugMessengerDestroy (device->instance, device->debugMessenger, NULL);
         log_debug("Destroyed debug messenger");
     }
-    device->debugMessenger = SPIRIT_NULL;
+    device->debugMessenger = NULL;
 
-    vkDestroyInstance(device->instance, SPIRIT_NULL);
+    vkDestroyInstance(device->instance, NULL);
     dalloc(device);
 
     return SPIRIT_SUCCESS;
@@ -193,7 +193,7 @@ static VkInstance createInstance (const SpiritDeviceCreateInfo *createInfo, VkDe
 
     // validation layers
     VkDebugUtilsMessengerCreateInfoEXT debugInfo = {}; // messenger create info
-    const char *const *validationLayers = SPIRIT_NULL;
+    const char *const *validationLayers = NULL;
     instanceInfo.enabledLayerCount = 0;
     if (createInfo->enableValidation) {
         log_verbose("Enabling Validation");
@@ -224,22 +224,22 @@ static VkInstance createInstance (const SpiritDeviceCreateInfo *createInfo, VkDe
 
     } else {
         instanceInfo.enabledLayerCount = 0;
-        instanceInfo.ppEnabledLayerNames = SPIRIT_NULL;
+        instanceInfo.ppEnabledLayerNames = NULL;
     }
 
     VkInstance instance;
 
-    if (vkCreateInstance(&instanceInfo, SPIRIT_NULL, &instance) != VK_SUCCESS) {
-        return SPIRIT_NULL;
+    if (vkCreateInstance(&instanceInfo, NULL, &instance) != VK_SUCCESS) {
+        return NULL;
     }
 
     if (createInfo->enableValidation) {
-        PFN_vkCreateDebugUtilsMessengerEXT pfnCreateDebugMesseger = SPIRIT_NULL;
+        PFN_vkCreateDebugUtilsMessengerEXT pfnCreateDebugMesseger = NULL;
         pfnCreateDebugMesseger = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
 
-        if (pfnCreateDebugMesseger == SPIRIT_NULL) log_error("Failed to load function vkCreateDebugUtilsMessengerEXT. Will log errors to stdout.");
+        if (pfnCreateDebugMesseger == NULL) log_error("Failed to load function vkCreateDebugUtilsMessengerEXT. Will log errors to stdout.");
         else {
-            if (pfnCreateDebugMesseger (instance, &debugInfo, SPIRIT_NULL, debugMessenger) != VK_SUCCESS) log_error("Failed to create debug messenger");
+            if (pfnCreateDebugMesseger (instance, &debugInfo, NULL, debugMessenger) != VK_SUCCESS) log_error("Failed to create debug messenger");
             *debugMessenger = NULL;
         }
     }
@@ -260,7 +260,7 @@ static VkPhysicalDevice selectPhysicalDevice (const SpiritDeviceCreateInfo *crea
     //throw error if there are no devices
     if (availableDeviceCount == 0) {
         log_fatal("No GPU detected.");
-        return SPIRIT_NULL;
+        return NULL;
     }
 
     VkPhysicalDevice availableDevices[availableDeviceCount];
@@ -370,7 +370,7 @@ static VkDevice createDevice (const SpiritDeviceCreateInfo *createInfo, const Vk
     if (errCode = vkCreateDevice (physicalDevice, &deviceCreateInfo, NULL, &device) != VK_SUCCESS) {
         // debug function
         log_info("Device failure code '%d'", errCode);
-        return SPIRIT_NULL;
+        return NULL;
     }
 
     log_verbose("Created logical device");

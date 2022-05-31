@@ -11,6 +11,9 @@ default:
 run:
 	./$(BUILDFDR)/$(EXEC)
 
+noshade:
+	rm bin/glsl-loader-cache/*.spv
+
 debug:
 	cd $(BUILDFDR)
 	$(DEBUGGER) -tui $(BUILDFDR)/$(EXEC)

@@ -16,7 +16,7 @@ SpiritWindow spCreateWindow (SpiritWindowCreateInfo *createInfo) {
     if (glfwInit () != GLFW_TRUE) {
         glfwGetError (&glfwError);
         log_error("GLFW error: %s", glfwError);
-        return SPIRIT_NULL;
+        return NULL;
     }
 
     window->title = createInfo->title;
@@ -94,7 +94,7 @@ SpiritBool spWindowShouldClose (SpiritWindow window) {
 
 SpiritResult spResizeWindow (SpiritWindow window, uint32_t w, uint32_t h) {
 
-    if (window->window == SPIRIT_NULL) {
+    if (window->window == NULL) {
         log_error("spResizeWindow: window passed is NULL");
     }
 
@@ -116,9 +116,9 @@ SpiritResult spWindowGetPixelSize (SpiritWindow window, uint32_t *w, uint32_t *h
 
 VkSurfaceKHR spWindowGetSurface (SpiritWindow window, VkInstance instance) {
 
-    VkSurfaceKHR surface = SPIRIT_NULL;
+    VkSurfaceKHR surface = NULL;
 
-    if (glfwCreateWindowSurface (instance, window->window, SPIRIT_NULL, &surface)) log_fatal("Failed to create window surface");
+    if (glfwCreateWindowSurface (instance, window->window, NULL, &surface)) log_fatal("Failed to create window surface");
     db_assert (surface, "Surface cannot be null");
     return surface;
 }

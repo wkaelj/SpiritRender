@@ -3,6 +3,7 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <errno.h>
+#include <stdio.h>
 
 // store the exectutable files directory
 // so that assets and other relative directories
@@ -99,12 +100,26 @@ SpiritBool spPlatformTestForFile(const char *filepath)
 
 u64 spPlatformTestFileSize(const char *filepath)
 {
-    struct stat data;
-    if (stat(filepath, &data))
-        log_perror("stat() failed");
-        return 0;
 
-    return data.st_size;
+    log_debug ("Filepath: '%s'", filepath);
+    FILE *fp = fopen(filepath, "r");
+
+    if (!fp && errno != EEXIST) return 1;
+    if (!fp) return 0;
+    
+    fseek (fp, 0l, SEEK_END);
+    u64 size = ftell(fp);
+    fclose (fp);
+    return size;
+    // struct stat data = (struct stat) {};
+    // if (stat(filepath, &data) == -1)
+    // {
+    //     if (errno == EEXIST) return 0;
+    //     log_perror("stat('%s') failed");
+    //     return 1;
+    // }
+
+    // return data.st_size;
 }
 
 time_t spPlatformGetTime(void)
@@ -118,7 +133,10 @@ time_t spPlatformGetFileModifiedDate(const char *restrict filepath)
     struct stat data;
     if (stat(filepath, &data))
     {
+        if (errno == EEXIST) return 0;
+        
         log_perror("stat() failed");
+        return 1;
     }
 
     return data.st_mtime;

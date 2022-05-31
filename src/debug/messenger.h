@@ -73,15 +73,16 @@ typedef enum {
 #ifdef __unix
 // messege can be NULL if you don't want it.
 
-//FIXME cannot convert line number to string
 // stupid workaround to convert line number to string
-#define int_to_str(int) #int
+#define int_to_str_2(int) #int
+#define int_to_str(int) int_to_str_2(int)
 
-#define log_perror(messege) unix_log_perror(\
+#define log_perror(messege, ...) unix_log_perror(\
     __FILE__,\
     __func__,\
     int_to_str(__LINE__),\
-    messege)
+    messege,\
+    ##__VA_ARGS__)
 
 
 // Params:
@@ -91,7 +92,8 @@ int unix_log_perror (
     const char *restrict file,
     const char *restrict func,
     const char *restrict line,
-    const char *restrict m);
+    const char *restrict m,
+    ...);
 #else // disable the function on non-unix systems
 #define log_perror(string) ((void)0)
 #endif

@@ -114,14 +114,14 @@ SpiritSwapchain spCreateSwapchain (SpiritSwapchainCreateInfo createInfo, SpiritD
     swapInfo.clipped = VK_TRUE;
 
     // old swapchain
-    if (optionalSwapchain != SPIRIT_NULL) swapInfo.oldSwapchain = optionalSwapchain->swapchain;
+    if (optionalSwapchain != NULL) swapInfo.oldSwapchain = optionalSwapchain->swapchain;
 
     // TODO fix swapchain create info
     // out->createInfo = swapInfo;
     // actually created swapchain
-    if (vkCreateSwapchainKHR(device->device, &swapInfo, SPIRIT_NULL, &out->swapchain)) {
+    if (vkCreateSwapchainKHR(device->device, &swapInfo, NULL, &out->swapchain)) {
         log_error("Failed to create swapchain");
-        return SPIRIT_NULL;
+        return NULL;
     }
 
     // images
@@ -164,11 +164,11 @@ SpiritSwapchain spCreateSwapchain (SpiritSwapchainCreateInfo createInfo, SpiritD
         if (vkCreateImageView (
             device->device, // vulkan device
             &imageViewInfo, // ptr to stack address
-            SPIRIT_NULL,    // nullptr
+            NULL,    // nullptr
             &out->imageViews[i] // ptr to stack adress
             )) {
             log_error("Failed to create swapchain image views");
-            return SPIRIT_NULL;
+            return NULL;
         }
     }
 
@@ -180,23 +180,23 @@ SpiritSwapchain spCreateSwapchain (SpiritSwapchainCreateInfo createInfo, SpiritD
 // destroy swapchain instance
 SpiritResult spDestroySwapchain (SpiritSwapchain swapchain, SpiritDevice device) {
 
-    // if (swapchain == SPIRIT_NULL || device == SPIRIT_NULL) {
-    //     if (swapchain == SPIRIT_NULL) log_error("Cannot destroy swapchain, swapchain is NULL");
-    //     if (device == SPIRIT_NULL) log_error("Cannot destroy swapchain, device is NULL");
+    // if (swapchain == NULL || device == NULL) {
+    //     if (swapchain == NULL) log_error("Cannot destroy swapchain, swapchain is NULL");
+    //     if (device == NULL) log_error("Cannot destroy swapchain, device is NULL");
     //     return SPIRIT_FAILURE;
     // }
-    db_assert(swapchain != SPIRIT_NULL, "swapchain cannot be null <- spDestroySwapchain()");
-    db_assert(device != SPIRIT_NULL, "device cannot be null <- spDestroySwapchain()");
+    db_assert(swapchain != NULL, "swapchain cannot be null <- spDestroySwapchain()");
+    db_assert(device != NULL, "device cannot be null <- spDestroySwapchain()");
 
-    vkDestroySwapchainKHR(device->device, swapchain->swapchain, SPIRIT_NULL);
+    vkDestroySwapchainKHR(device->device, swapchain->swapchain, NULL);
 
     for (u32 i = 0; i < swapchain->imageCount; i++) {
-        vkDestroyImageView(device->device, swapchain->imageViews[i], SPIRIT_NULL);
+        vkDestroyImageView(device->device, swapchain->imageViews[i], NULL);
     }
 
-    swapchain->imageViews = SPIRIT_NULL;
-    swapchain->images = SPIRIT_NULL;
-    swapchain->swapchain = SPIRIT_NULL;
+    swapchain->imageViews = NULL;
+    swapchain->images = NULL;
+    swapchain->swapchain = NULL;
 
     dalloc(swapchain);
 

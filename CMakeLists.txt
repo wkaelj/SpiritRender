@@ -37,11 +37,7 @@ file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.c)
 # libraries
 set(LIBRARY libs)
 
-add_subdirectory(${LIBRARY}/liblist)
-add_subdirectory(${LIBRARY}/glslang)
-add_subdirectory(${LIBRARY}/spirv-tools)
-add_subdirectory(${LIBRARY}/shaderc)
-add_subdirectory(${LIBRARY}/glfw)
+add_subdirectory(${LIBRARY})
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
@@ -54,25 +50,7 @@ set(CMAKE_BUILD_TYPE "Debug")
 add_compile_options(-Wall -pedantic -Og -D_FORTIFY_SOURCE=2 -fsanitize=address)
 set(CMAKE_C_STANDARD 23)
 
-
-
-# set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-# set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-# set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-
-# set(SHADERC_SKIP_INSTALL ON)
-# set(SHADERC_SKIP_TESTS ON)
-# set(SHADERC_SKIP_EXAMPLES ON)
-# set(SHADERC_ENABLE_COPYRIGHT_CHECK OFF)
-
-# set(SPIRV_HEADERS_SKIP_INSTAL OFF)
-# set(SPIRV_HEADERS_SKIP_EXAMPLES ON)
-
-target_link_libraries(${PROJECT_NAME} PUBLIC
-  shaderc
-  linkedlist
-  glfw
-)
+target_link_libraries(${PROJECT_NAME} PUBLIC deps)
 
 
 if (WIN32)
