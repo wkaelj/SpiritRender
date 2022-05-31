@@ -248,8 +248,6 @@ extern SpiritShader compileShader (
         outputShaderName,
         "main",
         settings);
-<<<<<<< Updated upstream
-=======
     
     shaderc_compilation_status output;
     output = shaderc_result_get_compilation_status (result);
@@ -259,7 +257,6 @@ extern SpiritShader compileShader (
         
         return (SpiritShader) {0, 0, 0};
     }
->>>>>>> Stashed changes
 
     size_t compiledShaderSize = shaderc_result_get_length(result);
 

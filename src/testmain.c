@@ -14,9 +14,6 @@ int main (int argc, char **argv) {
 
     spPlatformSetExecutableFolder (argv[0]);
 
-<<<<<<< Updated upstream
-    mainlooptest ();
-=======
     SpiritShader o = compileShader (
         "#version 450\nlayout (location = 0) out vec4 outColor;\nlayout(location = 0) in vec3 fragColor;\n\
 void main () {\noutColor = vec4(fragColor, 1.0);\n}",
@@ -26,7 +23,6 @@ void main () {\noutColor = vec4(fragColor, 1.0);\n}",
     db_assert(o.shader, "Shader failed");
 
     // mainlooptest ();
->>>>>>> Stashed changes
 
     return 0;
 }
