@@ -50,7 +50,9 @@ set(CMAKE_BUILD_TYPE "Debug")
 add_compile_options(-Wall -pedantic -Og -D_FORTIFY_SOURCE=2 -fsanitize=address)
 set(CMAKE_C_STANDARD 23)
 
-target_link_libraries(${PROJECT_NAME} PUBLIC deps)
+target_link_libraries(${PROJECT_NAME} PUBLIC
+  libs
+)
 
 
 if (WIN32)

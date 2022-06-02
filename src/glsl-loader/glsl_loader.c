@@ -220,7 +220,9 @@ extern SpiritShader compileShader (
         shaderc_target_env_vulkan,
         shaderc_env_version_vulkan_1_0);
 
-    SpiritShader out = (SpiritShader) {};
+    shaderc_compile_options_set_auto_map_locations(
+        settings,
+        true);
 
     // compile the shader
     result = shaderc_compile_into_spv(
@@ -236,7 +238,7 @@ extern SpiritShader compileShader (
     output = shaderc_result_get_compilation_status (result);
     if (output != shaderc_compilation_status_success)
     {
-        log_error ("Could not compile shader '%s' because of error %u; Code:\n%s", outputShaderName, output, src);
+        log_error ("Could not compile shader '%s' because of error %u\nError: %s\nCode:\n%s", outputShaderName, output, shaderc_result_get_error_message(result), src);
         
         return (SpiritShader) {0, 0, 0};
     }
