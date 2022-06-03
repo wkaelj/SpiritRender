@@ -101,25 +101,15 @@ SpiritBool spPlatformTestForFile(const char *filepath)
 u64 spPlatformTestFileSize(const char *filepath)
 {
 
-    log_debug ("Filepath: '%s'", filepath);
-    FILE *fp = fopen(filepath, "r");
+    struct stat data = (struct stat) {};
+    if (stat(filepath, &data) == -1)
+    {
+        if (errno == EEXIST) return 0;
+        log_perror("stat('%s') failed", filepath);
+        return 1;
+    }
 
-    if (!fp && errno != EEXIST) return 1;
-    if (!fp) return 0;
-    
-    fseek (fp, 0l, SEEK_END);
-    u64 size = ftell(fp);
-    fclose (fp);
-    return size;
-    // struct stat data = (struct stat) {};
-    // if (stat(filepath, &data) == -1)
-    // {
-    //     if (errno == EEXIST) return 0;
-    //     log_perror("stat('%s') failed");
-    //     return 1;
-    // }
-
-    // return data.st_size;
+    return data.st_size;
 }
 
 time_t spPlatformGetTime(void)

@@ -75,7 +75,7 @@ SpiritResult spReadFileText(
     // read file
     if (dest)
     {
-        fread(dest, *length - 1, 1, file);
+        fread(dest, *length, 1, file);
         dest[*length] = '\0';
     }
 
