@@ -47,7 +47,8 @@ static VkPipeline createPipeline(
 // - shaderInfo.type = SPIRIT_SHADER_TYPE_SHADER_TYPE
 // - size of dest is size of module count, at least -> dest[moduleCount]
 SpiritResult loadShaderCode (
-    SpiritShader       *dest,
+    SpiritDevice        device,
+    VkShaderModule     *dest,
     const u32           moduleCount,
     const SpiritShader *shaderInfo);
 
@@ -71,17 +72,16 @@ SpiritPipeline spCreatePipeline (
 
     // load shader modules
     u32 shaderCount = createInfo->shaderFilePathCount;
-    SpiritShader shaderCode[shaderCount];
-    loadShaderCode (shaderCode, shaderCount, createInfo->shaderFilePaths);
+    VkShaderModule shaderCode[shaderCount];
+    loadShaderCode (device, shaderCode, shaderCount, createInfo->shaderFilePaths);
     SpiritShaderType shaderTypes[shaderCount];
 
     pipeline->shaderCount = shaderCount;
     pipeline->shaders =     new_array (VkShaderModule, shaderCount);
-    pipeline->shaderCodes = new_array (SpiritShaderCode, shaderCount);
 
     for (u32 i = 0; i < shaderCount; i++)
     {
-        pipeline->shaders[i] = convertShaderToModule (device, &shaderCode[i]);
+        pipeline->shaders[i] = shaderCode[i];
     }
 
     // get config info
@@ -110,7 +110,6 @@ SpiritResult spDestroyPipeline (
     for (u32 i = 0; i < pipeline->shaderCount; i++)
     {
         vkDestroyShaderModule (device->device, pipeline->shaders[i], NULL);
-        dalloc (pipeline->shaderCodes[i]);
     }
     dalloc (pipeline->shaders);
     dalloc (pipeline);
@@ -151,6 +150,7 @@ static VkPipeline createPipeline(
         // TODO compute shader
         case SPIRIT_SHADER_TYPE_COMPUTE:
             log_fatal ("Compute shaders are not supported! yet...");
+            abort();
             break;
         default:
             log_fatal ("Unable to recognize shader type");
@@ -218,30 +218,37 @@ static VkPipeline createPipeline(
 // - shaderInfo.type = SPIRIT_SHADER_TYPE_SHADER_TYPE
 // - size of dest is size of module count, at least -> dest[moduleCount]
 SpiritResult loadShaderCode (
-    SpiritShader       *dest,
+    SpiritDevice        device,
+    VkShaderModule     *dest,
     const u32           moduleCount,
     const SpiritShader *shaderInfo)
 {
+
+    // store the error value in this and continue attemting to compile shaders
+    // so at least most of the shaders get compiled in the event of a failure
+    SpiritResult error = SPIRIT_SUCCESS;
 
     for (u32 i = 0; i < moduleCount; i++)
     {
         // load shader into s, to be error checked
         SpiritShader s = (SpiritShader) {};
-        s = loadSourceShader (shaderInfo[i].path, shaderInfo[i].type);
+        s = spLoadSourceShader (shaderInfo[i].path, shaderInfo[i].type);
 
         // error
-        if (s.shaderSize = 0)
+        if (s.shaderSize == 0)
         {
             log_error ("Failed to load shader '%s', index %u",
                 shaderInfo[i].path, i);
             return SPIRIT_FAILURE;
         }
-        db_assert (s.type == shaderInfo[i].type, "loadSourceShader did not set type!");
-        dest[i] = s;
+
+        // create shader module
+        if ((dest[i] = spConvertShaderToModule(device, &s)) == NULL) error = SPIRIT_FAILURE;
+        spDestroyShader(s); // clean up loaded shader code
     }
 
-    return SPIRIT_SUCCESS;
-}
+    return error;
+} // loadShaderCode
 
 // the default piplinse configuration, should work for almost everything
 SpiritResult defaultPipelineConfig(

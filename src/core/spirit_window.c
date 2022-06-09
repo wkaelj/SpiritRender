@@ -49,7 +49,7 @@ SpiritWindow spCreateWindow (SpiritWindowCreateInfo *createInfo) {
     if (window->window == NULL) {
         glfwGetError (&glfwError);
         log_fatal("Failed to create window. GLFW Error: %s", glfwError);
-    } else log_debug("Created Window");
+    }
 
     return window;
 }

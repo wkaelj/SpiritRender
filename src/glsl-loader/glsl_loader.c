@@ -41,12 +41,16 @@ shaderc_shader_kind convertShaderType (SpiritShaderType type)
         break;
     case SPIRIT_SHADER_TYPE_AUTO_DETECT:
         log_error("Must pass a valid shader type for shader compilation");
+        shadercType = 0;
+    case SPIRIT_SHADER_TYPE_MAX:
+        log_error("Must pass a valid shader type for shader compilation(not MAX)");
+        shadercType = 0;
     }
 
     return shadercType;
 }
 
-extern SpiritShader loadCompiledShader(const char *path, SpiritShaderType type)
+extern SpiritShader spLoadCompiledShader(const char *path, SpiritShaderType type)
 {
 
     u64 shaderCodeSize = 0;
@@ -78,17 +82,11 @@ extern SpiritShader loadCompiledShader(const char *path, SpiritShaderType type)
 }
 
 // load a shader from glsl source code
-extern SpiritShader loadSourceShader(
+extern SpiritShader spLoadSourceShader(
     const char *path,
     SpiritShaderType type)
 {
     SpiritShader out = {};
-
-    u32 filepathLength = 0;
-    spPlatformLocalizeFileName(NULL, path, &filepathLength);
-    char filepath[filepathLength];
-    spPlatformLocalizeFileName(filepath, path, &filepathLength);
-
     
     // shader filename, without path
     const char *strippedShaderName = spStringStrip(path, SPIRIT_PLATFORM_FOLDER_BREAK);
@@ -96,14 +94,12 @@ extern SpiritShader loadSourceShader(
 
     // check if shader has been precompiled
     u32 shaderCodePathLength = (
-        spPlatformGetExecutableFolderStrLen() +
         sizeof (GLSL_LOADER_CACHE_FOLDER) - 1 +
         strippedShaderNameLength +
         4); /* sizeof (".spv") - 1*/
 
     char shaderCodePath[shaderCodePathLength + 1];
-    npf_snprintf(shaderCodePath, shaderCodePathLength + 1, "%s%s%s%s",
-        spPlatformGetExecutableFolder(),
+    npf_snprintf(shaderCodePath, shaderCodePathLength + 1, "%s%s%s",
         GLSL_LOADER_CACHE_FOLDER,
         strippedShaderName,
         ".spv");
@@ -111,19 +107,19 @@ extern SpiritShader loadSourceShader(
     log_verbose("Scanning for shader '%s'", shaderCodePath);
 
     if (spReadFileExists (shaderCodePath) &&
-        spReadFileModifiedTime(shaderCodePath) > spReadFileModifiedTime (filepath))
+        spReadFileModifiedTime(shaderCodePath) > spReadFileModifiedTime (path))
     {
         log_verbose ("Loading compiled shader '%s'",
             shaderCodePath);
-        return loadCompiledShader(shaderCodePath, type);
+        return spLoadCompiledShader(shaderCodePath, type);
     } else // is a else rather then guard statment to save memory
     {
         
         // compile the shader from source code
 
-        if (!spReadFileExists(filepath))
+        if (!spReadFileExists(path))
         {
-            log_error ("Shader '%s' cannot be found", filepath);
+            log_error ("Shader '%s' cannot be found", path);
             return (SpiritShader) {0, 0, 0};
         }
 
@@ -147,13 +143,14 @@ extern SpiritShader loadSourceShader(
         }
 
         // load source code
-        size_t shaderSrcLength = spReadFileSize (filepath) + 1;
-        db_assert(shaderSrcLength, "Failed to read shader file size");
-        char shaderSrc[shaderSrcLength];
+        size_t shaderSrcLength = spReadFileSize (path);
+        db_assert(shaderSrcLength > 1, "Failed to read shader file size");
+        char shaderSrc[shaderSrcLength + 1];
         
-        spReadFileText (shaderSrc, filepath, &shaderSrcLength);
+        spReadFileText (shaderSrc, path, &shaderSrcLength);
+        shaderSrc[shaderSrcLength] = '\0';
 
-        SpiritShader out = compileShader (
+        SpiritShader out = spCompileShader (
             shaderSrc,
             shaderSrcLength,
             strippedShaderName,
@@ -163,6 +160,8 @@ extern SpiritShader loadSourceShader(
         {
             return out;
         }
+
+        log_debug("Gotten pointer = %p", out.shader);
 
         // write output file
         log_verbose ("Caching shader '%s' with size %u", shaderCodePath, out.shaderSize);
@@ -178,7 +177,6 @@ extern SpiritShader loadSourceShader(
             SPIRIT_TRUE);
         db_assert (catchBuffer == SPIRIT_SUCCESS, "Failed to truncate string");
 
-        log_debug ("Attempting to create cache folder '%s'", outputFolderPath);
         catchBuffer = spWriteFileFolder (outputFolderPath);
 
         db_assert (catchBuffer == SPIRIT_SUCCESS, "Failed to write folder");
@@ -195,7 +193,7 @@ extern SpiritShader loadSourceShader(
     }
 } // loadSourceShader
 
-extern SpiritShader compileShader (
+extern SpiritShader spCompileShader (
     const char      *src,
     const u32        srcLength,
     const char      *outputShaderName,
@@ -246,9 +244,22 @@ extern SpiritShader compileShader (
     size_t compiledShaderSize = shaderc_result_get_length(result);
     db_assert(compiledShaderSize, "compiled shader size cannot be 0");
 
-    SpiritShaderCode compiledShader = alloc (compiledShaderSize);
-    memcpy(compiledShader, (u32*) shaderc_result_get_bytes(result), compiledShaderSize);
+    SpiritShaderCode compiledShader = (SpiritShaderCode) alloc (compiledShaderSize);
 
+    const SpiritShaderCode p = (u32*) shaderc_result_get_bytes(result);
+    
+    compiledShader = memcpy (
+        compiledShader, 
+        shaderc_result_get_bytes(result), 
+        compiledShaderSize);
+
+    db_assert(memcmp(
+        compiledShader, 
+        shaderc_result_get_bytes(result), 
+        compiledShaderSize) != 0, "Shader did not copy)");
+    log_debug("Internal pointer = %p", compiledShader);
+
+    SpiritShader out = {};
     out.shader = compiledShader;
     out.shaderSize = compiledShaderSize;
     db_assert(out.shaderSize == compiledShaderSize, "Shader sizes do not match");
@@ -260,13 +271,13 @@ extern SpiritShader compileShader (
     shaderc_compiler_release(compiler);
 
     return out;
-}
+} // compileShader
 
 // convert loaded shader to a VkShaderModule
 // Try not to do this often, it is not a fast process
 // Remember to destroy the shader module when you are done with them
 // vkDestroyShaderModule (device, shader, callback (NULL))
-extern VkShaderModule convertShaderToModule(
+extern VkShaderModule spConvertShaderToModule(
     SpiritDevice device,
     SpiritShader *shader)
 {
@@ -274,7 +285,7 @@ extern VkShaderModule convertShaderToModule(
     VkShaderModuleCreateInfo moduleInfo = {};
     moduleInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     moduleInfo.codeSize = shader->shaderSize;
-    moduleInfo.pCode = (u32*) shader->shader;
+    moduleInfo.pCode = shader->shader;
 
     VkShaderModule out;
     if (vkCreateShaderModule(
@@ -285,4 +296,10 @@ extern VkShaderModule convertShaderToModule(
         return NULL;
 
     return out;
+}
+
+SpiritResult spDestroyShader(SpiritShader shader)
+{
+    free(shader.shader);
+    return SPIRIT_SUCCESS;
 }

@@ -51,10 +51,6 @@ SpiritSwapchain spCreateSwapchain (SpiritSwapchainCreateInfo createInfo, SpiritD
         device->swapchainDetails.capabilties.minImageExtent.height,
         device->swapchainDetails.capabilties.maxImageExtent.height);
 
-    log_debug("here");
-    log_debug("Maximum swapchain dimensions %ux%u",
-        device->swapchainDetails.capabilties.maxImageExtent.width,
-        device->swapchainDetails.capabilties.maxImageExtent.height);
     log_verbose("Window resolution '%ix%i'", createInfo.windowWidthPx, createInfo.windowHeightPx);
 
     SpiritSwapchain out = new_var(struct t_SpiritSwapchain);

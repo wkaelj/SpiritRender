@@ -137,7 +137,6 @@ SpiritResult spDestroyDevice (SpiritDevice device) {
         PFN_vkDestroyDebugUtilsMessengerEXT pfnDebugMessengerDestroy = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(device->instance, "vkDestroyDebugUtilsMessengerEXT");
         if (pfnDebugMessengerDestroy == NULL) log_error("Failed to load debug messenger destroy function");
         else pfnDebugMessengerDestroy (device->instance, device->debugMessenger, NULL);
-        log_debug("Destroyed debug messenger");
     }
     device->debugMessenger = NULL;
 
@@ -410,14 +409,13 @@ static SpiritBool checkValidationLayerSupport (const char *const *requiredLayerN
         //iterate through available extensions
         for (u32 x = 0; x < layerCount; x++) {
             if (strcmp (requiredLayerNames[i], availableLayers[x].layerName) == 0) {
-                log_debug("Found layer: %s", availableLayers[x].layerName);
                 found = true;
                 break;
             }
         }
 
         if (found == false) {
-            log_debug("Unavailable valiation layer: %s", requiredLayerNames[i]);
+            ("Unavailable valiation layer: %s", requiredLayerNames[i]);
             return SPIRIT_FALSE;
         }
     }

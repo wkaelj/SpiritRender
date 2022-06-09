@@ -18,7 +18,7 @@
 // loading functions
 
 // load a .spv shader, compiled to SPIR-V
-extern SpiritShader loadCompiledShader (
+extern SpiritShader spLoadCompiledShader (
     const char      *path, 
     SpiritShaderType type);
 
@@ -29,12 +29,12 @@ extern SpiritShader loadCompiledShader (
 //  - Creates cached shader files
 //  - Compiles shader source code
 //  - does not compile the shader of cache files exist
-extern SpiritShader loadSourceShader (
+extern SpiritShader spLoadSourceShader (
     const char      *filepath, 
     SpiritShaderType type);
 
 // compile a shader from glsl source code string
-extern SpiritShader compileShader(
+extern SpiritShader spCompileShader(
     const char      *src,
     const u32        srcLength,
     const char      *outputShaderName,
@@ -43,6 +43,8 @@ extern SpiritShader compileShader(
 // use functions
 
 // convert loaded shader to a VkShaderModule
-extern VkShaderModule convertShaderToModule (
+extern VkShaderModule spConvertShaderToModule (
     SpiritDevice device, 
     SpiritShader *shader);
+
+extern SpiritResult spDestroyShader(SpiritShader);

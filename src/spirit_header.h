@@ -7,11 +7,14 @@
 #endif
 
 // std
+
+#define __STDC_WANT_LIB_EXT1__ 1
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <assert.h>
 #include <string.h>
+#include <memory.h>
 #include <time.h>
 
 // vulkan

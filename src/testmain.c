@@ -15,15 +15,21 @@ int main (int argc, char **argv) {
 
     spPlatformSetExecutableFolder (argv[0]);
 
-    SpiritShader o = compileShader (
-        "#version 450\nlayout (location = 0) out vec4 outColor;layout(location = 0) in vec3 fragColor;\n \
-void main () {outColor = vec4(fragColor, 1.0);}",
-142, "frag", SPIRIT_SHADER_TYPE_FRAGMENT
-    );
+    const char *path = "shaders/simple_shader.frag";
+    u64 srcLen = spReadFileSize(path);
+    log_debug("Src length = %u", srcLen);
+    char src[srcLen + 1];
+    spReadFileText(src, path, &srcLen);
+    src[srcLen] = '\0';
+    db_assert(srcLen == strlen(src), "");
+
+    SpiritShader o = spCompileShader (src, srcLen, "frag", SPIRIT_SHADER_TYPE_FRAGMENT);
 
     db_assert(o.shader, "Shader failed");
 
-    // mainlooptest ();
+    spDestroyShader(o);
+
+    mainlooptest ();
 
     return 0;
 }

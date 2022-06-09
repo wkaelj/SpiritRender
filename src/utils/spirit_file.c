@@ -3,21 +3,38 @@
 #include <sys/stat.h>
 
 // just a wrapper, to help keep the file utilities organized
-u64 spReadFileSize(const char *filepath)
+u64 spReadFileSize(const char *path)
 {
+    // localize filepath
+    u32 pathLength = 0;
+    spPlatformLocalizeFileName(NULL, path, &pathLength);
+    char filepath[pathLength];
+    spPlatformLocalizeFileName(filepath, path, &pathLength);
     return spPlatformTestFileSize(filepath);
 }
 
-SpiritBool spReadFileExists(const char *filepath)
+SpiritBool spReadFileExists(const char *path)
 {
+
+        // localize filepath
+    u32 pathLength = 0;
+    spPlatformLocalizeFileName(NULL, path, &pathLength);
+    char filepath[pathLength];
+    spPlatformLocalizeFileName(filepath, path, &pathLength);
     return spPlatformTestForFile(filepath);
 }
 
 SpiritResult spReadFileBinary(
     void *restrict dest,
-    const char *filepath,
+    const char *path,
     u64 *restrict size)
 {
+
+    // localize filepath
+    u32 pathLength = 0;
+    spPlatformLocalizeFileName(NULL, path, &pathLength);
+    char filepath[pathLength];
+    spPlatformLocalizeFileName(filepath, path, &pathLength);
 
     db_assert(size, "Size cannot have a NULL value"); // size cannot be null
 
@@ -51,9 +68,15 @@ SpiritResult spReadFileBinary(
 
 SpiritResult spReadFileText(
     char *dest,
-    const char *filepath,
+    const char *path,
     u64 *restrict length)
 {
+
+        // localize filepath
+    u32 pathLength = 0;
+    spPlatformLocalizeFileName(NULL, path, &pathLength);
+    char filepath[pathLength];
+    spPlatformLocalizeFileName(filepath, path, &pathLength);
 
     db_assert(length, "Length must have be a valid pointer");
 
@@ -83,8 +106,14 @@ SpiritResult spReadFileText(
     return SPIRIT_SUCCESS;
 }
 
-time_t spReadFileModifiedTime(const char *restrict filepath)
+time_t spReadFileModifiedTime(const char *restrict path)
 {
+
+        // localize filepath
+    u32 pathLength = 0;
+    spPlatformLocalizeFileName(NULL, path, &pathLength);
+    char filepath[pathLength];
+    spPlatformLocalizeFileName(filepath, path, &pathLength);
     return spPlatformGetFileModifiedDate(filepath);
 }
 
@@ -93,13 +122,25 @@ SpiritResult spWriteFileBinary(
     const void *contents,
     const u32 size)
 {
+    // localize filepath
+    u32 pathLength = 0;
+    spPlatformLocalizeFileName(NULL, path, &pathLength);
+    char filepath[pathLength];
+    spPlatformLocalizeFileName(filepath, path, &pathLength);
 
-    FILE *file = fopen(path, "w");
+    FILE *file = fopen(filepath, "w");
     if (!file)
         return SPIRIT_FAILURE;
 
-    if (fwrite(path, size, 1, file) != size)
+
+
+    db_assert(ftell(file) == 0, "File not at start");
+
+    if (fwrite(path, size, 1, file) == 0 && ferror(file))
+    {
+        log_error("Failed to write data to file '%s'", path);
         return SPIRIT_FAILURE;
+    }
 
     if (fclose(file))
         return SPIRIT_UNDEFINED;
@@ -108,5 +149,10 @@ SpiritResult spWriteFileBinary(
 
 SpiritResult spWriteFileFolder(const char *path)
 {
-    return spPlatformCreateFolder(path);
+    // localize filepath
+    u32 pathLength = 0;
+    spPlatformLocalizeFileName(NULL, path, &pathLength);
+    char filepath[pathLength];
+    spPlatformLocalizeFileName(filepath, path, &pathLength);
+    return spPlatformCreateFolder(filepath);
 }

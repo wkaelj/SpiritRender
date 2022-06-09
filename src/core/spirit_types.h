@@ -119,9 +119,8 @@ typedef struct t_SpiritPipeline {
     VkRenderPass *renderPasses;
     uint32_t      renderPassCount;
 
-    VkShaderModule   *shaders;
-    SpiritShaderCode *shaderCodes;
-    u32               shaderCount;
+    VkShaderModule *shaders;
+    u32             shaderCount;
 } *SpiritPipeline;
 
 // shaders

@@ -19,6 +19,7 @@ void spPlatformSetExecutableFolder(char *name)
     spStringTruncate(g_executableDirectory, &pathLength, name, '/', true);
 
     g_executableDirectoryLength = pathLength;
+    db_assert(g_executableDirectoryLength == strlen(g_executableDirectory), "");
 }
 
 const char *spPlatformGetExecutableFolder(void)
@@ -83,6 +84,8 @@ SpiritResult spPlatformLocalizeFileName(char *output, const char *path, u32 *max
         if (output[i] == '\\')
             output[i] = SPIRIT_PLATFORM_FOLDER_BREAK;
     }
+
+    output && (output[*max] = '\0');
 
     return g_executableDirectoryLength + pathLength;
 }
@@ -153,7 +156,7 @@ SpiritResult spPlatformCreateFolder (const char *path)
         &localizerLength);
 
     if (filepath[localizerLength - 1] == SPIRIT_PLATFORM_FOLDER_BREAK)
-        filepath[localizerLength] = '\0';
+        filepath[localizerLength - 1] = '\0';
 
     for (char *p = filepath; *p != '\0'; p++)
         if (*p == SPIRIT_PLATFORM_FOLDER_BREAK)
