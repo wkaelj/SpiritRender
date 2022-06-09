@@ -136,7 +136,7 @@ SpiritResult spWriteFileBinary(
 
     db_assert(ftell(file) == 0, "File not at start");
 
-    if (fwrite(path, size, 1, file) == 0 && ferror(file))
+    if (fwrite(contents, size, 1, file) == 0 && ferror(file))
     {
         log_error("Failed to write data to file '%s'", path);
         return SPIRIT_FAILURE;
