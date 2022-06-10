@@ -1,10 +1,15 @@
 // test main function
 
 #include <spirit_header.h>
+
+// types
 #include "core/spirit_window.h"
 #include "core/spirit_device.h"
 #include "core/spirit_swapchain.h"
 #include "core/spirit_pipeline.h"
+#include "core/spirit_renderpass.h"
+
+// utils
 #include "glsl-loader/glsl_loader.h"
 #include "utils/spirit_file.h"
 #include "utils/platform.h"
@@ -75,6 +80,10 @@ void mainlooptest (void) {
     SpiritSwapchain swapchain = spCreateSwapchain(swapCreateInfo, device, NULL);
     db_assert(swapchain, "Must have swapchain");
 
+    SpiritRenderPassCreateInfo renderPassCreateInfo = {};
+
+    SpiritRenderPass renderPass = spCreateRenderPass(&renderPassCreateInfo, device, swapchain);
+
     SpiritPipelineCreateInfo pipelineCreateInfo = {};
     pipelineCreateInfo.shaderFilePathCount = 2;
     SpiritShader shaders[2];
@@ -88,11 +97,17 @@ void mainlooptest (void) {
     pipelineCreateInfo.renderWidth = swapCreateInfo.windowWidthPx;
     pipelineCreateInfo.renderHeight = swapCreateInfo.windowHeightPx;
 
-    SpiritPipeline pipeline = spCreatePipeline (device, &pipelineCreateInfo, NULL, NULL);
+    SpiritPipeline pipeline = spCreatePipeline (
+        device, 
+        &pipelineCreateInfo,
+        swapchain,
+        renderPass, 
+        NULL);
 
     while (!spWindowShouldClose (window));
 
     spDestroyPipeline (device, pipeline);
+    spDestroyRenderPass(renderPass, device);
     spDestroySwapchain(swapchain, device);
     spDestroyDevice(device);
     spDestroyWindow (window);

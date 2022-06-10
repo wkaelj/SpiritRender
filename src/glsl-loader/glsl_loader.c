@@ -218,10 +218,6 @@ extern SpiritShader spCompileShader (
         shaderc_target_env_vulkan,
         shaderc_env_version_vulkan_1_0);
 
-    shaderc_compile_options_set_auto_map_locations(
-        settings,
-        true);
-
     // compile the shader
     result = shaderc_compile_into_spv(
         compiler,
@@ -246,17 +242,17 @@ extern SpiritShader spCompileShader (
 
     SpiritShaderCode compiledShader = (SpiritShaderCode) alloc (compiledShaderSize);
 
-    const SpiritShaderCode p = (u32*) shaderc_result_get_bytes(result);
+    const SpiritShaderCode shadercResult = (u32*) shaderc_result_get_bytes(result);
     
     compiledShader = memcpy (
         compiledShader, 
-        shaderc_result_get_bytes(result), 
+        shadercResult, 
         compiledShaderSize);
 
     db_assert(memcmp(
         compiledShader, 
-        shaderc_result_get_bytes(result), 
-        compiledShaderSize) != 0, "Shader did not copy)");
+        shadercResult, 
+        compiledShaderSize) == 0, "Shader did not copy)");
     log_debug("Internal pointer = %p", compiledShader);
 
     SpiritShader out = {};

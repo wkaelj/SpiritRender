@@ -15,14 +15,12 @@ typedef struct t_FixedFuncInfo
 {
     VkViewport                             viewport;
     VkRect2D                               scissor;
-    VkPipelineViewportStateCreateInfo      viewportInfo;
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
     VkPipelineRasterizationStateCreateInfo rasterizationInfo;
     VkPipelineMultisampleStateCreateInfo   multisampleInfo;
     VkPipelineColorBlendAttachmentState    colorBlendAttachment;
     VkPipelineColorBlendStateCreateInfo    colorBlendInfo;
     VkPipelineDepthStencilStateCreateInfo  depthStencilInfo;
-    VkPipelineLayout                       pipelineLayout;
     VkRenderPass                           renderPass;
     uint32_t                               subpass;
 } FixedFuncInfo;
@@ -34,10 +32,14 @@ typedef struct t_FixedFuncInfo
 // create a graphics pipeline
 static VkPipeline createPipeline(
     SpiritDevice            device,
+    SpiritRenderPass        renderPass,
     const FixedFuncInfo    *fixedInfo,
     const u32               shaderCount,
     const VkShaderModule   *shaders,
     const SpiritShaderType *shaderTypes);
+
+// creates a graphics pipeline layout
+static VkPipelineLayout createLayout();
 
 // load array of shaders
 // uses path and type from shaderInfo array
@@ -46,13 +48,15 @@ static VkPipeline createPipeline(
 // - shaderInfo.path = "path/to/shader.vert" (no spv)
 // - shaderInfo.type = SPIRIT_SHADER_TYPE_SHADER_TYPE
 // - size of dest is size of module count, at least -> dest[moduleCount]
-SpiritResult loadShaderCode (
+static SpiritResult loadShaderCode (
     SpiritDevice        device,
     VkShaderModule     *dest,
     const u32           moduleCount,
     const SpiritShader *shaderInfo);
 
-SpiritResult defaultPipelineConfig(
+// automaticaly handles options for pipeline creation
+// using one big spagetti monster
+static SpiritResult defaultPipelineConfig(
     SpiritPipelineCreateInfo *createInfo, 
     FixedFuncInfo *pConfigInfo);
 
@@ -64,7 +68,7 @@ SpiritPipeline spCreatePipeline (
     const SpiritDevice        device,
     SpiritPipelineCreateInfo *createInfo,
     const SpiritSwapchain     swapchain,
-    // renderpasses?
+    const SpiritRenderPass    renderPass,
     SpiritPipeline            optionalPipeline)
 {
 
@@ -74,7 +78,13 @@ SpiritPipeline spCreatePipeline (
     u32 shaderCount = createInfo->shaderFilePathCount;
     VkShaderModule shaderCode[shaderCount];
     loadShaderCode (device, shaderCode, shaderCount, createInfo->shaderFilePaths);
+
+    // update shader types
     SpiritShaderType shaderTypes[shaderCount];
+    for (u32 i = 0; i < shaderCount; i++)
+    {
+        shaderTypes[i] = createInfo->shaderFilePaths[i].type;
+    }
 
     pipeline->shaderCount = shaderCount;
     pipeline->shaders =     new_array (VkShaderModule, shaderCount);
@@ -90,6 +100,7 @@ SpiritPipeline spCreatePipeline (
 
     pipeline->pipeline = createPipeline (
         device,
+        renderPass,
         &fixedInfo,
         pipeline->shaderCount,
         pipeline->shaders,
@@ -117,12 +128,32 @@ SpiritResult spDestroyPipeline (
     return SPIRIT_SUCCESS;
 }
 
+VkPipelineLayout createLayout(SpiritDevice device)
+{
+    VkPipelineLayoutCreateInfo layoutInfo = {};
+    layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    layoutInfo.setLayoutCount = 0;
+    layoutInfo.pSetLayouts = NULL;
+    layoutInfo.pushConstantRangeCount = 0;
+    layoutInfo.pPushConstantRanges = NULL;
+
+    VkPipelineLayout layout = VK_NULL_HANDLE;
+    if (vkCreatePipelineLayout(device->device, &layoutInfo, NULL, &layout))
+    {
+        log_error("Failed to create pipeline layout");
+        return NULL;
+    }
+
+    return layout;
+}
+
 //
 // Helper Function Implementation 
 //
 
 static VkPipeline createPipeline(
     SpiritDevice            device,
+    SpiritRenderPass        renderPass,
     const FixedFuncInfo    *fixedInfo,
     const u32               shaderCount,
     const VkShaderModule   *shaders,
@@ -153,7 +184,7 @@ static VkPipeline createPipeline(
             abort();
             break;
         default:
-            log_fatal ("Unable to recognize shader type");
+            log_fatal ("Unable to recognize shader type %u", shaderTypes[i]);
             break;
         }
 
@@ -174,21 +205,30 @@ static VkPipeline createPipeline(
     vertInfo.vertexBindingDescriptionCount =   0;
     vertInfo.pVertexBindingDescriptions =      NULL;
 
+
+    VkPipelineViewportStateCreateInfo viewportInfo = {};
+    viewportInfo.sType = 
+        VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    viewportInfo.viewportCount = 1;
+    viewportInfo.pViewports =   &fixedInfo->viewport;
+    viewportInfo.scissorCount =  1;
+    viewportInfo.pScissors =    &fixedInfo->scissor;
+
     VkGraphicsPipelineCreateInfo pipelineInfo = (VkGraphicsPipelineCreateInfo) {};
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     pipelineInfo.stageCount =           shaderCount;
     pipelineInfo.pStages =              shaderCreateInfo;
     pipelineInfo.pVertexInputState =   &vertInfo;
     pipelineInfo.pInputAssemblyState = &fixedInfo->inputAssemblyInfo;
-    pipelineInfo.pViewportState =      &fixedInfo->viewportInfo;
+    pipelineInfo.pViewportState =      &viewportInfo;
     pipelineInfo.pRasterizationState = &fixedInfo->rasterizationInfo;
     pipelineInfo.pColorBlendState =    &fixedInfo->colorBlendInfo;
     pipelineInfo.pDepthStencilState =  &fixedInfo->depthStencilInfo;
     pipelineInfo.pDynamicState =        NULL;
     
-    pipelineInfo.layout =     fixedInfo->pipelineLayout;
-    pipelineInfo.renderPass = fixedInfo->renderPass;
-    pipelineInfo.subpass =    fixedInfo->subpass;
+    pipelineInfo.layout =     createLayout(device);
+    pipelineInfo.renderPass = renderPass->renderPass;
+    pipelineInfo.subpass =    0;
 
     pipelineInfo.basePipelineIndex = -1;
     pipelineInfo.basePipelineHandle = NULL;
@@ -276,11 +316,6 @@ SpiritResult defaultPipelineConfig(
     configInfo.scissor.extent.width = createInfo->windowWidth;
     configInfo.scissor.extent.height = createInfo->windowHeight;
 
-    configInfo.viewportInfo = (VkPipelineViewportStateCreateInfo) {};
-    configInfo.viewportInfo.viewportCount = 1;
-    configInfo.viewportInfo.pViewports =   &configInfo.viewport;
-    configInfo.viewportInfo.scissorCount =  1;
-    configInfo.viewportInfo.pScissors =    &configInfo.scissor;
 
     configInfo.rasterizationInfo = (VkPipelineRasterizationStateCreateInfo) {};
     configInfo.rasterizationInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -312,18 +347,12 @@ SpiritResult defaultPipelineConfig(
         VK_COLOR_COMPONENT_B_BIT |
         VK_COLOR_COMPONENT_A_BIT;
     configInfo.colorBlendAttachment.blendEnable = VK_FALSE;
-    configInfo.colorBlendAttachment.srcColorBlendFactor = 
-        VK_BLEND_FACTOR_ONE;  // Optional
-    configInfo.colorBlendAttachment.dstColorBlendFactor = 
-        VK_BLEND_FACTOR_ZERO; // Optional
-    configInfo.colorBlendAttachment.colorBlendOp = 
-        VK_BLEND_OP_ADD;             // Optional
-    configInfo.colorBlendAttachment.srcAlphaBlendFactor = 
-        VK_BLEND_FACTOR_ONE;  // Optional
-    configInfo.colorBlendAttachment.dstAlphaBlendFactor = 
-        VK_BLEND_FACTOR_ZERO; // Optional
-    configInfo.colorBlendAttachment.alphaBlendOp = 
-        VK_BLEND_OP_ADD;             // Optional
+    configInfo.colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
+    configInfo.colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;// Optional
+    configInfo.colorBlendAttachment.colorBlendOp =        VK_BLEND_OP_ADD; // Optional
+    configInfo.colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
+    configInfo.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;// Optional
+    configInfo.colorBlendAttachment.alphaBlendOp =        VK_BLEND_OP_ADD; // Optional
 
     configInfo.colorBlendInfo = (VkPipelineColorBlendStateCreateInfo) {};
     configInfo.colorBlendInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;

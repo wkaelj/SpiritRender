@@ -26,7 +26,7 @@ SpiritPipeline spCreatePipeline (
     const SpiritDevice        device,
     SpiritPipelineCreateInfo *createInfo,
     const SpiritSwapchain     swapchain,
-    // renderpasses?
+    const SpiritRenderPass    renderPass,
     SpiritPipeline            optionalPipeline);
 
 // destroy a pipeline and free associated memory

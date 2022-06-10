@@ -6,9 +6,9 @@
 // Kael Johnston March 22 2022
 
 SpiritRenderPass spCreateRenderPass (
-    SpiritRenderPassCreateInfo createInfo, 
-    const SpiritDevice         device,
-    const SpiritSwapchain      swapchain) {
+    SpiritRenderPassCreateInfo *createInfo, 
+    const SpiritDevice          device,
+    const SpiritSwapchain       swapchain) {
 
     SpiritRenderPass out = new_var(struct t_SpiritRenderPass);
 
@@ -51,12 +51,15 @@ SpiritRenderPass spCreateRenderPass (
     return out;
 }
 
-SpiritResult spDestroyRenderPass (SpiritRenderPass renderPass, SpiritDevice device) {
+SpiritResult spDestroyRenderPass (
+    SpiritRenderPass renderPass, 
+    SpiritDevice     device)
+{
 
     if (renderPass == NULL) return SPIRIT_FAILURE;
     vkDestroyRenderPass(device->device, renderPass->renderPass, NULL);
 
     dalloc(renderPass);
 
-     return SPIRIT_SUCCESS;
+    return SPIRIT_SUCCESS;
 }

@@ -8,6 +8,7 @@
 
 typedef struct t_SpiritSwapchainCreateInfo {
 
+    // TODO vsync option
     SpiritBool         selectedPresentMode;
     VkPresentModeKHR   preferredPresentMode;
     SpiritBool         selectedFormat;

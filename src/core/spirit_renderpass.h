@@ -41,5 +41,16 @@ typedef struct t_SpiritRenderPassCreateInfo {
 // Functions
 //
 
+// create a render pass
+SpiritRenderPass spCreateRenderPass(
+    SpiritRenderPassCreateInfo *createInfo, 
+    const SpiritDevice          device,
+    const SpiritSwapchain       swapchain);
+
+SpiritResult spDestroyRenderPass(
+    SpiritRenderPass renderPass, 
+    SpiritDevice     device);
+
 // convert render pass settings into render pass create info
-SpiritRenderPassCreateInfo spRenderPassExpandSettings (SpiritRenderPassSettings settings);
+SpiritRenderPassCreateInfo spRenderPassExpandSettings (
+    SpiritRenderPassSettings *settings);
