@@ -3,11 +3,7 @@
 #include <spirit_header.h>
 
 // types
-#include "core/spirit_window.h"
-#include "core/spirit_device.h"
-#include "core/spirit_swapchain.h"
-#include "core/spirit_pipeline.h"
-#include "core/spirit_renderpass.h"
+#include "core/spirit_context.h"
 
 // utils
 #include "glsl-loader/glsl_loader.h"
@@ -41,74 +37,23 @@ int main (int argc, char **argv) {
 
 void mainlooptest (void) {
 
-    // create window
-    SpiritWindowCreateInfo windowCreateInfo;
-    windowCreateInfo.w = 800;
-    windowCreateInfo.h = 600;
-    windowCreateInfo.title = "Hello Spirit";
-    windowCreateInfo.fullscreen = SPIRIT_FALSE;
+    SpiritContextCreateInfo contextInfo = {};
+    contextInfo.enableValidation = true;
+    contextInfo.fragmentShader = "shaders/simple_shader.frag";
+    contextInfo.vertexShader = "shader/simple_shader.vert";
+    contextInfo.windowName = "Hi Triangle :D";
+    contextInfo.windowSize = (SpiritResolution) {600, 600};
+    contextInfo.windowFullscreen = false;
 
-    SpiritWindow window = spCreateWindow (&windowCreateInfo);
-    db_assert(window, "Must have window");
+    SpiritContext context = spCreateContext(&contextInfo);
 
-    // create device
-    SpiritDeviceCreateInfo deviceCreateInfo = {};
-    deviceCreateInfo.enableValidation = SPIRIT_TRUE;
-    deviceCreateInfo.powerSaveMode = SPIRIT_FALSE;
+    while (!spWindowShouldClose (context->window)){
 
-    deviceCreateInfo.appName = "TestApp";
-    deviceCreateInfo.appVersion = VK_MAKE_VERSION(0, 0, 0);
-    deviceCreateInfo.engineName = "Spirit Render";
-    deviceCreateInfo.engineVersion = VK_MAKE_VERSION(0, 0, 0);
+        spContextSubmitFrame(context);
+        vkDeviceWaitIdle(context->device->device);
+    }
 
-    deviceCreateInfo.windowExtensions = spWindowGetExtensions(window);
-    deviceCreateInfo.window = window;
+    spDestroyContext(context);
 
-    const char *deviceExtensions[1] = {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-    };
 
-    deviceCreateInfo.requiredDeviceExtensions = deviceExtensions;
-    deviceCreateInfo.requiredDeviceExtensionCount = 1;
-    SpiritDevice device = spCreateDevice (&deviceCreateInfo);
-    db_assert(device, "Must have device");
-
-    // create swapchain
-    SpiritSwapchainCreateInfo swapCreateInfo = {};
-    spWindowGetPixelSize(window, &swapCreateInfo.windowWidthPx, &swapCreateInfo.windowHeightPx);
-
-    SpiritSwapchain swapchain = spCreateSwapchain(swapCreateInfo, device, NULL);
-    db_assert(swapchain, "Must have swapchain");
-
-    SpiritRenderPassCreateInfo renderPassCreateInfo = {};
-
-    SpiritRenderPass renderPass = spCreateRenderPass(&renderPassCreateInfo, device, swapchain);
-
-    SpiritPipelineCreateInfo pipelineCreateInfo = {};
-    pipelineCreateInfo.shaderFilePathCount = 2;
-    SpiritShader shaders[2];
-    shaders[0].path = "shaders/simple_shader.frag";
-    shaders[0].type = SPIRIT_SHADER_TYPE_FRAGMENT;
-    shaders[1].path = "shaders/simple_shader.vert";
-    shaders[1].type = SPIRIT_SHADER_TYPE_VERTEX;
-    pipelineCreateInfo.shaderFilePaths = shaders;
-    pipelineCreateInfo.windowWidth = swapCreateInfo.windowWidthPx;
-    pipelineCreateInfo.windowHeight = swapCreateInfo.windowHeightPx;
-    pipelineCreateInfo.renderWidth = swapCreateInfo.windowWidthPx;
-    pipelineCreateInfo.renderHeight = swapCreateInfo.windowHeightPx;
-
-    SpiritPipeline pipeline = spCreatePipeline (
-        device, 
-        &pipelineCreateInfo,
-        swapchain,
-        renderPass, 
-        NULL);
-
-    while (!spWindowShouldClose (window));
-
-    spDestroyPipeline (device, pipeline);
-    spDestroyRenderPass(renderPass, device);
-    spDestroySwapchain(swapchain, device);
-    spDestroyDevice(device);
-    spDestroyWindow (window);
 }

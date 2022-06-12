@@ -29,6 +29,10 @@ SpiritPipeline spCreatePipeline (
     const SpiritRenderPass    renderPass,
     SpiritPipeline            optionalPipeline);
 
+SpiritResult spPipelineBindCommandBuffer(
+    SpiritPipeline pipeline,
+    VkCommandBuffer buffer);
+
 // destroy a pipeline and free associated memory
 SpiritResult spDestroyPipeline (
     SpiritDevice   device,

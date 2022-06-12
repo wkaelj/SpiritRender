@@ -174,7 +174,7 @@ extern SpiritShader spLoadSourceShader(
             &shaderCodePathLength,
             shaderCodePath,
             SPIRIT_PLATFORM_FOLDER_BREAK,
-            SPIRIT_TRUE);
+            true);
         db_assert (catchBuffer == SPIRIT_SUCCESS, "Failed to truncate string");
 
         catchBuffer = spWriteFileFolder (outputFolderPath);

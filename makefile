@@ -16,10 +16,6 @@ noshade:
 
 debug:
 	cd $(BUILDFDR)
-	$(DEBUGGER) -tui $(BUILDFDR)/$(EXEC)
-
-debugngui:
-	cd $(BUILDFDR)
 	$(DEBUGGER) $(BUILDFDR)/$(EXEC)
 
 # use dmalloc sometimes because memory is hard

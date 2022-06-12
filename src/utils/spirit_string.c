@@ -24,7 +24,7 @@ SpiritResult spStringTruncate(
     u32 *restrict length,
     const char *restrict str,
     const char slicer,
-    SpiritBool inclusive)
+    bool inclusive)
 {
 
     db_assert(length, "Length value cannot be null");

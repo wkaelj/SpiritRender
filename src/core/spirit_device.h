@@ -14,8 +14,8 @@
 
 // information used to create logical device
 typedef struct t_SpiritDeviceCreateInfo {
-    SpiritBool powerSaveMode; // prefer integrated GPU, and limit framerate
-    SpiritBool enableValidation; // enable vulkan validation layers
+    bool powerSaveMode; // prefer integrated GPU, and limit framerate
+    bool enableValidation; // enable vulkan validation layers
 
     const char            *appName;
     u32                    appVersion;
@@ -36,6 +36,28 @@ typedef struct t_SpiritDeviceCreateInfo {
 
 // create a spirit device
 SpiritDevice spCreateDevice (SpiritDeviceCreateInfo *createInfo);
+
+// find the format supported by the device
+VkFormat spDeviceFindSupportedFormat(
+    const SpiritDevice device,
+    const VkFormat *candidates, 
+    const u32 candidateCount, 
+    const VkImageTiling tiling, 
+    const VkFormatFeatureFlags features);
+
+// find the memory type
+u32 spDeviceFindMemoryType(
+    const SpiritDevice device, 
+    u32 typeFilter, 
+    VkMemoryPropertyFlags properties);
+
+// create a image using the specified vulkan device
+SpiritResult spDeviceCreateImage(
+    const SpiritDevice device,
+    const VkImageCreateInfo *imageInfo,
+    VkMemoryPropertyFlags memoryFlags,
+    VkImage *image,
+    VkDeviceMemory *imageMemory);
 
 // destroy spirit device
 SpiritResult spDestroyDevice (SpiritDevice device);

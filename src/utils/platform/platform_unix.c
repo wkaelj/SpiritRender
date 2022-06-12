@@ -95,10 +95,10 @@ char *spPlatformGetCWD(void)
     return getcwd(NULL, 0);
 }
 
-SpiritBool spPlatformTestForFile(const char *filepath)
+bool spPlatformTestForFile(const char *filepath)
 {
-    if ((unsigned) access(filepath, F_OK | R_OK)) return SPIRIT_FALSE;
-    return SPIRIT_TRUE;
+    if ((unsigned) access(filepath, F_OK | R_OK)) return false;
+    return true;
 }
 
 u64 spPlatformTestFileSize(const char *filepath)

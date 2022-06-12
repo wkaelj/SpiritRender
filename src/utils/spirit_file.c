@@ -13,7 +13,7 @@ u64 spReadFileSize(const char *path)
     return spPlatformTestFileSize(filepath);
 }
 
-SpiritBool spReadFileExists(const char *path)
+bool spReadFileExists(const char *path)
 {
 
         // localize filepath

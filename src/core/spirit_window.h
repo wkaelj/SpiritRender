@@ -9,14 +9,11 @@
 //
 // types
 // 
-// actual window information is kept private because of 
-// platform specific details
-typedef struct t_SpiritWindow *SpiritWindow;
 
 typedef struct t_SpiritWindowCreateInfo {
-    int32_t w, h; // size of window in screen units
-    char   *title;
-    bool    fullscreen;
+    uint32_t w, h; // size of window in screen units
+    const char *title;
+    bool fullscreen;
 } SpiritWindowCreateInfo;
 
 typedef struct t_SpiritWindowExtensions {
@@ -33,7 +30,7 @@ SpiritWindow spCreateWindow (SpiritWindowCreateInfo *createInfo);
 SpiritResult spDestroyWindow (SpiritWindow window);
 
 // check if a window should remain open or has been closed by the user
-SpiritBool spWindowShouldClose (SpiritWindow window);
+bool spWindowShouldClose (SpiritWindow window);
 
 // resize window
 SpiritResult spResizeWindow (SpiritWindow window, uint32_t w, uint32_t h);

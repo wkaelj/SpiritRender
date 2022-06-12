@@ -18,7 +18,7 @@ u64 spReadFileSize(const char *filepath);
 
 // test if a file exits
 // returns size of file, 0 if it does not exist
-SpiritBool spReadFileExists(const char *filepath);
+bool spReadFileExists(const char *filepath);
 
 // read a binary file
 // if dest it null it will only do size

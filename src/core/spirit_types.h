@@ -29,12 +29,6 @@
 // Enumerations
 //
 
-// function return values
-typedef enum e_SpiritBool {
-    SPIRIT_TRUE = 1,
-    SPIRIT_FALSE = 0
-} SpiritBool;
-
 typedef enum e_SpiritResult {
     SPIRIT_SUCCESS = 0,  // total success
     SPIRIT_FAILURE = 1,  // certain failure
@@ -44,6 +38,12 @@ typedef enum e_SpiritResult {
 //
 // Structures
 //
+
+typedef struct t_SpiritResolution
+{
+    u64 w;
+    u64 h;
+} SpiritResolution;
 
 typedef unsigned char byte;
 
@@ -69,6 +69,8 @@ typedef struct t_SpiritDevice {
     VkPhysicalDevice         physicalDevice;
     VkDebugUtilsMessengerEXT debugMessenger;
 
+    VkCommandPool commandPool;
+
     VkSurfaceKHR windowSurface;
 
     VkQueue    graphicsQueue;
@@ -79,25 +81,34 @@ typedef struct t_SpiritDevice {
     const char *const *deviceExtensions;
     u32                deviceExtensionCount;
 
-    SpiritBool powerSaveMode;
-    SpiritBool validationEnabled;
+    bool powerSaveMode;
+    bool validationEnabled;
 
     SpiritSwapchainSupportInfo swapchainDetails;
 } *SpiritDevice;
+
+// actual window information is kept private because of 
+// platform specific details
+typedef struct t_SpiritWindow *SpiritWindow;
 
 // render pass
 typedef struct t_SpiritRenderPass {
     VkRenderPass renderPass;
 
+
+
 } *SpiritRenderPass;
 
 // swapchain
 typedef struct t_SpiritSwapchain {
+
+    // swapchain
     VkSwapchainKHR             swapchain;
     SpiritSwapchainSupportInfo supportInfo;
 
+
     VkExtent2D         extent;
-    VkSurfaceFormatKHR format;
+    VkSurfaceFormatKHR surfaceFormat;
     VkPresentModeKHR   presentMode;
 
     // VkSwapchainCreateInfoKHR createInfo; // used to recreate
@@ -106,6 +117,29 @@ typedef struct t_SpiritSwapchain {
     VkImage     *images;
     u32          imageCount;
     VkImageView *imageViews;
+    VkFormat imageFormat;
+
+    VkImage *depthImages;
+    VkImageView *depthImageViews;
+    VkDeviceMemory *depthImageMemory;
+    VkFormat depthFormat;
+
+    // sync
+    VkSemaphore *imageAvailableSemaphores;
+    u32 imageAvailableSemaphoreCount;
+    VkSemaphore *renderFinishedSemaphores;
+    u32 renderFinishedSemaphoreCount;
+
+    VkFence *inFlightFences;
+    u32 inFlightFenceCount;
+    VkFence *imagesInFlight;
+    u32 imagesInFlightCount;
+
+    VkFramebuffer *framebuffers;
+    u32            framebufferCount;
+    
+    u32 currentFrame;
+
 } *SpiritSwapchain;
 
 // store a pointer to compiled shader code
@@ -113,12 +147,9 @@ typedef u32 *SpiritShaderCode;
 
 // pipeline
 typedef struct t_SpiritPipeline {
+
     VkPipeline    pipeline;
-
-    // render passes
-    VkRenderPass *renderPasses;
-    uint32_t      renderPassCount;
-
+    VkPipelineLayout layout;    
     VkShaderModule *shaders;
     u32             shaderCount;
 } *SpiritPipeline;
@@ -141,3 +172,22 @@ typedef struct t_SpiritShader {
     SpiritShaderCode shader;
     u64              shaderSize;
 } SpiritShader;
+
+// spirit context
+typedef struct t_SpiritContext
+{
+    SpiritWindow window;
+
+    SpiritDevice     device;
+    SpiritSwapchain  swapchain;
+    SpiritRenderPass *renderPasses;
+    u32               renderPassCount;
+    SpiritPipeline  *pipelines;
+    u32              pipelineCount;
+
+    // command buffers
+    VkCommandBuffer *commandBuffers;
+    u32              commandBufferCount;
+
+    SpiritResolution windowSize; // use for UI sizes, stored as screen units
+} *SpiritContext;
