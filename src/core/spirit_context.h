@@ -1,3 +1,4 @@
+#pragma once
 #include <spirit_header.h>
 
 // Create a spirit render context
@@ -10,6 +11,7 @@
 #include "spirit_renderpass.h"
 #include "spirit_pipeline.h"
 #include "spirit_window.h"
+#include "spirit_material.h"
 
 typedef struct t_SpiritContextCreateInfo
 {
@@ -31,14 +33,52 @@ typedef struct t_SpiritContextCreateInfo
 
 } SpiritContextCreateInfo;
 
+struct t_SpiritContext
+{
+    SpiritWindow window;
+
+    SpiritDevice     device;
+    SpiritSwapchain  swapchain;
+
+    // materials
+    SpiritMaterial *materials; // TODO linkedlist
+    u32 materialCount;
+
+    // command buffers
+    VkCommandBuffer *commandBuffers;
+    size_t           commandBufferCount;
+    u32              commandBufferIndex; // which command buffer to use to draw
+    bool isRecording; // if the command buffers are currently recording
+
+    SpiritResolution windowSize; // use for UI sizes, stored as screen units
+    SpiritResolution screenResolution; // resolution in px, use for 
+};
+
 SpiritContext spCreateContext(SpiritContextCreateInfo *createInfo);
+
+// perform basic tasks including:
+//  - checking if context should remain open
+//  - resizing the swapchain, if required
+//  - selecting the next framebuffer
+//  - beginning the command buffer for draw commands
+SpiritContext spContextUpdateAndBegin(SpiritContext context);
 
 SpiritResult spContextSubmitFrame(SpiritContext context);
 
-SpiritResult spContextAddObject(void);
+// perform basic tasks including:
+//  - checking if context should remain open
+//  - resizing the swapchain, if required
+//  - selecting the next framebuffer
+//  - beginning the command buffer for draw commands
+// and more complex rendering tasks such as
+//  - submitting material commands to the swapchain
+//  - issuing a draw call
+SpiritResult spContextAddMaterial(
+    SpiritContext context,
+    SpiritMaterial material);
 
-SpiritResult spContextAddMaterial(void);
-
-SpiritResult spContextRemoveMaterial(void);
+SpiritResult spContextRemoveMaterial(
+    SpiritContext context,
+    const char *materialName);
 
 SpiritResult spDestroyContext(SpiritContext context);

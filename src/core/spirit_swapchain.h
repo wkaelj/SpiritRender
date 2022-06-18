@@ -1,5 +1,6 @@
 #pragma once
 #include <spirit_header.h>
+#include "spirit_renderpass.h"
 
 // swapchain creation and recreation
 //
@@ -23,6 +24,47 @@ typedef struct t_SpiritSwapchainCreateInfo {
 
 } SpiritSwapchainCreateInfo;
 
+struct t_SpiritSwapchain {
+
+    // swapchain
+    VkSwapchainKHR             swapchain;
+    SpiritSwapchainSupportInfo supportInfo;
+
+
+    VkExtent2D         extent;
+    VkSurfaceFormatKHR surfaceFormat;
+    VkPresentModeKHR   presentMode;
+
+    // VkSwapchainCreateInfoKHR createInfo; // used to recreate
+
+    // images
+    VkImage     *images;
+    u32          imageCount;
+    VkImageView *imageViews;
+    VkFormat imageFormat;
+
+    VkImage *depthImages;
+    VkImageView *depthImageViews;
+    VkDeviceMemory *depthImageMemory;
+    VkFormat depthFormat;
+
+    // sync
+    VkSemaphore *imageAvailableSemaphores;
+    u32 imageAvailableSemaphoreCount;
+    VkSemaphore *renderFinishedSemaphores;
+    u32 renderFinishedSemaphoreCount;
+
+    VkFence *inFlightFences;
+    u32 inFlightFenceCount;
+    VkFence *imagesInFlight;
+    u32 imagesInFlightCount;
+
+    VkFramebuffer *framebuffers;
+    u32            framebufferCount;
+    
+    u32 currentFrame;
+
+};
 
 // create a new swapchain. Can optionaly pass a old swapchain, which will be recreated with new window resolution
 SpiritSwapchain spCreateSwapchain (

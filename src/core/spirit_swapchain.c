@@ -39,16 +39,22 @@ VkFormat findDepthFormat(const SpiritDevice device);
 //
 
 // create swapchain instance
-SpiritSwapchain spCreateSwapchain (SpiritSwapchainCreateInfo createInfo, SpiritDevice device, SpiritSwapchain optionalSwapchain) {
+SpiritSwapchain spCreateSwapchain (
+        SpiritSwapchainCreateInfo createInfo,
+        SpiritDevice device,
+        SpiritSwapchain optionalSwapchain)
+{
     
     db_assert(device, "Device cannot be null when creating swapchain");
 
     // set present and format to fallback values
-    if (!createInfo.selectedFormat) {
+    if (!createInfo.selectedFormat)
+    {
         createInfo.preferedFormat.format = VK_FORMAT_R8G8B8_SRGB;
         createInfo.preferedFormat.colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
     }
-    if (!createInfo.selectedPresentMode) {
+    if (!createInfo.selectedPresentMode)
+    {
         createInfo.preferredPresentMode = VK_PRESENT_MODE_FIFO_KHR;
     }
 
@@ -72,7 +78,8 @@ SpiritSwapchain spCreateSwapchain (SpiritSwapchainCreateInfo createInfo, SpiritD
     // image count
     u32 swapImageCount = device->swapchainDetails.capabilties.minImageCount + 1;
     if (device->swapchainDetails.capabilties.maxImageCount > 0 &&
-    swapImageCount > device->swapchainDetails.capabilties.maxImageCount) {
+    swapImageCount > device->swapchainDetails.capabilties.maxImageCount)
+    {
         swapImageCount = device->swapchainDetails.capabilties.maxImageCount;
     }
     swapInfo.minImageCount = swapImageCount;
@@ -329,7 +336,6 @@ SpiritResult spDestroySwapchain (SpiritSwapchain swapchain, const SpiritDevice d
     db_assert(device != NULL, "device cannot be null");
 
     destroyDepthObjects(device, swapchain);
-    destroyImages(device, swapchain);
     destroySyncObjects(device, swapchain);
 
     // destroy existing framebuffers
@@ -348,7 +354,8 @@ SpiritResult spDestroySwapchain (SpiritSwapchain swapchain, const SpiritDevice d
 
     vkDestroySwapchainKHR(device->device, swapchain->swapchain, NULL);
 
-    for (u32 i = 0; i < swapchain->imageCount; i++) {
+    for (u32 i = 0; i < swapchain->imageCount; i++)
+    {
         vkDestroyImageView(device->device, swapchain->imageViews[i], NULL);
     }
 

@@ -33,6 +33,30 @@ typedef struct t_SpiritDeviceCreateInfo {
 
 } SpiritDeviceCreateInfo;
 
+struct t_SpiritDevice
+{
+    VkDevice                 device;
+    VkInstance               instance;
+    VkPhysicalDevice         physicalDevice;
+    VkDebugUtilsMessengerEXT debugMessenger;
+
+    VkCommandPool commandPool;
+
+    VkSurfaceKHR windowSurface;
+
+    VkQueue    graphicsQueue;
+    VkQueue    presentQueue;
+    u32        queueCount;
+    const u32 *queueIndices;
+
+    const char *const *deviceExtensions;
+    u32                deviceExtensionCount;
+
+    bool powerSaveMode;
+    bool validationEnabled;
+
+    SpiritSwapchainSupportInfo swapchainDetails;
+};
 
 // create a spirit device
 SpiritDevice spCreateDevice (SpiritDeviceCreateInfo *createInfo);

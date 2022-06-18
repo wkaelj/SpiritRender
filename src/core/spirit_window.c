@@ -4,8 +4,8 @@
 #define GLFW_INCLUDE_VULKAN
 struct t_SpiritWindow {
     GLFWwindow *window;
-    int32_t w, h;
-    char *title;
+    SpiritResolution windowSize;
+    const char *title;
 };
 
 SpiritWindow spCreateWindow (SpiritWindowCreateInfo *createInfo) {
@@ -30,18 +30,21 @@ SpiritWindow spCreateWindow (SpiritWindowCreateInfo *createInfo) {
     }
 
     if (createInfo->fullscreen) {
-        glfwGetMonitorWorkarea (windowMonitor, NULL, NULL,  &window->w, &window->h);
+        glfwGetMonitorWorkarea (
+                windowMonitor, 
+                NULL, NULL, 
+                (int*) &window->windowSize.w,
+                (int*) &window->windowSize.h);
     } else {
-        window->w = createInfo->w;
-        window->h = createInfo->h;
+        window->windowSize = createInfo->windowSize;
     }
 
     glfwWindowHint (GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint (GLFW_RESIZABLE, GLFW_FALSE); // RESIZABLE
 
     window->window = glfwCreateWindow (
-        window->w, 
-        window->h, 
+        window->windowSize.w, 
+        window->windowSize.h, 
         window->title, 
         windowMonitor, 
         NULL);

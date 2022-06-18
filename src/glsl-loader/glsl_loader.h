@@ -1,5 +1,6 @@
 #pragma once
 #include <spirit_header.h>
+#include <core/spirit_device.h>
 
 // Functions to load and compile glsl vertex and fragment shader
 // Supports compiled and uncompiled shaders

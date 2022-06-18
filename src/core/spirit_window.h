@@ -11,7 +11,7 @@
 // 
 
 typedef struct t_SpiritWindowCreateInfo {
-    uint32_t w, h; // size of window in screen units
+    SpiritResolution windowSize; // size of window in screen units
     const char *title;
     bool fullscreen;
 } SpiritWindowCreateInfo;

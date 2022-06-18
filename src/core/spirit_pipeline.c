@@ -262,6 +262,10 @@ static VkPipeline createPipeline(
 
     VkPipeline pipeline = NULL;
 
+    log_debug("Pipeline W=%u, H=%u", 
+        pipelineInfo.pViewportState->pScissors->extent.width, 
+        pipelineInfo.pViewportState->pScissors->extent.height);
+
     if (vkCreateGraphicsPipelines (
         device->device, 
         NULL, 
@@ -333,15 +337,15 @@ SpiritResult defaultPipelineConfig(
     pConfigInfo->viewport = (VkViewport) {};
     pConfigInfo->viewport.x = 0.0f;
     pConfigInfo->viewport.y = 0.0f;
-    pConfigInfo->viewport.width = createInfo->windowWidth;
-    pConfigInfo->viewport.height = createInfo->windowWidth;
+    pConfigInfo->viewport.width = createInfo->resolution.w;
+    pConfigInfo->viewport.height = createInfo->resolution.h;
     pConfigInfo->viewport.minDepth = 0.0f;
     pConfigInfo->viewport.maxDepth = 1.0f;
 
     pConfigInfo->scissor.offset.x = 0;
     pConfigInfo->scissor.offset.y = 0;
-    pConfigInfo->scissor.extent.width = createInfo->windowWidth;
-    pConfigInfo->scissor.extent.height = createInfo->windowHeight;
+    pConfigInfo->scissor.extent.width = createInfo->resolution.w;
+    pConfigInfo->scissor.extent.height = createInfo->resolution.h;
 
 
     pConfigInfo->rasterizationInfo = (VkPipelineRasterizationStateCreateInfo) {};

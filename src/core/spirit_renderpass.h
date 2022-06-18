@@ -1,6 +1,8 @@
 #pragma once
 #include <spirit_header.h>
 
+#include "spirit_renderpass.h"
+
 // Render pass abtraction to create render passes based on templates, or advanced creation info
 //
 //
@@ -36,6 +38,11 @@ typedef struct t_SpiritRenderPassSettings {
 typedef struct t_SpiritRenderPassCreateInfo {
 
 } SpiritRenderPassCreateInfo;
+
+struct t_SpiritRenderPass
+{
+    VkRenderPass renderPass;
+};
 
 //
 // Functions

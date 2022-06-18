@@ -20,6 +20,9 @@
 // vulkan
 #include <vulkan/vulkan.h>
 
+// cglm
+#include <cglm/cglm.h>
+
 // custom 
 #include "debug/messenger.h" // debug messenging functions
 #include "core/spirit_types.h" // custom types
@@ -34,6 +37,11 @@
 // create a new variable
 #define new_var(typename) (typename*)malloc(sizeof(typename))
 #define new_array(typename, count) (typename*)malloc(sizeof(typename) * count)
+
+#define new_flex_array(structname, flexmembertype, elementcount) \
+    ((structname*)malloc(\
+            sizeof(structname) + \
+            sizeof(flexmembertype) * elementcount))
 
 // find the size of a STACK ALLOCATED array
 #define array_length(array) = (sizeof(array)/sizeof(array[0]))

@@ -47,6 +47,17 @@ void mainlooptest (void) {
 
     SpiritContext context = spCreateContext(&contextInfo);
 
+    SpiritMaterialCreateInfo materialInfo = {};
+    materialInfo.name = "std";
+    materialInfo.fragmentShader = "shaders/simple_shader.frag";
+    materialInfo.vertexShader = "shaders/simple_shader.vert";
+
+    SpiritMaterial material = spCreateMaterial(
+        context,
+        &materialInfo);
+    context->materials = &material;
+    context->materialCount = 1;
+
     while (!spWindowShouldClose (context->window)){
 
         spContextSubmitFrame(context);
