@@ -45,7 +45,7 @@ SpiritSwapchain spCreateSwapchain (
         SpiritSwapchain optionalSwapchain)
 {
     
-    db_assert(device, "Device cannot be null when creating swapchain");
+    db_assert(device, "Device cannot be NULL when creating swapchain");
 
     // set present and format to fallback values
     if (!createInfo.selectedFormat)
@@ -149,8 +149,9 @@ SpiritSwapchain spCreateSwapchain (
     // sync objects
     if (createSyncObjects(device, out)) return NULL;
 
+    out->currentFrame = 0;
 
-    log_verbose("Created Swapchain");
+    log_verbose("Created Swapchain, image count %u", out->imageCount);
     return out;
 
 } // spCreateSwapchain
@@ -163,10 +164,10 @@ SpiritResult spSwapchainSubmitCommandBuffer(
 {
     if (swapchain->imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
         vkWaitForFences(
-            device->device, 
-            1, 
-            &swapchain->imagesInFlight[imageIndex], 
-            VK_TRUE, UINT64_MAX);
+        device->device, 
+        1, 
+        &swapchain->imagesInFlight[imageIndex], 
+        VK_TRUE, UINT64_MAX);
     }
     swapchain->imagesInFlight[imageIndex] = 
         swapchain->inFlightFences[swapchain->currentFrame];
@@ -279,8 +280,9 @@ SpiritResult spSwapchainAddFramebuffers(
                 NULL);
         }
 
-        dalloc(swapchain->framebuffers);
+        free(swapchain->framebuffers);
     }
+
     // allocate memory to fit framebuffers
     swapchain->framebuffers = new_array(VkFramebuffer, swapchain->imageCount);
     swapchain->framebufferCount = swapchain->imageCount;
@@ -318,7 +320,7 @@ SpiritResult spSwapchainAddFramebuffers(
                     NULL);
             }
 
-            dalloc(swapchain->framebuffers);
+            free(swapchain->framebuffers);
 
             return SPIRIT_FAILURE;
         }
@@ -332,8 +334,8 @@ SpiritResult spSwapchainAddFramebuffers(
 // destroy swapchain instance
 SpiritResult spDestroySwapchain (SpiritSwapchain swapchain, const SpiritDevice device) {
 
-    db_assert(swapchain != NULL, "swapchain cannot be null");
-    db_assert(device != NULL, "device cannot be null");
+    db_assert(swapchain != NULL, "swapchain cannot be NULL");
+    db_assert(device != NULL, "device cannot be NULL");
 
     destroyDepthObjects(device, swapchain);
     destroySyncObjects(device, swapchain);
@@ -347,9 +349,11 @@ SpiritResult spDestroySwapchain (SpiritSwapchain swapchain, const SpiritDevice d
                 device->device, 
                 swapchain->framebuffers[i], 
                 NULL);
+
         }
 
-        dalloc(swapchain->framebuffers);
+
+        free(swapchain->framebuffers);
     }
 
     vkDestroySwapchainKHR(device->device, swapchain->swapchain, NULL);
@@ -357,13 +361,17 @@ SpiritResult spDestroySwapchain (SpiritSwapchain swapchain, const SpiritDevice d
     for (u32 i = 0; i < swapchain->imageCount; i++)
     {
         vkDestroyImageView(device->device, swapchain->imageViews[i], NULL);
+
+        // maybe unbind image
+        
+        vkFreeMemory(device->device, swapchain->depthImageMemory[i], NULL);
     }
 
     swapchain->imageViews = NULL;
     swapchain->images = NULL;
     swapchain->swapchain = NULL;
 
-    dalloc(swapchain);
+    free(swapchain);
 
     return SPIRIT_SUCCESS;
 }
@@ -416,7 +424,7 @@ SpiritResult createImages(const SpiritDevice device, SpiritSwapchain swapchain)
         if (vkCreateImageView (
             device->device, // vulkan device
             &imageViewInfo, // ptr to stack address
-            NULL,    // nullptr
+            NULL,    // NULLptr
             &swapchain->imageViews[i] // ptr to stack adress
             )) {
             log_error("Failed to create swapchain image views");
@@ -457,7 +465,7 @@ SpiritResult createSyncObjects(const SpiritDevice device, SpiritSwapchain swapch
         {
             failure = true;
         }
-        else if(vkCreateSemaphore(
+        if(vkCreateSemaphore(
             device->device, 
             &semaphoreInfo, 
             NULL, 
@@ -465,7 +473,7 @@ SpiritResult createSyncObjects(const SpiritDevice device, SpiritSwapchain swapch
         {
             failure = true;
         }
-        else if(vkCreateFence(
+        if(vkCreateFence(
             device->device, 
             &fenceInfo, 
             NULL, 
@@ -553,6 +561,7 @@ void destroyDepthObjects(const SpiritDevice device, SpiritSwapchain swapchain)
     {
         vkDestroyImageView(device->device, swapchain->depthImageViews[i], NULL);
         vkDestroyImage(device->device, swapchain->depthImages[i], NULL);
+        vkFreeMemory(device->device, swapchain->depthImageMemory[i], NULL);
     }
 }
 

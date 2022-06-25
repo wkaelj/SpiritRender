@@ -2,6 +2,7 @@
 #include <spirit_header.h>
 #include "spirit_device.h"
 #include "spirit_renderpass.h"
+#include "spirit_mesh.h"
 
 // Creating and managment of pipelines
 // multiple pipelines can share the same device

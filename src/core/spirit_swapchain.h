@@ -1,13 +1,13 @@
 #pragma once
 #include <spirit_header.h>
 #include "spirit_renderpass.h"
+#include "spirit_device.h"
 
 // swapchain creation and recreation
 //
 //
 // Kael Johnston Mar 10 2022
 
-#include "spirit_device.h"
 
 #define SPIRIT_SWAPCHAIN_MAX_FRAMES_IN_FLIGHT (2)
 

@@ -2,8 +2,8 @@
 #include <spirit_header.h>
 #include "spirit_renderpass.h"
 #include "spirit_pipeline.h"
-#include "spirit_mesh.h"
 #include "spirit_context.h"
+#include "spirit_mesh.h"
 
 // materials have their own render pass, pipeline and shaders
 // which allow them to be completely customizable
@@ -19,7 +19,12 @@ typedef struct t_SpiritMaterialCreateInfo
 } SpiritMaterialCreateInfo;
 
 // used internally, do not reference
-typedef struct t_SpiritMaterialMeshList *t_SpiritMaterialMeshList;
+
+struct t_MaterialListNode
+{
+    SpiritMeshReference mesh;
+    LIST_ENTRY(t_MaterialListNode) data;
+};
 
 struct t_SpiritMaterial
 {
@@ -30,7 +35,8 @@ struct t_SpiritMaterial
     SpiritRenderPass renderPass;
     SpiritPipeline pipeline;
 
-    struct t_SpiritMaterialMeshList *list;
+    size_t meshCount;
+    LIST_HEAD(t_MaterialListHead, t_MaterialListNode) meshList;
 };
 
 SpiritMaterial spCreateMaterial(

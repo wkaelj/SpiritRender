@@ -27,7 +27,7 @@ typedef struct t_SpiritComponentReference
 // can be used to reference any type of spirit component
 typedef union t_SpiritComponent
 {
-    SpiritComponentType type; // allows the component to be set to null
+    SpiritComponentType type; // allows the component to be set to NULL
     //SpiritTransformComponent transformComponent;
     //SpiritMeshRenderComponent meshRenderComponent;
 } SpiritComponent;

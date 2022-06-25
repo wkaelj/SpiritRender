@@ -16,11 +16,15 @@
 #include <string.h>
 #include <memory.h>
 #include <time.h>
+#include <sys/queue.h>
+
+
 
 // vulkan
 #include <vulkan/vulkan.h>
 
 // cglm
+#define CGLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <cglm/cglm.h>
 
 // custom 
@@ -59,8 +63,6 @@
 
 // tmp memory alocator
 // will be replaced with calles to a custom memory allocator
-#define alloc(size) malloc(size);
-#define dalloc(ptr) free(ptr);
 
 // debug
 #ifndef DEBUG

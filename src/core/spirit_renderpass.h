@@ -1,6 +1,7 @@
 #pragma once
 #include <spirit_header.h>
-
+#include "spirit_device.h"
+#include "spirit_swapchain.h"
 #include "spirit_renderpass.h"
 
 // Render pass abtraction to create render passes based on templates, or advanced creation info

@@ -89,10 +89,10 @@ typedef enum {
 //      s - the automatic string identifying the file and whatnot
 //      m - an optional messege that can be left by the user
 int unix_log_perror (
-    const char *restrict file,
-    const char *restrict func,
-    const char *restrict line,
-    const char *restrict m,
+    const char *file,
+    const char *func,
+    const char *line,
+    const char *m,
     ...);
 #else // disable the function on non-unix systems
 #define log_perror(string) ((void)0)
@@ -101,7 +101,7 @@ int unix_log_perror (
 // log debugging messege
 int debug_log (
     DebugSeverity severity, 
-    const char *restrict file,
-    const char *restrict func,
+    const char *file,
+    const char *func,
     const int            line,
-    const char *restrict format, ...);
+    const char *format, ...);

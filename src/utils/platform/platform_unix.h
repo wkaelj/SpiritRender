@@ -37,6 +37,6 @@ bool spPlatformTestForFile (const char *filepath);
 // return the size of a file, 0 for failure
 u64 spPlatformTestFileSize (const char *filepath);
 
-time_t spPlatformGetFileModifiedDate(const char *restrict filepath);
+time_t spPlatformGetFileModifiedDate(const char *filepath);
 
 SpiritResult spPlatformCreateFolder(const char *path);

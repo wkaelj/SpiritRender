@@ -109,6 +109,12 @@ SpiritPipeline spCreatePipeline (
         pipeline->shaderCount,
         pipeline->shaders,
         shaderTypes);
+    if (pipeline->pipeline == NULL)
+    {
+        free(pipeline->shaders);
+        free(pipeline);
+        return NULL;
+    }
 
     return pipeline;
 }
@@ -219,13 +225,16 @@ static VkPipeline createPipeline(
         #undef SHADER
     }
 
+    VkVertexInputBindingDescription bindingDescription = spMeshGetBindingDescription();
+    VkVertexInputAttributeDescription attributeDescription = spMeshGetAttributeDescription();
+
     // vertex input
     VkPipelineVertexInputStateCreateInfo vertInfo = {};
     vertInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertInfo.vertexAttributeDescriptionCount = 0;
-    vertInfo.pVertexAttributeDescriptions =    NULL;
-    vertInfo.vertexBindingDescriptionCount =   0;
-    vertInfo.pVertexBindingDescriptions =      NULL;
+    vertInfo.vertexAttributeDescriptionCount = 1;
+    vertInfo.pVertexAttributeDescriptions =    &attributeDescription;
+    vertInfo.vertexBindingDescriptionCount =   1;
+    vertInfo.pVertexBindingDescriptions =      &bindingDescription;
 
 
     VkPipelineViewportStateCreateInfo viewportInfo = {};
@@ -261,10 +270,6 @@ static VkPipeline createPipeline(
     pipelineInfo.basePipelineHandle = NULL;
 
     VkPipeline pipeline = NULL;
-
-    log_debug("Pipeline W=%u, H=%u", 
-        pipelineInfo.pViewportState->pScissors->extent.width, 
-        pipelineInfo.pViewportState->pScissors->extent.height);
 
     if (vkCreateGraphicsPipelines (
         device->device, 

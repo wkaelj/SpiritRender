@@ -15,7 +15,7 @@ void spPlatformSetExecutableFolder(char *name)
 {
     u32 pathLength = 0;
     spStringTruncate(NULL, &pathLength, name, '/', true); // remove exectuable name from path
-    g_executableDirectory = alloc(pathLength + 1);
+    g_executableDirectory =malloc(pathLength + 1);
     spStringTruncate(g_executableDirectory, &pathLength, name, '/', true);
 
     g_executableDirectoryLength = pathLength;
@@ -120,7 +120,7 @@ time_t spPlatformGetTime(void)
     return time(NULL);
 }
 
-time_t spPlatformGetFileModifiedDate(const char *restrict filepath)
+time_t spPlatformGetFileModifiedDate(const char *filepath)
 {
 
     struct stat data;

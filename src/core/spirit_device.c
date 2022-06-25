@@ -215,6 +215,42 @@ SpiritResult spDeviceCreateImage(
     return SPIRIT_SUCCESS;
 }
 
+SpiritResult spDeviceCreateBuffer(
+    SpiritDevice          device,
+    VkDeviceSize          size,
+    VkBufferUsageFlags    usage,
+    VkMemoryPropertyFlags properties,
+    VkBuffer             *buffer,
+    VkDeviceMemory       *bufferMemory)
+{
+    VkBufferCreateInfo bufferInfo = {};
+    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferInfo.size = size;
+    bufferInfo.usage = usage;
+    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    if (vkCreateBuffer(device->device, &bufferInfo, NULL, buffer) != VK_SUCCESS)
+    {
+        return SPIRIT_FAILURE;
+    }
+
+    VkMemoryRequirements memRequirements;
+    vkGetBufferMemoryRequirements(device->device, *buffer, &memRequirements);
+
+    VkMemoryAllocateInfo allocInfo = {};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memRequirements.size;
+    allocInfo.memoryTypeIndex = spDeviceFindMemoryType(device, memRequirements.memoryTypeBits, properties);
+
+    if (vkAllocateMemory(device->device, &allocInfo, NULL, bufferMemory) != VK_SUCCESS)
+    {
+        return SPIRIT_SUCCESS;
+    }
+
+    vkBindBufferMemory(device->device, *buffer, *bufferMemory, 0);
+
+    return SPIRIT_SUCCESS;
+}
 // destroy a spirit device and free all memory whatever
 SpiritResult spDestroyDevice (SpiritDevice device) {
 
@@ -239,7 +275,7 @@ SpiritResult spDestroyDevice (SpiritDevice device) {
     device->debugMessenger = NULL;
 
     vkDestroyInstance(device->instance, NULL);
-    dalloc(device);
+    free(device);
 
     return SPIRIT_SUCCESS;
 }
@@ -348,7 +384,7 @@ static VkInstance createInstance (const SpiritDeviceCreateInfo *createInfo, VkDe
 
 static VkPhysicalDevice selectPhysicalDevice (const SpiritDeviceCreateInfo *createInfo, const VkInstance instance) {
 
-    // set device to null so i can mess with it
+    // set device to NULL so i can mess with it
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 
     // check available rendering devices

@@ -1,6 +1,4 @@
 #include "spirit_renderpass.h"
-#include "spirit_swapchain.h"
-#include "spirit_device.h"
 
 // Renderpass implementation
 //
@@ -37,7 +35,7 @@ SpiritResult spDestroyRenderPass (
     if (renderPass == NULL) return SPIRIT_FAILURE;
     vkDestroyRenderPass(device->device, renderPass->renderPass, NULL);
 
-    dalloc(renderPass);
+    free(renderPass);
 
     return SPIRIT_SUCCESS;
 }

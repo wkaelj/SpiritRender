@@ -70,7 +70,7 @@ extern SpiritShader spLoadCompiledShader(const char *path, SpiritShaderType type
 
     db_assert(shaderCodeSize, "shaderCodeSize was 0");
 
-    void *shaderCodeBinary = alloc(shaderCodeSize);
+    void *shaderCodeBinary =malloc(shaderCodeSize);
     spReadFileBinary(shaderCodeBinary, path, &shaderCodeSize);
 
     SpiritShader out;
@@ -296,6 +296,6 @@ extern VkShaderModule spConvertShaderToModule(
 
 SpiritResult spDestroyShader(SpiritShader shader)
 {
-    free(shader.shader);
+     free(shader.shader);
     return SPIRIT_SUCCESS;
 }

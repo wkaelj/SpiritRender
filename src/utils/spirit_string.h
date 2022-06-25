@@ -40,8 +40,8 @@
 
 // // copy the contents of src into dest
 // SpiritResult spStringCpy (
-//     const char *restrict src, 
-//     char *restrict       dest, 
+//     const char *src, 
+//     char *      dest, 
 //     u32                  max);
 
 // // check if container contains token
@@ -56,17 +56,17 @@ const char *spStringStrip (const char *filename, const char stripper);
 
 // cut off everything after the last instance of slicer
 // Example: "/home/path/to/file/file.txt -> /home/path/to/file/"
-// if dest is null will only set length
-// if length is null with go forever
-// if str is null will fail
+// if dest is NULL will only set length
+// if length is NULL with go forever
+// if str is NULL will fail
 // otherwise sets dest to truncated str max length of length
 //
 // the inclusive bool detirmines weather the last instance of slicer
 // is written to the final string
 // "/home/file/" -> "/home/file" (where slicer is '/)
 SpiritResult spStringTruncate(
-    char *restrict        dest,
-    u32 *restrict         length,
+    char *       dest,
+    u32 *        length,
     const char * restrict str, 
     const char            slicer,
     bool            inclusive);

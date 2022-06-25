@@ -21,26 +21,26 @@ u64 spReadFileSize(const char *filepath);
 bool spReadFileExists(const char *filepath);
 
 // read a binary file
-// if dest it null it will only do size
+// if dest it NULL it will only do size
 // if size is non 0 it will read a maximum of size bytes
-// if dest is null it does not matter if size is non 0
+// if dest is NULL it does not matter if size is non 0
 SpiritResult spReadFileBinary(
     void          *dest,
     const char    *filepath,
-    u64 *restrict  size);
+    u64 * size);
 
 // read a text file into a string
-// if dest is null it will only read size
+// if dest is NULL it will only read size
 // if size is non 0 it will read a maximum of size
-// if dest is null it does not matter if size is non 0
+// if dest is NULL it does not matter if size is non 0
 SpiritResult spReadFileText(
     char *dest,
     const char *filepath,
-    u64 *restrict length);
+    u64 *length);
 
 // read the last time a file was modified
 // unix time
-time_t spReadFileModifiedTime(const char *restrict filepath);
+time_t spReadFileModifiedTime(const char *filepath);
 
 // ===================================
 //              Writing

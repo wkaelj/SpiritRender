@@ -70,7 +70,7 @@ SpiritResult spDestroyWindow (SpiritWindow window) {
     }
     glfwTerminate ();
 
-    dalloc(window);
+    free(window);
 
     log_verbose("Closing window");
     return SPIRIT_SUCCESS;
@@ -106,14 +106,18 @@ SpiritResult spResizeWindow (SpiritWindow window, uint32_t w, uint32_t h) {
     return SPIRIT_SUCCESS;
 }
 
-SpiritResult spWindowGetPixelSize (SpiritWindow window, uint32_t *w, uint32_t *h) {
+SpiritResult spWindowGetPixelSize (SpiritWindow window, u64 *w, u64 *h) {
 
     const char *glfwError;
-    glfwGetFramebufferSize (window->window, (int*) w, (int*) h);
+
+    int sw, sh;
+    glfwGetFramebufferSize (window->window, &sw, &sh);
     if (glfwGetError (&glfwError) != GLFW_NO_ERROR) {
         log_error ("Failed to get framebuffer size. GLFW error: %s", glfwError);
         return SPIRIT_FAILURE;
     }
+
+    *w = sw, *h = sh;
     return SPIRIT_SUCCESS;
 }
 
@@ -122,7 +126,7 @@ VkSurfaceKHR spWindowGetSurface (SpiritWindow window, VkInstance instance) {
     VkSurfaceKHR surface = NULL;
 
     if (glfwCreateWindowSurface (instance, window->window, NULL, &surface)) log_fatal("Failed to create window surface");
-    db_assert (surface, "Surface cannot be null");
+    db_assert (surface, "Surface cannot be NULL");
     return surface;
 }
 

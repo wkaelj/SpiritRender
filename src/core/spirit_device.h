@@ -58,6 +58,15 @@ struct t_SpiritDevice
     SpiritSwapchainSupportInfo swapchainDetails;
 };
 
+// create a VkBuffer
+SpiritResult spDeviceCreateBuffer(
+    SpiritDevice          device,
+    VkDeviceSize          size,
+    VkBufferUsageFlags    usage,
+    VkMemoryPropertyFlags properties,
+    VkBuffer             *buffer,
+    VkDeviceMemory       *bufferMemory);
+
 // create a spirit device
 SpiritDevice spCreateDevice (SpiritDeviceCreateInfo *createInfo);
 

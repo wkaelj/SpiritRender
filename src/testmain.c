@@ -1,9 +1,11 @@
 // test main function
 
 #include <spirit_header.h>
+#include <unistd.h>
 
 // types
 #include "core/spirit_context.h"
+#include "core/spirit_mesh.h"
 
 // utils
 #include "glsl-loader/glsl_loader.h"
@@ -47,6 +49,9 @@ void mainlooptest (void) {
 
     SpiritContext context = spCreateContext(&contextInfo);
 
+    if (context == NULL)
+        return;
+
     SpiritMaterialCreateInfo materialInfo = {};
     materialInfo.name = "std";
     materialInfo.fragmentShader = "shaders/simple_shader.frag";
@@ -55,15 +60,36 @@ void mainlooptest (void) {
     SpiritMaterial material = spCreateMaterial(
         context,
         &materialInfo);
+    if(material == NULL)
+        return;
+
     context->materials = &material;
     context->materialCount = 1;
 
-    while (!spWindowShouldClose (context->window)){
+    vec3 meshVerts[] = {
+        {0.0f, -0.5f, 0.0f},
+        {0.5f, 0.5f, 0.0f},
+        {-0.5f, 0.5f, 0.0f}
+    };
 
+    SpiritMeshCreateInfo meshInfo = {};
+    meshInfo.vertCount = 3;
+    meshInfo.verts = meshVerts;
+
+    SpiritMesh mesh = spCreateMesh(context->device, &meshInfo);
+
+    SpiritMeshManager meshManager = spCreateMeshManager(NULL);
+    const SpiritMeshReference meshRef = spMeshManagerAddMesh(meshManager, mesh);
+
+    while (!spWindowShouldClose (context->window))
+    {
+        spMaterialAddMesh(material, meshRef);
         spContextSubmitFrame(context);
-        vkDeviceWaitIdle(context->device->device);
+        sleep(1);
     }
 
+    vkDeviceWaitIdle(context->device->device);
+    spDestroyMaterial(context, material);
     spDestroyContext(context);
 
 

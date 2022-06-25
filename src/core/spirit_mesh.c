@@ -1,16 +1,151 @@
 #include "spirit_mesh.h"
 
+//
+// Helpers
+//
+
+//
+// Public Functions
+//
+//
+
+SpiritMesh spCreateMesh(const SpiritDevice device, const SpiritMeshCreateInfo *createInfo)
+{
+    
+    SpiritMesh mesh = new_flex_array(struct t_SpiritMesh, Vertex, createInfo->vertCount);
+
+    // process vertex data
+    size_t dataSize = sizeof(Vertex) * createInfo->vertCount;
+
+    for (size_t i = 0; i < createInfo->vertCount; i++)
+    {
+        mesh->verts[i] = (Vertex) { 0 };
+        glm_vec3_copy(createInfo->verts[i], mesh->verts[i].position);
+    }
+
+    // obtain memory from device
+    VkBuffer vertBuffer;
+    VkDeviceMemory vertBufferMemory;
+    VkDeviceSize bufferSize = dataSize;
+    if(spDeviceCreateBuffer(
+        device,
+        bufferSize,
+        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+        &vertBuffer,
+        &vertBufferMemory))
+    {
+        return NULL;
+    }
+
+    // copy memory into data
+    Vertex *data;
+    vkMapMemory(device->device, vertBufferMemory, 0, bufferSize, 0, (void**) &data);
+    memcpy(data, mesh->verts, dataSize);
+    vkUnmapMemory(device->device, vertBufferMemory);
+
+    // update mesh t reference vertex data
+    mesh->vertexBuffer = vertBuffer;
+    mesh->vetexBufferMemory = vertBufferMemory;
+
+    return mesh;
+}
+
+SpiritMeshManager spCreateMeshManager(const SpiritMeshManagerCreateInfo *createInfo)
+{
+    SpiritMeshManager meshManager = new_var(struct t_SpiritMeshManager);
+    meshManager->meshCount = 0;
+    LIST_INIT(&meshManager->meshes);
+
+    return meshManager;
+}
+
+const SpiritMeshReference spMeshManagerAddMesh(
+    SpiritMeshManager manager,
+    SpiritMesh mesh)
+{
+    struct t_MeshListNode *newNode = new_var(struct t_MeshListNode);
+    newNode->mesh = mesh;
+    newNode->referenceCount = 0;
+
+    LIST_INSERT_HEAD(&manager->meshes, newNode, data);
+    SpiritMeshReference ref = {};
+    ref.meshManager = manager;
+    ref.node = newNode;
+    ref.vertCount = mesh->vertCount;
+
+    return spCheckoutMesh(ref);
+}
+
+const SpiritMesh spMeshManagerAccessMesh(
+    const SpiritMeshReference ref)
+{
+    return ref.node->mesh;
+}
 
 // checkout a new reference to a mesh
-extern const SpiritMeshReference spCheckoutMesh(
-    const SpiritMeshReference meshReference)
+const SpiritMeshReference spCheckoutMesh(const SpiritMeshReference meshReference)
 {
-    return (const SpiritMeshReference) {}; 
+     meshReference.node->referenceCount++;
+     return meshReference;
 }
 
 // release a reference to a mesh
-extern const SpiritResult spReleaseMesh(
+const SpiritResult spReleaseMesh(
     const SpiritMeshReference meshReference)
 {
+
+    // check to ensure meshmanager is valid
+    if(meshReference.node 
+        && meshReference.node->mesh
+        && meshReference.vertCount 
+        && meshReference.meshManager); else { return SPIRIT_FAILURE; }
+
+    // reduce reference count, and if no more references free mesh
+    if (--meshReference.node->referenceCount <= 0)
+    {
+        LIST_REMOVE(meshReference.node, data);
+        free(meshReference.node->mesh);
+        free(meshReference.node);
+        meshReference.meshManager->meshCount--;
+    }
+
     return SPIRIT_SUCCESS;
 }
+
+SpiritResult spDestroyMesh(const SpiritContext context, SpiritMesh mesh)
+{
+    vkDestroyBuffer(
+        context->device->device,
+        mesh->vertexBuffer,
+        NULL);
+    vkFreeMemory(
+        context->device->device,
+        mesh->vetexBufferMemory,
+        NULL);
+
+    free(mesh);
+
+    return SPIRIT_SUCCESS;
+}
+
+SpiritResult spDestroyMeshManager(
+    const SpiritContext context,
+    SpiritMeshManager meshManager)
+{
+    
+    struct t_MeshListNode *currentNode = meshManager->meshes.lh_first;
+    while(currentNode != NULL)
+    {
+        spDestroyMesh(context, currentNode->mesh);
+
+        void *next = LIST_NEXT(currentNode, data);
+        LIST_REMOVE(currentNode, data);
+        free(currentNode);
+        currentNode = next;
+    }
+
+    free(meshManager);
+    return SPIRIT_SUCCESS;
+}
+

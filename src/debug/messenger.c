@@ -10,10 +10,10 @@
 // debug_log function
 int debug_log(
     DebugSeverity        severity, 
-    const char *restrict file, 
-    const char *restrict func, 
+    const char *file, 
+    const char *func, 
     const int            line, 
-    const char *restrict format, ...)
+    const char *format, ...)
 {
 
     static char bufferString1[BUFFER_LENGTH]; // bufferstring preallocated for stack storage
@@ -60,10 +60,10 @@ int debug_log(
 #warning Function may result in undefined behaivour passing NULL 'm' value
 #endif
 int unix_log_perror(
-    const char *restrict file,
-    const char *restrict func,
-    const char *restrict line,
-    const char *restrict m,
+    const char *file,
+    const char *func,
+    const char *line,
+    const char *m,
     ...)
 {
 

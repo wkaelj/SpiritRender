@@ -13,6 +13,11 @@ void destroyCommandBuffers(
     VkCommandBuffer *buffers,
     const u32 bufferCount);
 
+SpiritResult beginCommandBuffer(VkCommandBuffer buffer);
+
+void endCommandBuffer(VkCommandBuffer buffer);
+
+
 // 
 // Public functions
 // 
@@ -24,7 +29,7 @@ SpiritContext spCreateContext(SpiritContextCreateInfo *createInfo)
     
     // initialize basic components
     // create window
-    SpiritWindowCreateInfo windowCreateInfo;
+    SpiritWindowCreateInfo windowCreateInfo = {};
     windowCreateInfo.windowSize = createInfo->windowSize;
     windowCreateInfo.title = createInfo->windowName;
     windowCreateInfo.fullscreen = createInfo->windowFullscreen;
@@ -58,8 +63,10 @@ SpiritContext spCreateContext(SpiritContextCreateInfo *createInfo)
     SpiritSwapchainCreateInfo swapCreateInfo = {};
     spWindowGetPixelSize(
         context->window, 
-        &swapCreateInfo.windowWidthPx, 
-        &swapCreateInfo.windowHeightPx);
+        &context->screenResolution.w, 
+        &context->screenResolution.h);
+    swapCreateInfo.windowWidthPx = context->windowSize.w;
+    swapCreateInfo.windowHeightPx = context->windowSize.h;
 
     context->swapchain = spCreateSwapchain(swapCreateInfo, context->device, NULL);
     db_assert(context->swapchain, "Must have swapchain");
@@ -74,13 +81,26 @@ SpiritContext spCreateContext(SpiritContextCreateInfo *createInfo)
 
 SpiritResult spContextSubmitFrame(SpiritContext context)
 {
+    spSwapchainAquireNextImage(context->device, context->swapchain, &context->commandBufferIndex);
+    beginCommandBuffer(context->commandBuffers[context->commandBufferIndex]);
+    context->isRecording = true;
+    
     // FIXME does not use linkedlist
     for (size_t i = 0; i < context->materialCount; i++)
     {
         spMaterialRecordCommands(context, context->materials[i]);
     }
-    
-    vkCmdDraw(context->commandBuffers[context->commandBufferIndex], 3, 0, 0, 0);
+
+    context->isRecording = false;
+
+    endCommandBuffer(context->commandBuffers[context->commandBufferIndex]);
+
+    spSwapchainSubmitCommandBuffer(
+        context->device,
+        context->swapchain,
+        context->commandBuffers[context->commandBufferIndex],
+        context->commandBufferIndex);
+
     return SPIRIT_SUCCESS;
 }
 
@@ -126,7 +146,7 @@ VkCommandBuffer *createCommandBuffers(
         buffers) != VK_SUCCESS)
     {
         log_error("Failed to allocate command buffers");
-        dalloc(buffers);
+        free(buffers);
         return NULL;
     }
 
@@ -144,13 +164,11 @@ void destroyCommandBuffers(
         device->commandPool, 
         bufferCount,
         buffers);
-    dalloc(buffers);
+    free(buffers);
 }
 
 // command buffer creation and destruction
-SpiritResult beginCommandBuffer(
-        VkCommandBuffer buffer, 
-        SpiritPipeline pipeline)
+SpiritResult beginCommandBuffer(VkCommandBuffer buffer)
 {
 
     VkCommandBufferBeginInfo bufferBeginInfo = {};
@@ -162,9 +180,6 @@ SpiritResult beginCommandBuffer(
         return SPIRIT_FAILURE;
     }
 
-    spPipelineBindCommandBuffer(
-        pipeline,
-        buffer);
     return SPIRIT_SUCCESS;
 }
 

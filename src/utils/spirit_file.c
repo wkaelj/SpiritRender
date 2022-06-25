@@ -25,9 +25,9 @@ bool spReadFileExists(const char *path)
 }
 
 SpiritResult spReadFileBinary(
-    void *restrict dest,
+    void *dest,
     const char *path,
-    u64 *restrict size)
+    u64 *size)
 {
 
     // localize filepath
@@ -36,7 +36,7 @@ SpiritResult spReadFileBinary(
     char filepath[pathLength];
     spPlatformLocalizeFileName(filepath, path, &pathLength);
 
-    db_assert(size, "Size cannot have a NULL value"); // size cannot be null
+    db_assert(size, "Size cannot have a NULL value"); // size cannot be NULL
 
     // open file
     FILE *file = fopen(filepath, "r");
@@ -69,7 +69,7 @@ SpiritResult spReadFileBinary(
 SpiritResult spReadFileText(
     char *dest,
     const char *path,
-    u64 *restrict length)
+    u64 *length)
 {
 
         // localize filepath
@@ -106,7 +106,7 @@ SpiritResult spReadFileText(
     return SPIRIT_SUCCESS;
 }
 
-time_t spReadFileModifiedTime(const char *restrict path)
+time_t spReadFileModifiedTime(const char *path)
 {
 
         // localize filepath

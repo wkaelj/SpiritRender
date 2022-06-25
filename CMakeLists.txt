@@ -34,6 +34,9 @@ endif()
 
 file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.c)
 
+# COMPILE OPTIONS
+set(LIB_COMPILE_FLAGS "-D_FORTIFY_SOURCE=2 -fsanitize=address -DDMALLOC")
+
 # libraries
 set(LIBRARY libs)
 
@@ -41,14 +44,14 @@ add_subdirectory(${LIBRARY})
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-set_property(TARGET ${PROJECT_NAME} PROPERTY C_STANDARD 99)
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 
 # BUILD TYPE
 set(CMAKE_BUILD_TYPE "Debug")
-add_compile_options(-Wall -pedantic -Og -D_FORTIFY_SOURCE=2 -fsanitize=address)
-set(CMAKE_C_STANDARD 23)
+# add_compile_options(-D_FORTIFY_SOURCE=2 -fsanitize=address)
+set(CMAKE_C_STANDARD c2x)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
   libs

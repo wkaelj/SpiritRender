@@ -4,13 +4,6 @@
 // Structures
 //
 
-// used to store a linkedlist of all mesh structs
-struct t_SpiritMaterialMeshList
-{
-    SpiritMeshReference meshReference;
-    struct t_SpiritMaterialMeshList *next;
-};
-
 //
 // Helper functions
 //
@@ -21,14 +14,6 @@ SpiritResult beginRenderPass(
     const SpiritRenderPass renderPass);
 
 void endRenderPass(VkCommandBuffer buffer);
-
-static inline struct t_SpiritMaterialMeshList *newMeshList(const SpiritMeshReference ref);
-
-// add a new mesh reference too the end of the list
-static void meshListAdd(struct t_SpiritMaterialMeshList *meshList, const SpiritMeshReference);
-
-// delete the mesh list and release the references
-static void meshListDelete(struct t_SpiritMaterialMeshList *meshList);
 
 //
 // Public functions
@@ -51,7 +36,7 @@ SpiritMaterial spCreateMaterial(
             context->swapchain);
     if (material->renderPass == NULL)
     {
-        dalloc(material);
+        free(material);
         log_error("Failed to make render pass for material '%s'", createInfo->name);
         return NULL;
     }
@@ -65,7 +50,6 @@ SpiritMaterial spCreateMaterial(
     shaders[1].type = SPIRIT_SHADER_TYPE_VERTEX;
     pipelineCreateInfo.shaderFilePaths = shaders;
     pipelineCreateInfo.shaderFilePathCount = sizeof(shaders) / sizeof(shaders[0]);
-    log_debug("material W=%u H=%u", pipelineCreateInfo.resolution.w, pipelineCreateInfo.resolution.w);
 
     pipelineCreateInfo.resolution = context->screenResolution;
     db_assert(pipelineCreateInfo.resolution.w == context->screenResolution.w &&
@@ -81,12 +65,12 @@ SpiritMaterial spCreateMaterial(
     if (material->pipeline == NULL)
     {
         spDestroyRenderPass(material->renderPass, context->device);
-        dalloc(material);
+        free(material);
         log_error("Failed to make pipeline for material '%s'", createInfo->name);
         return NULL;
     }
 
-    material->list = NULL;
+    LIST_INIT(&material->meshList);
 
     return material;
 
@@ -96,8 +80,11 @@ SpiritResult spMaterialAddMesh(
     const SpiritMaterial material,
     const SpiritMeshReference meshRef)
 {
-    meshListAdd(material->list, meshRef);
+    struct t_MaterialListNode *newNode = new_var(struct t_MaterialListNode);
+    newNode->mesh = spCheckoutMesh(meshRef);
 
+    LIST_INSERT_HEAD(&material->meshList, newNode, data);
+    material->meshCount++;
     return SPIRIT_SUCCESS;
 }
 
@@ -106,7 +93,7 @@ size_t spMaterialRecordCommands(
     SpiritMaterial material)
 {
     db_assert(context->isRecording, "Context is not recording, cannot record commands");
-    
+
     if(beginRenderPass(
         context->commandBuffers[context->commandBufferIndex],
         context->commandBufferIndex,
@@ -116,7 +103,39 @@ size_t spMaterialRecordCommands(
         return SPIRIT_FAILURE;
     }
 
-    // submit vertexes
+    spPipelineBindCommandBuffer(
+        material->pipeline, 
+        context->commandBuffers[context->commandBufferIndex]);
+
+    // iterate through meshes and submit vertexes
+    struct t_MaterialListNode *currentMesh = material->meshList.lh_first;
+    while(currentMesh != NULL)
+    {
+        VkBuffer vertBuffers[] = 
+        {
+            spMeshManagerAccessMesh(currentMesh->mesh)->vertexBuffer
+        };
+        VkDeviceSize offsets[] = { 0 };
+
+        vkCmdBindVertexBuffers(
+            context->commandBuffers[context->commandBufferIndex],
+            0, 
+            1,
+            vertBuffers,
+            offsets);
+
+        vkCmdDraw(
+            context->commandBuffers[context->commandBufferIndex],
+            currentMesh->mesh.vertCount,
+            1, 0, 0);
+
+        // move to next list element and remove processed element
+        struct t_MaterialListNode *oldNode = currentMesh;
+        currentMesh = LIST_NEXT(currentMesh, data);
+        spReleaseMesh(oldNode->mesh);
+        free(oldNode);
+        LIST_REMOVE(oldNode, data);
+    }
 
     endRenderPass(context->commandBuffers[context->commandBufferIndex]);
 
@@ -130,8 +149,7 @@ SpiritResult spDestroyMaterial(
 {
     spDestroyPipeline(context->device, material->pipeline);
     spDestroyRenderPass(material->renderPass, context->device);
-    meshListDelete(material->list);
-    free(material);
+     free(material);
     return SPIRIT_SUCCESS;
 }
 
@@ -174,42 +192,4 @@ SpiritResult beginRenderPass(
 void endRenderPass(VkCommandBuffer buffer)
 {
     vkCmdEndRenderPass(buffer);
-}
-
-// list managment
-
-inline struct t_SpiritMaterialMeshList *newMeshList(const SpiritMeshReference meshRef)
-{
-    // allocate space for a mesh component, check it out and add it too the list
-    struct t_SpiritMaterialMeshList *meshList = new_var(struct t_SpiritMaterialMeshList);
-    *meshList = (struct t_SpiritMaterialMeshList) {spCheckoutMesh(meshRef), NULL};
-    return meshList;
-}
-
-void meshListAdd(struct t_SpiritMaterialMeshList *meshList, const SpiritMeshReference ref)
-{
-
-    struct t_SpiritMaterialMeshList *i = meshList;
-
-    // find the last element in the mesh list 
-    while(meshList->next != NULL) meshList = meshList->next;
-    meshList->next = newMeshList(ref);
-}
-
-void meshListDelete(struct t_SpiritMaterialMeshList *meshList)
-{
-    
-    struct t_SpiritMaterialMeshList *nextMesh;
-    struct t_SpiritMaterialMeshList *currentMesh = meshList;
-
-    while(currentMesh != NULL) 
-    {
-        nextMesh = currentMesh->next;
-
-        // return mesh reference
-        spReleaseMesh(currentMesh->meshReference);
-        dalloc(currentMesh);
-
-        currentMesh = nextMesh;
-    }
 }

@@ -20,14 +20,14 @@ const char *spStringStrip(const char *filename, const char stripper)
 // cut off everything after the last instance of slicer
 // Example: "/home/path/to/file/file.txt -> /home/path/to/file/"
 SpiritResult spStringTruncate(
-    char *restrict dest,
-    u32 *restrict length,
-    const char *restrict str,
+    char *dest,
+    u32 *length,
+    const char *str,
     const char slicer,
     bool inclusive)
 {
 
-    db_assert(length, "Length value cannot be null");
+    db_assert(length, "Length value cannot be NULL");
     db_assert(inclusive == 0 ^ inclusive == 1, "'inclusive' must be 1 or 0");
 
     if (!length || !inclusive) return SPIRIT_FAILURE;
@@ -56,7 +56,7 @@ SpiritResult spStringTruncate(
     // reset length if it is 0
     if (*length == 0) *length = lastSlicerInstance + inclusive;
 
-    // null terminate string
+    // NULL terminate string
     dest && (dest[lastSlicerInstance + inclusive] = '\0');
 
     return SPIRIT_SUCCESS;

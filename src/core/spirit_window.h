@@ -36,7 +36,7 @@ bool spWindowShouldClose (SpiritWindow window);
 SpiritResult spResizeWindow (SpiritWindow window, uint32_t w, uint32_t h);
 
 // get window size in pixels not screen units
-SpiritResult spWindowGetPixelSize (SpiritWindow window, uint32_t *w, uint32_t *h);
+SpiritResult spWindowGetPixelSize (SpiritWindow window, u64 *w, u64 *h);
 
 // get requried window extensions
 SpiritWindowExtensions spWindowGetExtensions (SpiritWindow window);
