@@ -32,10 +32,10 @@ else()
 	message(STATUS "Using vulkan lib at: ${Vulkan_LIBRARIES}")
 endif()
 
-file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.c)
+file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.c ${PROJECT_SOURCE_DIR}/src/*.h)
 
 # COMPILE OPTIONS
-set(LIB_COMPILE_FLAGS "-D_FORTIFY_SOURCE=2 -fsanitize=address -DDMALLOC")
+set(LIB_COMPILE_FLAGS "-D_FORTIFY_SOURCE=2 -fsanitize=address")
 
 # libraries
 set(LIBRARY libs)

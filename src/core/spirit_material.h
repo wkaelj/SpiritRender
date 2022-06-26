@@ -1,9 +1,6 @@
 #pragma once
 #include <spirit_header.h>
-#include "spirit_renderpass.h"
-#include "spirit_pipeline.h"
-#include "spirit_context.h"
-#include "spirit_mesh.h"
+
 
 // materials have their own render pass, pipeline and shaders
 // which allow them to be completely customizable

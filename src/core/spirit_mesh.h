@@ -1,7 +1,5 @@
 #pragma once
 #include <spirit_header.h>
-#include "spirit_device.h"
-#include "spirit_context.h"
 
 // manage meshes imported into the program
 // so that multiple entities can reference the same mesh
@@ -42,40 +40,31 @@ typedef struct t_SpiritMesh
     Vertex verts[]; // flex member
 } *SpiritMesh;
 
-typedef struct t_SpiritMaterialMeshList *t_SpiritMaterialMeshList;
-
 struct t_MeshListNode
 {
     size_t referenceCount;
     SpiritMesh mesh;
     LIST_ENTRY(t_MeshListNode) data; // list data
 };
-
 // mesh manager info
 
 // a struct used to manage meshes loaded into memory
 // each mesh in the meshmanager has its references counted
 // and when it has 0 references is automatically released
-typedef struct t_SpiritMeshManager
+struct t_SpiritMeshManager
 {
     size_t meshCount;
     LIST_HEAD(t_MeshList, t_MeshListNode) meshes;
-} *SpiritMeshManager;
+};
 
 // struct containting creation information for the mesh manager
 typedef struct t_SpiritMeshManagerCreateInfo
 {
     // empty, might be used later though
+    int val;
 } SpiritMeshManagerCreateInfo;
 
-// a reference to a mesh stored in a mesh manager
-// can be obtained and released from
-typedef struct t_SpiritMeshReference
-{
-    struct t_MeshListNode *node;
-    size_t vertCount;
-    SpiritMeshManager meshManager;
-} SpiritMeshReference;
+
 
 
 //
@@ -85,7 +74,9 @@ typedef struct t_SpiritMeshReference
 // create a mesh that can be added to a mesh manager
 // converts vector3 mesh positions to vertex structs
 // and creates vertex buffers
-extern SpiritMesh spCreateMesh(const SpiritDevice device, const SpiritMeshCreateInfo *createInfo);
+extern SpiritMesh spCreateMesh(
+    const SpiritContext context,
+    const SpiritMeshCreateInfo *createInfo);
 
 // you really shouldnt ever need to call this, but you do you
 extern SpiritResult spDestroyMesh(const SpiritContext context, SpiritMesh mesh);
@@ -116,17 +107,8 @@ extern SpiritResult spDestroyMeshManager(
     const SpiritContext context,
     SpiritMeshManager meshManager);
 
-static inline const VkVertexInputAttributeDescription spMeshGetAttributeDescription(void)
-{
-    return (VkVertexInputAttributeDescription) {
-        0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0};
-}
+const VkVertexInputAttributeDescription spMeshGetAttributeDescription(void);
 
-static inline const VkVertexInputBindingDescription spMeshGetBindingDescription(void)
-{
-    return (VkVertexInputBindingDescription) {
-        0, 
-        sizeof(Vertex), 
-        VK_VERTEX_INPUT_RATE_VERTEX };
-}
+const VkVertexInputBindingDescription spMeshGetBindingDescription(void);
+
 

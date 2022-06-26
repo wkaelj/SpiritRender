@@ -12,6 +12,16 @@
 // Types
 //
 
+// device information used by the swapchain code
+// it is declared here so that neither the device or the swapchain need to include
+// the other
+typedef struct t_SpiritSwapchainSupportInfo {
+    VkSurfaceCapabilitiesKHR capabilties;
+    VkSurfaceFormatKHR      *formats; // maybe need to fix pointers later
+    u32                      formatCount;
+    VkPresentModeKHR        *presentModes;
+    u32                      presentModeCount;
+} SpiritSwapchainSupportInfo;
 // information used to create logical device
 typedef struct t_SpiritDeviceCreateInfo {
     bool powerSaveMode; // prefer integrated GPU, and limit framerate

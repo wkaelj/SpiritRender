@@ -1,5 +1,10 @@
 #include "spirit_material.h"
 
+#include "spirit_renderpass.h"
+#include "spirit_pipeline.h"
+#include "spirit_context.h"
+#include "spirit_mesh.h"
+
 //
 // Structures
 //
@@ -43,17 +48,10 @@ SpiritMaterial spCreateMaterial(
 
     // create associated pipeline
     SpiritPipelineCreateInfo pipelineCreateInfo = {};
-    SpiritShader shaders[2];
-    shaders[0].path = createInfo->fragmentShader;
-    shaders[0].type = SPIRIT_SHADER_TYPE_FRAGMENT;
-    shaders[1].path = createInfo->vertexShader;
-    shaders[1].type = SPIRIT_SHADER_TYPE_VERTEX;
-    pipelineCreateInfo.shaderFilePaths = shaders;
-    pipelineCreateInfo.shaderFilePathCount = sizeof(shaders) / sizeof(shaders[0]);
+    pipelineCreateInfo.vertexShader = createInfo->vertexShader;
+    pipelineCreateInfo.fragmentShader = createInfo->fragmentShader;
 
     pipelineCreateInfo.resolution = context->screenResolution;
-    db_assert(pipelineCreateInfo.resolution.w == context->screenResolution.w &&
-        pipelineCreateInfo.resolution.h == context->screenResolution.h, "wth");
 
     material->pipeline = spCreatePipeline (
         context->device, 
@@ -149,7 +147,7 @@ SpiritResult spDestroyMaterial(
 {
     spDestroyPipeline(context->device, material->pipeline);
     spDestroyRenderPass(material->renderPass, context->device);
-     free(material);
+    free(material);
     return SPIRIT_SUCCESS;
 }
 

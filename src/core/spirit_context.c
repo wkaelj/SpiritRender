@@ -1,5 +1,11 @@
 #include "spirit_context.h"
 
+#include "spirit_device.h"
+#include "spirit_swapchain.h"
+#include "spirit_renderpass.h"
+#include "spirit_pipeline.h"
+#include "spirit_material.h"
+
 // 
 // Private functions
 // 
@@ -15,7 +21,7 @@ void destroyCommandBuffers(
 
 SpiritResult beginCommandBuffer(VkCommandBuffer buffer);
 
-void endCommandBuffer(VkCommandBuffer buffer);
+SpiritResult endCommandBuffer(VkCommandBuffer buffer);
 
 
 // 
@@ -76,13 +82,22 @@ SpiritContext spCreateContext(SpiritContextCreateInfo *createInfo)
         context->device, 
         context->swapchain->imageCount);
 
+    log_verbose("Created Context");
+
     return context;
 }
 
 SpiritResult spContextSubmitFrame(SpiritContext context)
 {
+
+    // aquire the image to render too
     spSwapchainAquireNextImage(context->device, context->swapchain, &context->commandBufferIndex);
-    beginCommandBuffer(context->commandBuffers[context->commandBufferIndex]);
+
+    if (beginCommandBuffer(context->commandBuffers[context->commandBufferIndex]))
+    {
+        log_fatal("Failed to begin command buffer %u", context->commandBufferIndex);
+        abort();
+    }
     context->isRecording = true;
     
     // FIXME does not use linkedlist
@@ -93,7 +108,12 @@ SpiritResult spContextSubmitFrame(SpiritContext context)
 
     context->isRecording = false;
 
-    endCommandBuffer(context->commandBuffers[context->commandBufferIndex]);
+
+    if (endCommandBuffer(context->commandBuffers[context->commandBufferIndex]))
+    {
+        log_fatal("Failed to end command buffer %u", context->commandBufferIndex);
+        abort();
+    }
 
     spSwapchainSubmitCommandBuffer(
         context->device,
@@ -183,7 +203,8 @@ SpiritResult beginCommandBuffer(VkCommandBuffer buffer)
     return SPIRIT_SUCCESS;
 }
 
-void endCommandBuffer(VkCommandBuffer buffer)
+SpiritResult endCommandBuffer(VkCommandBuffer buffer)
 {
-    vkEndCommandBuffer(buffer);
+    if (vkEndCommandBuffer(buffer)) return SPIRIT_FAILURE;
+    return SPIRIT_SUCCESS;
 }

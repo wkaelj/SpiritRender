@@ -6,12 +6,7 @@
 // with all the components
 
 // include components
-#include "spirit_device.h"
-#include "spirit_swapchain.h"
-#include "spirit_renderpass.h"
-#include "spirit_pipeline.h"
-#include "spirit_window.h"
-#include "spirit_material.h"
+
 
 typedef struct t_SpiritContextCreateInfo
 {

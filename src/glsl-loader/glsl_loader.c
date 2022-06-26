@@ -240,7 +240,7 @@ extern SpiritShader spCompileShader (
     size_t compiledShaderSize = shaderc_result_get_length(result);
     db_assert(compiledShaderSize, "compiled shader size cannot be 0");
 
-    SpiritShaderCode compiledShader = (SpiritShaderCode) alloc (compiledShaderSize);
+    SpiritShaderCode compiledShader = (SpiritShaderCode) malloc(compiledShaderSize);
 
     const SpiritShaderCode shadercResult = (u32*) shaderc_result_get_bytes(result);
     

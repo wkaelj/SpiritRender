@@ -1,10 +1,7 @@
 #pragma once
 // Header file stores global dependencies for project
 
-// dmalloc
-#ifdef DMALLOC
-#include "dmalloc.h"
-#endif
+
 
 // std
 
@@ -18,7 +15,10 @@
 #include <time.h>
 #include <sys/queue.h>
 
-
+// dmalloc
+#ifdef DMALLOC
+#include "dmalloc.h"
+#endif
 
 // vulkan
 #include <vulkan/vulkan.h>

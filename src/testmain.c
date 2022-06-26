@@ -5,7 +5,9 @@
 
 // types
 #include "core/spirit_context.h"
+
 #include "core/spirit_mesh.h"
+#include "core/spirit_material.h"
 
 // utils
 #include "glsl-loader/glsl_loader.h"
@@ -76,7 +78,7 @@ void mainlooptest (void) {
     meshInfo.vertCount = 3;
     meshInfo.verts = meshVerts;
 
-    SpiritMesh mesh = spCreateMesh(context->device, &meshInfo);
+    SpiritMesh mesh = spCreateMesh(context, &meshInfo);
 
     SpiritMeshManager meshManager = spCreateMeshManager(NULL);
     const SpiritMeshReference meshRef = spMeshManagerAddMesh(meshManager, mesh);

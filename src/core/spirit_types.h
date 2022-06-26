@@ -1,5 +1,6 @@
 #pragma once
-#include <spirit_header.h>
+
+#include <stdint.h>
 
 // Variables for the spirit render.
 // 
@@ -14,14 +15,14 @@
 #define NULL ((void*)0)
 
 // types
-#define i8  int8_t
-#define u8  uint8_t
-#define i16 int16_t
-#define u16 uint16_t
-#define i32 int32_t
-#define u32 uint32_t
-#define i64 int64_t
-#define u64 uint64_t
+typedef int8_t   i8;
+typedef uint8_t  u8;
+typedef int16_t  i16;
+typedef uint16_t u16;
+typedef int32_t  i32;
+typedef uint32_t u32;
+typedef int64_t  i64;
+typedef uint64_t u64;
 #define f32 float
 #define f64 double
 
@@ -47,17 +48,6 @@ typedef struct t_SpiritResolution
 
 typedef unsigned char byte;
 
-// device information used by the swapchain code
-// it is declared here so that neither the device or the swapchain need to include
-// the other
-typedef struct t_SpiritSwapchainSupportInfo {
-    VkSurfaceCapabilitiesKHR capabilties;
-    VkSurfaceFormatKHR      *formats; // maybe need to fix pointers later
-    u32                      formatCount;
-    VkPresentModeKHR        *presentModes;
-    u32                      presentModeCount;
-} SpiritSwapchainSupportInfo;
-
 //
 // Component Types
 //
@@ -69,6 +59,17 @@ typedef struct t_SpiritSwapchain  *SpiritSwapchain;
 typedef struct t_SpiritPipeline   *SpiritPipeline;
 typedef struct t_SpiritMaterial   *SpiritMaterial;
 typedef struct t_SpiritContext    *SpiritContext;
+
+typedef struct t_SpiritMesh         *SpiritMesh;
+typedef struct t_SpiritMeshManager  *SpiritMeshManager;
+// a reference to a mesh stored in a mesh manager
+// can be obtained and released from
+typedef struct t_SpiritMeshReference
+{
+    struct t_MeshListNode *node;
+    u32 vertCount;
+    SpiritMeshManager meshManager;
+} SpiritMeshReference;
 
 // shaders
 // store wether a shader is frag or vert shader

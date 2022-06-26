@@ -1,15 +1,13 @@
 #include "spirit_mesh.h"
 
-//
-// Helpers
-//
-
+#include "spirit_device.h"
+#include "spirit_context.h"
 //
 // Public Functions
 //
 //
 
-SpiritMesh spCreateMesh(const SpiritDevice device, const SpiritMeshCreateInfo *createInfo)
+SpiritMesh spCreateMesh(const SpiritContext context, const SpiritMeshCreateInfo *createInfo)
 {
     
     SpiritMesh mesh = new_flex_array(struct t_SpiritMesh, Vertex, createInfo->vertCount);
@@ -28,7 +26,7 @@ SpiritMesh spCreateMesh(const SpiritDevice device, const SpiritMeshCreateInfo *c
     VkDeviceMemory vertBufferMemory;
     VkDeviceSize bufferSize = dataSize;
     if(spDeviceCreateBuffer(
-        device,
+        context->device,
         bufferSize,
         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
@@ -40,9 +38,9 @@ SpiritMesh spCreateMesh(const SpiritDevice device, const SpiritMeshCreateInfo *c
 
     // copy memory into data
     Vertex *data;
-    vkMapMemory(device->device, vertBufferMemory, 0, bufferSize, 0, (void**) &data);
+    vkMapMemory(context->device->device, vertBufferMemory, 0, bufferSize, 0, (void**) &data);
     memcpy(data, mesh->verts, dataSize);
-    vkUnmapMemory(device->device, vertBufferMemory);
+    vkUnmapMemory(context->device->device, vertBufferMemory);
 
     // update mesh t reference vertex data
     mesh->vertexBuffer = vertBuffer;
@@ -148,4 +146,19 @@ SpiritResult spDestroyMeshManager(
     free(meshManager);
     return SPIRIT_SUCCESS;
 }
+
+const VkVertexInputAttributeDescription spMeshGetAttributeDescription(void)
+{
+    return (VkVertexInputAttributeDescription) {
+        0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0};
+}
+
+const VkVertexInputBindingDescription spMeshGetBindingDescription(void)
+{
+    return (VkVertexInputBindingDescription) {
+        0, 
+        sizeof(Vertex), 
+        VK_VERTEX_INPUT_RATE_VERTEX };
+}
+
 

@@ -15,17 +15,15 @@
 // 
 
 typedef struct t_SpiritPipelineCreateInfo {
-    SpiritShader *shaderFilePaths;     // array of shader names
-    u32           shaderFilePathCount; // num of shaders
+    const char *vertexShader;     // array of shader names
+    const char *fragmentShader; // num of shaders
     SpiritResolution resolution;
 } SpiritPipelineCreateInfo;
 
 struct t_SpiritPipeline
 {
-    VkPipeline    pipeline;
+    VkPipeline pipeline;
     VkPipelineLayout layout;    
-    VkShaderModule *shaders;
-    u32             shaderCount;
 };
 
 // create a new render pass, can optionaly pass a old pipeline which will

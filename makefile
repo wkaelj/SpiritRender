@@ -20,9 +20,8 @@ debug:
 
 # use dmalloc sometimes because memory is hard
 dmalloc:
-	cd $(BUILDFDR)
 	dmalloc -g -V -l malloclog -i 1 high
-	$(DEBUGGER) $(BUILDFDR)/$(EXEC)
+	./$(BUILDFDR)/$(EXEC)
 
 cmake:
 	mkdir -p $(BUILDFDR)

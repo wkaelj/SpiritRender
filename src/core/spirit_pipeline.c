@@ -31,13 +31,12 @@ typedef struct t_FixedFuncInfo
 
 // create a graphics pipeline
 static VkPipeline createPipeline(
-    SpiritDevice            device,
-    SpiritRenderPass        renderPass,
-    VkPipelineLayout        layout,
-    const FixedFuncInfo    *fixedInfo,
-    const u32               shaderCount,
-    const VkShaderModule   *shaders,
-    const SpiritShaderType *shaderTypes);
+    SpiritDevice         device,
+    SpiritRenderPass     renderPass,
+    VkPipelineLayout     layout,
+    const FixedFuncInfo *fixedInfo,
+    const VkShaderModule vertexShader,
+    const VkShaderModule fragmentShader);
 
 // creates a graphics pipeline layout
 static VkPipelineLayout createLayout(SpiritDevice device);
@@ -50,10 +49,10 @@ static VkPipelineLayout createLayout(SpiritDevice device);
 // - shaderInfo.type = SPIRIT_SHADER_TYPE_SHADER_TYPE
 // - size of dest is size of module count, at least -> dest[moduleCount]
 static SpiritResult loadShaderCode (
-    SpiritDevice        device,
-    VkShaderModule     *dest,
-    const u32           moduleCount,
-    const SpiritShader *shaderInfo);
+    SpiritDevice           device,
+    VkShaderModule        *dest,
+    const char            *path,
+    const SpiritShaderType shaderType);
 
 // automaticaly handles options for pipeline creation
 // using one big spagetti monster
@@ -76,45 +75,56 @@ SpiritPipeline spCreatePipeline (
     SpiritPipeline pipeline = new_var (struct t_SpiritPipeline);
 
     // load shader modules
-    u32 shaderCount = createInfo->shaderFilePathCount;
-    VkShaderModule shaderCode[shaderCount];
-    loadShaderCode (device, shaderCode, shaderCount, createInfo->shaderFilePaths);
+    const u32 shaderCount = 2;
+    VkShaderModule vertexShader, fragmentShader;
+    loadShaderCode(
+        device,
+        &vertexShader,
+        createInfo->vertexShader,
+        SPIRIT_SHADER_TYPE_VERTEX);
+    loadShaderCode(
+        device,
+        &fragmentShader,
+        createInfo->fragmentShader,
+        SPIRIT_SHADER_TYPE_FRAGMENT);
 
-    // update shader types
-    SpiritShaderType shaderTypes[shaderCount];
-    for (u32 i = 0; i < shaderCount; i++)
-    {
-        shaderTypes[i] = createInfo->shaderFilePaths[i].type;
-    }
-
-    pipeline->shaderCount = shaderCount;
-    pipeline->shaders =     new_array (VkShaderModule, shaderCount);
-
-    for (u32 i = 0; i < shaderCount; i++)
-    {
-        pipeline->shaders[i] = shaderCode[i];
-    }
 
     // get config info
     FixedFuncInfo fixedInfo;
     defaultPipelineConfig (createInfo, &fixedInfo);
 
     pipeline->layout = createLayout(device);
+    if(pipeline->layout == NULL)
+    {
+        log_error("Failed to create pipeline layout");
+        vkDestroyShaderModule(device->device, vertexShader, NULL);
+        vkDestroyShaderModule(device->device, fragmentShader, NULL);
+        free(pipeline);
+        return NULL;
+    }
 
     pipeline->pipeline = createPipeline (
         device,
         renderPass,
         pipeline->layout,
         &fixedInfo,
-        pipeline->shaderCount,
-        pipeline->shaders,
-        shaderTypes);
+        vertexShader,
+        fragmentShader);
+
     if (pipeline->pipeline == NULL)
     {
-        free(pipeline->shaders);
+        log_error("Failed to create pipeline");
+        vkDestroyPipelineLayout(device->device, pipeline->layout, NULL);
+
+        vkDestroyShaderModule(device->device, vertexShader, NULL);
+        vkDestroyShaderModule(device->device, fragmentShader, NULL);
+
         free(pipeline);
         return NULL;
     }
+
+    vkDestroyShaderModule(device->device, vertexShader, NULL);
+    vkDestroyShaderModule(device->device, fragmentShader, NULL);
 
     return pipeline;
 }
@@ -143,17 +153,16 @@ SpiritResult spDestroyPipeline (
     if (!pipeline) return SPIRIT_FAILURE;
 
     vkDestroyPipelineLayout(device->device, pipeline->layout, NULL);
-
     vkDestroyPipeline (device->device, pipeline->pipeline, NULL);
-    for (u32 i = 0; i < pipeline->shaderCount; i++)
-    {
-        vkDestroyShaderModule (device->device, pipeline->shaders[i], NULL);
-    }
-    dalloc (pipeline->shaders);
-    dalloc (pipeline);
+    free(pipeline);
 
     return SPIRIT_SUCCESS;
 }
+
+
+//
+// Helper Function Implementation 
+//
 
 VkPipelineLayout createLayout(SpiritDevice device)
 {
@@ -167,63 +176,36 @@ VkPipelineLayout createLayout(SpiritDevice device)
     VkPipelineLayout layout = VK_NULL_HANDLE;
     if (vkCreatePipelineLayout(device->device, &layoutInfo, NULL, &layout))
     {
-        log_error("Failed to create pipeline layout");
         return NULL;
     }
 
     return layout;
 }
 
-//
-// Helper Function Implementation 
-//
-
-static VkPipeline createPipeline(
-    SpiritDevice            device,
-    SpiritRenderPass        renderPass,
-    VkPipelineLayout        layout,
-    const FixedFuncInfo    *fixedInfo,
-    const u32               shaderCount,
-    const VkShaderModule   *shaders,
-    const SpiritShaderType *shaderTypes)
+VkPipeline createPipeline(
+    SpiritDevice         device,
+    SpiritRenderPass     renderPass,
+    VkPipelineLayout     layout,
+    const FixedFuncInfo *fixedInfo,
+    const VkShaderModule vertexShader,
+    const VkShaderModule fragmentShader)
 {
 
 
     // configure shader info for each shader
-    VkPipelineShaderStageCreateInfo shaderCreateInfo[shaderCount];
-    for (u32 i = 0; i < shaderCount; i++)
-    {
-        #define SHADER shaderCreateInfo[i]
+    VkPipelineShaderStageCreateInfo shaderCreateInfo[2];
 
-        SHADER = (VkPipelineShaderStageCreateInfo) {};
-        SHADER.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    shaderCreateInfo[0] = (VkPipelineShaderStageCreateInfo) {};
+    shaderCreateInfo[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    shaderCreateInfo[0].module = vertexShader;
+    shaderCreateInfo[0].pName = "main"; // entry function in glsl code
+    shaderCreateInfo[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+    shaderCreateInfo[1] = (VkPipelineShaderStageCreateInfo){};
+    shaderCreateInfo[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    shaderCreateInfo[1].module = fragmentShader;
+    shaderCreateInfo[1].pName = "main";
+    shaderCreateInfo[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-        switch (shaderTypes[i])
-        {
-        case SPIRIT_SHADER_TYPE_VERTEX:
-            SHADER.stage = VK_SHADER_STAGE_VERTEX_BIT;
-            break;
-        case SPIRIT_SHADER_TYPE_FRAGMENT:
-            SHADER.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-            break;
-        // TODO compute shader
-        case SPIRIT_SHADER_TYPE_COMPUTE:
-            log_fatal ("Compute shaders are not supported! yet...");
-            abort();
-            break;
-        default:
-            log_fatal ("Unable to recognize shader type %u", shaderTypes[i]);
-            break;
-        }
-
-        SHADER.module =              shaders[i];
-        SHADER.pName =              "main"; // entry function in glsl code
-        SHADER.flags =               0; // no flags
-        SHADER.pSpecializationInfo = NULL;
-        SHADER.pNext =               NULL;
-
-        #undef SHADER
-    }
 
     VkVertexInputBindingDescription bindingDescription = spMeshGetBindingDescription();
     VkVertexInputAttributeDescription attributeDescription = spMeshGetAttributeDescription();
@@ -247,7 +229,7 @@ static VkPipeline createPipeline(
 
     VkGraphicsPipelineCreateInfo pipelineInfo = (VkGraphicsPipelineCreateInfo) {};
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineInfo.stageCount =           shaderCount;
+    pipelineInfo.stageCount =           2;
     pipelineInfo.pStages =              shaderCreateInfo;
     pipelineInfo.pVertexInputState =   &vertInfo;
     pipelineInfo.pInputAssemblyState = &fixedInfo->inputAssemblyInfo;
@@ -279,11 +261,8 @@ static VkPipeline createPipeline(
         NULL,
         &pipeline) != VK_SUCCESS)
     {
-        log_error("Failed to create graphics pipeline");
         return NULL;
     }
-
-    log_verbose("Created pipeline");
 
     return pipeline;
 }
@@ -296,37 +275,34 @@ static VkPipeline createPipeline(
 // - shaderInfo.type = SPIRIT_SHADER_TYPE_SHADER_TYPE
 // - size of dest is size of module count, at least -> dest[moduleCount]
 SpiritResult loadShaderCode (
-    SpiritDevice        device,
-    VkShaderModule     *dest,
-    const u32           moduleCount,
-    const SpiritShader *shaderInfo)
+    SpiritDevice           device,
+    VkShaderModule        *dest,
+    const char            *path,
+    const SpiritShaderType shaderType)
 {
 
-    // store the error value in this and continue attemting to compile shaders
-    // so at least most of the shaders get compiled in the event of a failure
-    SpiritResult error = SPIRIT_SUCCESS;
-
-    for (u32 i = 0; i < moduleCount; i++)
+    // load shader into s, to be error checked
+    SpiritShader s = (SpiritShader) {};
+    s = spLoadSourceShader (path, shaderType);
+    
+    // error
+    if (s.shaderSize == 0)
     {
-        // load shader into s, to be error checked
-        SpiritShader s = (SpiritShader) {};
-        s = spLoadSourceShader (shaderInfo[i].path, shaderInfo[i].type);
+        log_error ("Failed to load shader '%s'", path);
+        return SPIRIT_FAILURE;
+    }
+    
+    // create shader module
+    *dest = spConvertShaderToModule(device, &s);
+    spDestroyShader(s);
 
-        // error
-        if (s.shaderSize == 0)
-        {
-            log_error ("Failed to load shader '%s', index %u",
-                shaderInfo[i].path, i);
-            return SPIRIT_FAILURE;
-        }
-
-        // create shader module
-        if ((dest[i] = spConvertShaderToModule(device, &s)) == NULL) error = SPIRIT_FAILURE;
-        spDestroyShader(s); // clean up loaded shader code
+    if (*dest == NULL)
+    {
+        return SPIRIT_FAILURE;
     }
 
-    return error;
-} // loadShaderCode
+    return SPIRIT_SUCCESS;
+}
 
 // the default piplinse configuration, should work for almost everything
 SpiritResult defaultPipelineConfig(
@@ -351,7 +327,6 @@ SpiritResult defaultPipelineConfig(
     pConfigInfo->scissor.offset.y = 0;
     pConfigInfo->scissor.extent.width = createInfo->resolution.w;
     pConfigInfo->scissor.extent.height = createInfo->resolution.h;
-
 
     pConfigInfo->rasterizationInfo = (VkPipelineRasterizationStateCreateInfo) {};
     pConfigInfo->rasterizationInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;

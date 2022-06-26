@@ -41,12 +41,12 @@ struct t_SpiritSwapchain {
     VkImage     *images;
     u32          imageCount;
     VkImageView *imageViews;
-    VkFormat imageFormat;
+    VkFormat     imageFormat;
 
-    VkImage *depthImages;
-    VkImageView *depthImageViews;
+    VkImage        *depthImages;
+    VkImageView    *depthImageViews;
     VkDeviceMemory *depthImageMemory;
-    VkFormat depthFormat;
+    VkFormat        depthFormat;
 
     // sync
     VkSemaphore *imageAvailableSemaphores;
@@ -55,9 +55,9 @@ struct t_SpiritSwapchain {
     u32 renderFinishedSemaphoreCount;
 
     VkFence *inFlightFences;
-    u32 inFlightFenceCount;
+    u32      inFlightFenceCount;
     VkFence *imagesInFlight;
-    u32 imagesInFlightCount;
+    u32      imagesInFlightCount;
 
     VkFramebuffer *framebuffers;
     u32            framebufferCount;
