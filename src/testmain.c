@@ -16,25 +16,22 @@
 
 void mainlooptest (void);
 
+// run all the tests
+bool Test(void);
+
+
 int main (int argc, char **argv) {
 
     spPlatformSetExecutableFolder (argv[0]);
 
-    const char *path = "shaders/simple_shader.frag";
-    u64 srcLen = spReadFileSize(path);
-    log_debug("Src length = %u", srcLen);
-    char src[srcLen + 1];
-    spReadFileText(src, path, &srcLen);
-    src[srcLen] = '\0';
-    db_assert(srcLen == strlen(src), "");
+    // tests
+    if (argc >= 2 && strcmp("--test", argv[1]) == 0)
+    {
+        Test();
+        return 0;
+    }
 
-    SpiritShader o = spCompileShader (src, srcLen, "frag", SPIRIT_SHADER_TYPE_FRAGMENT);
-
-    db_assert(o.shader, "Shader failed");
-
-    spDestroyShader(o);
-
-    mainlooptest ();
+    mainlooptest();
 
     return 0;
 }
@@ -43,8 +40,6 @@ void mainlooptest (void) {
 
     SpiritContextCreateInfo contextInfo = {};
     contextInfo.enableValidation = true;
-    contextInfo.fragmentShader = "shaders/simple_shader.frag";
-    contextInfo.vertexShader = "shader/simple_shader.vert";
     contextInfo.windowName = "Hi Triangle :D";
     contextInfo.windowSize = (SpiritResolution) {600, 600};
     contextInfo.windowFullscreen = false;
@@ -62,7 +57,7 @@ void mainlooptest (void) {
     SpiritMaterial material = spCreateMaterial(
         context,
         &materialInfo);
-    if(material == NULL)
+    if (material == NULL)
         return;
 
     context->materials = &material;
@@ -85,14 +80,94 @@ void mainlooptest (void) {
 
     while (!spWindowShouldClose (context->window))
     {
-        spMaterialAddMesh(material, meshRef);
-        spContextSubmitFrame(context);
-        sleep(1);
+        if (spMaterialAddMesh(material, meshRef))
+        {
+            log_fatal("Failed to add mesh to material");
+            exit(1);
+        }
+        if(spContextSubmitFrame(context))
+        {
+            log_fatal("Failed to submit frame");
+            exit(1);
+        }
     }
 
     vkDeviceWaitIdle(context->device->device);
     spDestroyMaterial(context, material);
     spDestroyContext(context);
 
+}
 
+//
+// Tests
+//
+
+void runTest(bool test)
+{
+    static u32 testIntex;
+    if(test)
+    {
+        log_info("Test %u passed.", testIntex);
+    } else
+    {
+        log_error("Test %u failed.", testIntex);
+    }
+
+    testIntex++;
+}
+
+// tests
+bool TestPlatformLocalizeFilename(const char *input, const char *expected)
+{
+
+    u32 max = 0;
+    spPlatformLocalizeFileName(NULL, input, &max);
+    char output[max];
+    spPlatformLocalizeFileName(output, input, &max);
+    if (strcmp(output, expected))
+    {
+        log_error("Expected %s, got %s", expected, output);
+        return false;
+    }
+    return true;
+}
+
+bool TestStringTruncate(const char *input, const char slicer, bool inclusive, const char *expected)
+{
+
+    u32 len = strlen(input) + 1;
+    char dest[len];
+
+    spStringTruncate(dest, &len, input, slicer, inclusive);
+
+    if (strcmp(dest, expected))
+    {
+        log_error("Expected %s, got %s", expected, dest);
+        return false;
+    }
+    return true;
+}
+
+bool TestStringStrip(const char *input, const char slicer, const char *expected)
+{
+
+    u32 len = strlen(input) + 1;
+    char dest[len];
+    
+    spStringStrip(dest, &len, input, slicer);
+
+    if (strcmp(dest, expected))
+    {
+        log_error("Expected %s, got %s", expected, dest);
+        return false;
+    }
+    return true;
+}
+
+bool Test(void)
+{
+    runTest(TestPlatformLocalizeFilename("file/test.png", "./bin/file/test.png"));
+    runTest(TestPlatformLocalizeFilename("file\\test.mov", "./bin/file/test.mov"));
+    runTest(TestStringTruncate("filename.txt", '.', false, "filename"));
+    runTest(TestStringStrip("filename.txt", '.', "txt"));
 }

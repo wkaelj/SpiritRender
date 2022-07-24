@@ -56,8 +56,8 @@ static SpiritResult loadShaderCode (
 
 // automaticaly handles options for pipeline creation
 // using one big spagetti monster
-static SpiritResult defaultPipelineConfig(
-    SpiritPipelineCreateInfo *createInfo, 
+static void defaultPipelineConfig(
+    const SpiritPipelineCreateInfo *createInfo, 
     FixedFuncInfo *pConfigInfo);
 
 //
@@ -77,21 +77,29 @@ SpiritPipeline spCreatePipeline (
     // load shader modules
     const u32 shaderCount = 2;
     VkShaderModule vertexShader, fragmentShader;
-    loadShaderCode(
+    if (loadShaderCode(
         device,
         &vertexShader,
         createInfo->vertexShader,
-        SPIRIT_SHADER_TYPE_VERTEX);
-    loadShaderCode(
+        SPIRIT_SHADER_TYPE_VERTEX))
+    {
+        log_error("Failed to load shader '%s'", createInfo->vertexShader);
+        return NULL;
+    }
+    if (loadShaderCode(
         device,
         &fragmentShader,
         createInfo->fragmentShader,
-        SPIRIT_SHADER_TYPE_FRAGMENT);
+        SPIRIT_SHADER_TYPE_FRAGMENT))
+    {
+        log_error("Failed to load shader '%s'", createInfo->fragmentShader);
+        return NULL;
+    }
 
 
     // get config info
     FixedFuncInfo fixedInfo;
-    defaultPipelineConfig (createInfo, &fixedInfo);
+    defaultPipelineConfig(createInfo, &fixedInfo);
 
     pipeline->layout = createLayout(device);
     if(pipeline->layout == NULL)
@@ -305,8 +313,8 @@ SpiritResult loadShaderCode (
 }
 
 // the default piplinse configuration, should work for almost everything
-SpiritResult defaultPipelineConfig(
-    SpiritPipelineCreateInfo *createInfo, 
+void defaultPipelineConfig(
+    const SpiritPipelineCreateInfo *createInfo, 
     FixedFuncInfo *pConfigInfo)
 {
 
@@ -388,6 +396,4 @@ SpiritResult defaultPipelineConfig(
     pConfigInfo->depthStencilInfo.stencilTestEnable = VK_FALSE;
     // pConfigInfo->depthStencilInfo.front = {};  // Optional
     // pConfigInfo->depthStencilInfo.back = {};   // Optional
-
-    return SPIRIT_SUCCESS;
 }

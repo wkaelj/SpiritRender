@@ -77,6 +77,7 @@ SpiritSwapchain spCreateSwapchain (
 
     // image count
     u32 swapImageCount = device->swapchainDetails.capabilties.minImageCount + 1;
+    log_debug("Swapchain minImageCount + 1 = %u", swapImageCount);
     if (device->swapchainDetails.capabilties.maxImageCount > 0 &&
     swapImageCount > device->swapchainDetails.capabilties.maxImageCount)
     {
@@ -162,6 +163,13 @@ SpiritResult spSwapchainSubmitCommandBuffer(
     VkCommandBuffer buffer,
     u32 imageIndex)
 {
+
+    db_assert(device, "Must have a valid device");
+    db_assert(swapchain, "must have a valid swapchain");
+    db_assert(buffer, "Must have a valid command buffer");
+
+    log_debug("Image index = %u, max = %u", imageIndex, swapchain->maxFramesInFlight);
+
     if (swapchain->imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
         if (vkWaitForFences(
             device->device, 
@@ -247,7 +255,12 @@ SpiritResult spSwapchainSubmitCommandBuffer(
 SpiritResult spSwapchainAquireNextImage(
     const SpiritDevice device,
     const SpiritSwapchain swapchain,
-    u32 *imageIndex) {
+    u32 *imageIndex)
+{
+
+    db_assert(device, "Must have a valid devce");
+    db_assert(swapchain, "Must have a valid swapchain");
+    db_assert(imageIndex, "imageIndex must be a valid pointer to a u32");
 
     SpiritResult result = SPIRIT_SUCCESS;
     if (vkWaitForFences(
@@ -276,13 +289,6 @@ SpiritResult spSwapchainAquireNextImage(
     return result;
 }
 
-// add framebuffers for a specific render pass to a swapchain
-// to use a different render pass, just call the function again
-// the framebuffers will be automatically destroyed when the swapchain
-// is destroyed
-//  - device is the device used for everything
-//  - swapchain is the swapchain to add framebuffers to
-//  - renderPass is the render pass to use for the framebuffers
 SpiritResult spSwapchainAddFramebuffers(
     const SpiritDevice device,
     SpiritSwapchain swapchain,
@@ -462,7 +468,9 @@ void destroyImages(const SpiritDevice device, SpiritSwapchain swapchain)
 }
 
 SpiritResult createSyncObjects(const SpiritDevice device, SpiritSwapchain swapchain) {
+    
     // sync options
+    swapchain->maxFramesInFlight = SPIRIT_SWAPCHAIN_MAX_FRAMES_IN_FLIGHT;
 
     swapchain->imageAvailableSemaphores = 
         new_array(VkSemaphore, SPIRIT_SWAPCHAIN_MAX_FRAMES_IN_FLIGHT);

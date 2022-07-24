@@ -5,23 +5,12 @@
 // just a wrapper, to help keep the file utilities organized
 u64 spReadFileSize(const char *path)
 {
-    // localize filepath
-    u32 pathLength = 0;
-    spPlatformLocalizeFileName(NULL, path, &pathLength);
-    char filepath[pathLength];
-    spPlatformLocalizeFileName(filepath, path, &pathLength);
-    return spPlatformTestFileSize(filepath);
+    return spPlatformTestFileSize(path);
 }
 
 bool spReadFileExists(const char *path)
 {
-
-        // localize filepath
-    u32 pathLength = 0;
-    spPlatformLocalizeFileName(NULL, path, &pathLength);
-    char filepath[pathLength];
-    spPlatformLocalizeFileName(filepath, path, &pathLength);
-    return spPlatformTestForFile(filepath);
+    return spPlatformTestForFile(path);
 }
 
 SpiritResult spReadFileBinary(
@@ -108,13 +97,7 @@ SpiritResult spReadFileText(
 
 time_t spReadFileModifiedTime(const char *path)
 {
-
-        // localize filepath
-    u32 pathLength = 0;
-    spPlatformLocalizeFileName(NULL, path, &pathLength);
-    char filepath[pathLength];
-    spPlatformLocalizeFileName(filepath, path, &pathLength);
-    return spPlatformGetFileModifiedDate(filepath);
+    return spPlatformGetFileModifiedDate(path);
 }
 
 SpiritResult spWriteFileBinary(
@@ -149,10 +132,5 @@ SpiritResult spWriteFileBinary(
 
 SpiritResult spWriteFileFolder(const char *path)
 {
-    // localize filepath
-    u32 pathLength = 0;
-    spPlatformLocalizeFileName(NULL, path, &pathLength);
-    char filepath[pathLength];
-    spPlatformLocalizeFileName(filepath, path, &pathLength);
-    return spPlatformCreateFolder(filepath);
+    return spPlatformCreateFolder(path);
 }

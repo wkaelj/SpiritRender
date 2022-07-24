@@ -7,7 +7,10 @@
 // return SPIRIT_SHADER_TYPE_MAX on failure
 static SpiritShaderType autoDetectShaderType(const char *path)
 {
-    const char *fileExtension = spStringStrip (path, '.');
+
+    u32 extensionLen = 5;
+    char fileExtension[extensionLen];
+    spStringStrip (fileExtension, &extensionLen, path, '.');
 
     if (strncmp ("vert", fileExtension, 4))
     {
@@ -53,9 +56,9 @@ shaderc_shader_kind convertShaderType (SpiritShaderType type)
 extern SpiritShader spLoadCompiledShader(const char *path, SpiritShaderType type)
 {
 
-    u64 shaderCodeSize = 0;
+    u64 shaderCodeSize = spReadFileSize(path);
     // get file size
-    if ((shaderCodeSize = spReadFileSize (path)) < 3)
+    if (shaderCodeSize < 3)
     {
         if (shaderCodeSize == 1)
             log_error("Cannot find file size of '%s'", path);
@@ -89,17 +92,24 @@ extern SpiritShader spLoadSourceShader(
     SpiritShader out = {};
     
     // shader filename, without path
-    const char *strippedShaderName = spStringStrip(path, SPIRIT_PLATFORM_FOLDER_BREAK);
-    const u32 strippedShaderNameLength = strlen (strippedShaderName);
+    u32 strippedShaderNameLength = 0;
+    spStringStrip(NULL, &strippedShaderNameLength, path, SPIRIT_PLATFORM_FOLDER_BREAK);
+    char strippedShaderName[strippedShaderNameLength];
+    spStringStrip(
+        strippedShaderName,
+        &strippedShaderNameLength,
+        path,
+        SPIRIT_PLATFORM_FOLDER_BREAK);
+    strippedShaderNameLength--; // remove space for terminator
 
     // check if shader has been precompiled
-    u32 shaderCodePathLength = (
-        sizeof (GLSL_LOADER_CACHE_FOLDER) - 1 +
+    u32 shaderCodePathLength = 
+        sizeof(GLSL_LOADER_CACHE_FOLDER) - 1 +
         strippedShaderNameLength +
-        4); /* sizeof (".spv") - 1*/
+        5; /* sizeof (".spv\0")*/
 
-    char shaderCodePath[shaderCodePathLength + 1];
-    npf_snprintf(shaderCodePath, shaderCodePathLength + 1, "%s%s%s",
+    char shaderCodePath[shaderCodePathLength];
+    npf_snprintf(shaderCodePath, shaderCodePathLength, "%s%s%s",
         GLSL_LOADER_CACHE_FOLDER,
         strippedShaderName,
         ".spv");
@@ -143,12 +153,12 @@ extern SpiritShader spLoadSourceShader(
         }
 
         // load source code
-        size_t shaderSrcLength = spReadFileSize (path);
+        size_t shaderSrcLength = spReadFileSize(path);
         db_assert(shaderSrcLength > 1, "Failed to read shader file size");
         char shaderSrc[shaderSrcLength + 1];
         
         spReadFileText (shaderSrc, path, &shaderSrcLength);
-        shaderSrc[shaderSrcLength] = '\0';
+        shaderSrc[shaderSrcLength ] = '\0';
 
         SpiritShader out = spCompileShader (
             shaderSrc,
@@ -160,8 +170,6 @@ extern SpiritShader spLoadSourceShader(
         {
             return out;
         }
-
-        log_debug("Gotten pointer = %p", out.shader);
 
         // write output file
         log_verbose ("Caching shader '%s' with size %u", shaderCodePath, out.shaderSize);
@@ -191,7 +199,7 @@ extern SpiritShader spLoadSourceShader(
 
         return out;
     }
-} // loadSourceShader
+}
 
 extern SpiritShader spCompileShader (
     const char      *src,
@@ -253,8 +261,7 @@ extern SpiritShader spCompileShader (
         compiledShader, 
         shadercResult, 
         compiledShaderSize) == 0, "Shader did not copy)");
-    log_debug("Internal pointer = %p", compiledShader);
-
+    
     SpiritShader out = {};
     out.shader = compiledShader;
     out.shaderSize = compiledShaderSize;

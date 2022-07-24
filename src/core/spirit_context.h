@@ -20,12 +20,6 @@ typedef struct t_SpiritContextCreateInfo
     bool enableValidation; // should vulkan validation be initialized
     bool powerSaving; // should integrated GPU's be chosen
 
-    // pipeline
-    const char *vertexShader; // path to the vertex shader
-    const char *fragmentShader; // path to the fragment shader
-
-
-
 } SpiritContextCreateInfo;
 
 struct t_SpiritContext

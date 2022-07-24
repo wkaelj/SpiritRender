@@ -6,10 +6,14 @@ BUILDFDR = bin
 EXEC = SpiritRender
 
 default:
+	cp -r Config/* bin/
 	make -s --quiet -C $(BUILDFDR)
 
 run:
 	./$(BUILDFDR)/$(EXEC)
+
+test:
+	./$(BUILDFDR)/$(EXEC) --test
 
 noshade:
 	rm bin/glsl-loader-cache/*.spv
