@@ -168,8 +168,6 @@ SpiritResult spSwapchainSubmitCommandBuffer(
     db_assert(swapchain, "must have a valid swapchain");
     db_assert(buffer, "Must have a valid command buffer");
 
-    log_debug("Image index = %u, max = %u", imageIndex, swapchain->maxFramesInFlight);
-
     if (swapchain->imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
         if (vkWaitForFences(
             device->device, 
@@ -231,12 +229,13 @@ SpiritResult spSwapchainSubmitCommandBuffer(
     presentInfo.waitSemaphoreCount = 1;
     presentInfo.pWaitSemaphores = signalSemaphores;
 
-    VkSwapchainKHR swapChains[] = {swapchain->swapchain};
+    VkSwapchainKHR swapchains[] = { swapchain->swapchain };
     presentInfo.swapchainCount = 1;
-    presentInfo.pSwapchains = swapChains;
+    presentInfo.pSwapchains = swapchains;
 
     presentInfo.pImageIndices = &imageIndex;
 
+    log_debug("Present queue %p", device->presentQueue);
     VkResult result = vkQueuePresentKHR(device->presentQueue, &presentInfo);
 
     swapchain->currentFrame = (swapchain->currentFrame + 1) % 
@@ -284,7 +283,7 @@ SpiritResult spSwapchainAquireNextImage(
     {
         log_error("Error attempting to aquire next image with semaphore %u", swapchain->currentFrame);
         result = SPIRIT_FAILURE;
-    }
+    }   
 
     return result;
 }
@@ -479,7 +478,7 @@ SpiritResult createSyncObjects(const SpiritDevice device, SpiritSwapchain swapch
     swapchain->inFlightFences = 
         new_array(VkFence, SPIRIT_SWAPCHAIN_MAX_FRAMES_IN_FLIGHT);
     swapchain->imagesInFlight = 
-        new_array(VkFence, swapchain->imageCount);
+        new_array(VkFence, SPIRIT_SWAPCHAIN_MAX_FRAMES_IN_FLIGHT);
 
     VkSemaphoreCreateInfo semaphoreInfo = {};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -496,19 +495,20 @@ SpiritResult createSyncObjects(const SpiritDevice device, SpiritSwapchain swapch
             &semaphoreInfo, 
             NULL, 
             &swapchain->imageAvailableSemaphores[i])) failure = true;
-       if(vkCreateSemaphore(
+       if (vkCreateSemaphore(
             device->device, 
             &semaphoreInfo, 
             NULL, 
             &swapchain->renderFinishedSemaphores[i])) failure = true;
-        if(vkCreateFence(
+        if (vkCreateFence(
             device->device, 
             &fenceInfo, 
             NULL, 
             &swapchain->inFlightFences[i])) failure = true;
-        
 
-        if(failure)
+        swapchain->imagesInFlight[i] = VK_NULL_HANDLE;        
+
+        if (failure)
         {
             log_error("Failed to create syncronization objects");
             return SPIRIT_FAILURE;

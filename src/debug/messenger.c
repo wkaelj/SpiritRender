@@ -37,7 +37,7 @@ int debug_log(
     uint16_t strlen = npf_snprintf (
         bufferString2,              // output
         BUFFER_LENGTH,              // max length
-        ">>> %s:%s->%i\n\t%s%s\n",  // format string
+        ">>> %s:%s:%i\n\t%s%s\n",  // format string
         file,                       // filename
         func,                       // function name
         line,                       // line number

@@ -85,11 +85,14 @@ void mainlooptest (void) {
             log_fatal("Failed to add mesh to material");
             exit(1);
         }
+
         if(spContextSubmitFrame(context))
         {
             log_fatal("Failed to submit frame");
             exit(1);
         }
+
+        sleep(1);
     }
 
     vkDeviceWaitIdle(context->device->device);
