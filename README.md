@@ -24,7 +24,7 @@ This is the syntax I am using
  7. CONST_NAME - constant or definition
  8. Brackets do the thing where you put them under
  ```c
-void funcName (void)
+void funcName(void)
 {
  // stuffs
 }
