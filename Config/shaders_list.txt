@@ -1,2 +1,0 @@
-SimpleVertShader;VERTEX;Config/shaders/simple_shader.vert.spv;
-SimpleFragShader;FRAGMENT;Config/shaders/simple_shader.frag.spv;
