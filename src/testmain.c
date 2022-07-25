@@ -78,7 +78,7 @@ void mainlooptest (void) {
     SpiritMeshManager meshManager = spCreateMeshManager(NULL);
     const SpiritMeshReference meshRef = spMeshManagerAddMesh(meshManager, mesh);
 
-    while (!spWindowShouldClose (context->window))
+    while (!spWindowShouldClose(context->window))
     {
         if (spMaterialAddMesh(material, meshRef))
         {

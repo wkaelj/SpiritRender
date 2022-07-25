@@ -235,7 +235,6 @@ SpiritResult spSwapchainSubmitCommandBuffer(
 
     presentInfo.pImageIndices = &imageIndex;
 
-    log_debug("Present queue %p", device->presentQueue);
     VkResult result = vkQueuePresentKHR(device->presentQueue, &presentInfo);
 
     swapchain->currentFrame = (swapchain->currentFrame + 1) % 

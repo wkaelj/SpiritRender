@@ -52,8 +52,9 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CM
 set(CMAKE_BUILD_TYPE "Debug")
 # add_compile_options(-D_FORTIFY_SOURCE=2 -fsanitize=address)
 
-target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=address)
-target_link_options(${PROJECT_NAME} PRIVATE -fsanitize=address)
+# address sanitizer
+#target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=address)
+#target_link_options(${PROJECT_NAME} PRIVATE -fsanitize=address)
 
 set(CMAKE_C_STANDARD c2x)
 
