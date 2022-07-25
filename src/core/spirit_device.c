@@ -77,8 +77,9 @@ SpiritDevice spCreateDevice (SpiritDeviceCreateInfo *createInfo) {
     // validation layers
 
     // default validation layers
-    if (createInfo->enableValidation && createInfo->requiredValidationLayerCount == 0) {
-        const char *backupLayer = "VK_LAYER_KHRONOS_validation";
+    const char *backupLayer = "VK_LAYER_KHRONOS_validation";
+    if (createInfo->enableValidation && createInfo->requiredValidationLayerCount == 0)
+    {
         createInfo->requiredValidationLayers = &backupLayer;
         createInfo->requiredValidationLayerCount = 1;
     }
@@ -87,7 +88,8 @@ SpiritDevice spCreateDevice (SpiritDeviceCreateInfo *createInfo) {
     if (createInfo->enableValidation &&
     !checkValidationLayerSupport(
         createInfo->requiredValidationLayers, 
-        createInfo->requiredValidationLayerCount)) {
+        createInfo->requiredValidationLayerCount))
+    {
         
         // disable validation
         createInfo->enableValidation = false;
@@ -95,7 +97,8 @@ SpiritDevice spCreateDevice (SpiritDeviceCreateInfo *createInfo) {
     }
 
     // fallback device extensions
-    if (createInfo->requiredDeviceExtensionCount == 0) {
+    if (createInfo->requiredDeviceExtensionCount == 0)
+    {
         const char *requiredDeviceExtensions[1] = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
         createInfo->requiredDeviceExtensionCount = 1;
         createInfo->requiredDeviceExtensions = requiredDeviceExtensions;
@@ -104,21 +107,24 @@ SpiritDevice spCreateDevice (SpiritDeviceCreateInfo *createInfo) {
     out->validationEnabled = createInfo->enableValidation;
 
     out->instance = createInstance(createInfo, &out->debugMessenger); // create vulkan instance
-    if (out->instance == NULL) {
+    if (out->instance == NULL)
+    {
         log_fatal("Failed to create vulkan instance");
         return NULL;
     }
     out->windowSurface = spWindowGetSurface(createInfo->window, out->instance); // create window surface
     createInfo->windowSurface = out->windowSurface;
     out->physicalDevice = selectPhysicalDevice(createInfo, out->instance); // select physical device
-    if (out->physicalDevice == NULL) {
+    if (out->physicalDevice == NULL)
+    {
         log_fatal("Failed to select GPU");
         return NULL;
     }
 
     out->swapchainDetails = querySwapChainSupport(createInfo, out->physicalDevice);
     out->device = createDevice(createInfo, out->physicalDevice, out->instance);
-    if (out->device == NULL) {
+    if (out->device == NULL)
+    {
         log_fatal("Failed to create logical device");
         return NULL;
     }
@@ -454,19 +460,21 @@ static VkDevice createDevice (const SpiritDeviceCreateInfo *createInfo, const Vk
     VkDeviceQueueCreateInfo queueCreateInfos[queueCount];
     u32 addedQueues[QUEUE_COUNT];
     u32 skippedQueueCount = 0;    
-    for (u32 i = 0; i < queueCount; i++) {
+    for (u32 i = 0; i < queueCount; i++)
+    {
         bool isDuplicateQueue = false;
         // avoid adding duplicate queues
         // the < i is to ensure that we don't check indexes of
         // addedQueues that have not been set yet (false positives with 0)
-        for (u32 n = 0; n < queueCount && n < i; n++) {
-            if (queueFamilies[i] == addedQueues[n]) {
+        for (u32 n = 0; n < queueCount && n < i; n++)
+        {
+            if (queueFamilies[i] == addedQueues[n])
+            {
                 isDuplicateQueue = true;
             }
         }
-        if (isDuplicateQueue) {
-            log_verbose("Skipping duplicate queue index: %u",
-                queueFamilies[i]);
+        if (isDuplicateQueue)
+        {
             skippedQueueCount++;
             continue;
         }
@@ -563,15 +571,18 @@ static bool checkValidationLayerSupport (const char *const *requiredLayerNames, 
     {
         bool found = false;
 
-        //iterate through available extensions
-        for (u32 x = 0; x < layerCount; x++) {
-            if (strcmp (requiredLayerNames[i], availableLayers[x].layerName) == 0) {
+        // iterate through available extensions
+        for (u32 x = 0; x < layerCount; x++)
+        {
+            if (strncmp(requiredLayerNames[i], availableLayers[x].layerName, 256) == 0)
+            {
                 found = true;
                 break;
             }
         }
 
-        if (found == false) {
+        if (found == false)
+        {
             log_warning("Unavailable valiation layer: %s", requiredLayerNames[i]);
             return false;
         }
@@ -661,7 +672,6 @@ static bool checkDeviceExtensionSupport (const SpiritDeviceCreateInfo *createInf
         bool found = false; // if the current extension has been found
         for (u32 x = 0; x < availailableExtensionCount; x++) {
             if (strcmp (createInfo->requiredDeviceExtensions[i], availableExtensionNames[x].extensionName) == 0) {
-                log_verbose("Found required device extension '%s'", availableExtensionNames[x].extensionName);
                 found = true;
                 break;
             }

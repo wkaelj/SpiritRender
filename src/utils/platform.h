@@ -8,6 +8,7 @@
 
 #ifdef _WIN32
 #include "platform/platform_win32.h"
+#error No windows support
 #elif __unix
 #include "platform/platform_unix.h"
 #elif __APPLE__

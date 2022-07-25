@@ -77,6 +77,7 @@ SpiritSwapchain spCreateSwapchain (
 
     // image count
     u32 swapImageCount = device->swapchainDetails.capabilties.minImageCount + 1;
+    log_debug("Swapchain minImageCount + 1 = %u", swapImageCount);
     if (device->swapchainDetails.capabilties.maxImageCount > 0 &&
     swapImageCount > device->swapchainDetails.capabilties.maxImageCount)
     {
@@ -162,6 +163,11 @@ SpiritResult spSwapchainSubmitCommandBuffer(
     VkCommandBuffer buffer,
     u32 imageIndex)
 {
+
+    db_assert(device, "Must have a valid device");
+    db_assert(swapchain, "must have a valid swapchain");
+    db_assert(buffer, "Must have a valid command buffer");
+
     if (swapchain->imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
         if (vkWaitForFences(
             device->device, 
@@ -223,12 +229,13 @@ SpiritResult spSwapchainSubmitCommandBuffer(
     presentInfo.waitSemaphoreCount = 1;
     presentInfo.pWaitSemaphores = signalSemaphores;
 
-    VkSwapchainKHR swapChains[] = {swapchain->swapchain};
+    VkSwapchainKHR swapchains[] = { swapchain->swapchain };
     presentInfo.swapchainCount = 1;
-    presentInfo.pSwapchains = swapChains;
+    presentInfo.pSwapchains = swapchains;
 
     presentInfo.pImageIndices = &imageIndex;
 
+    log_debug("Present queue %p", device->presentQueue);
     VkResult result = vkQueuePresentKHR(device->presentQueue, &presentInfo);
 
     swapchain->currentFrame = (swapchain->currentFrame + 1) % 
@@ -247,7 +254,12 @@ SpiritResult spSwapchainSubmitCommandBuffer(
 SpiritResult spSwapchainAquireNextImage(
     const SpiritDevice device,
     const SpiritSwapchain swapchain,
-    u32 *imageIndex) {
+    u32 *imageIndex)
+{
+
+    db_assert(device, "Must have a valid devce");
+    db_assert(swapchain, "Must have a valid swapchain");
+    db_assert(imageIndex, "imageIndex must be a valid pointer to a u32");
 
     SpiritResult result = SPIRIT_SUCCESS;
     if (vkWaitForFences(
@@ -271,18 +283,11 @@ SpiritResult spSwapchainAquireNextImage(
     {
         log_error("Error attempting to aquire next image with semaphore %u", swapchain->currentFrame);
         result = SPIRIT_FAILURE;
-    }
+    }   
 
     return result;
 }
 
-// add framebuffers for a specific render pass to a swapchain
-// to use a different render pass, just call the function again
-// the framebuffers will be automatically destroyed when the swapchain
-// is destroyed
-//  - device is the device used for everything
-//  - swapchain is the swapchain to add framebuffers to
-//  - renderPass is the render pass to use for the framebuffers
 SpiritResult spSwapchainAddFramebuffers(
     const SpiritDevice device,
     SpiritSwapchain swapchain,
@@ -462,7 +467,9 @@ void destroyImages(const SpiritDevice device, SpiritSwapchain swapchain)
 }
 
 SpiritResult createSyncObjects(const SpiritDevice device, SpiritSwapchain swapchain) {
+    
     // sync options
+    swapchain->maxFramesInFlight = SPIRIT_SWAPCHAIN_MAX_FRAMES_IN_FLIGHT;
 
     swapchain->imageAvailableSemaphores = 
         new_array(VkSemaphore, SPIRIT_SWAPCHAIN_MAX_FRAMES_IN_FLIGHT);
@@ -471,7 +478,7 @@ SpiritResult createSyncObjects(const SpiritDevice device, SpiritSwapchain swapch
     swapchain->inFlightFences = 
         new_array(VkFence, SPIRIT_SWAPCHAIN_MAX_FRAMES_IN_FLIGHT);
     swapchain->imagesInFlight = 
-        new_array(VkFence, swapchain->imageCount);
+        new_array(VkFence, SPIRIT_SWAPCHAIN_MAX_FRAMES_IN_FLIGHT);
 
     VkSemaphoreCreateInfo semaphoreInfo = {};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -488,19 +495,20 @@ SpiritResult createSyncObjects(const SpiritDevice device, SpiritSwapchain swapch
             &semaphoreInfo, 
             NULL, 
             &swapchain->imageAvailableSemaphores[i])) failure = true;
-       if(vkCreateSemaphore(
+       if (vkCreateSemaphore(
             device->device, 
             &semaphoreInfo, 
             NULL, 
             &swapchain->renderFinishedSemaphores[i])) failure = true;
-        if(vkCreateFence(
+        if (vkCreateFence(
             device->device, 
             &fenceInfo, 
             NULL, 
             &swapchain->inFlightFences[i])) failure = true;
-        
 
-        if(failure)
+        swapchain->imagesInFlight[i] = VK_NULL_HANDLE;        
+
+        if (failure)
         {
             log_error("Failed to create syncronization objects");
             return SPIRIT_FAILURE;

@@ -10,18 +10,20 @@ set(SHADERC_ENABLE_COPYRIGHT_CHECK OFF)
 set(SPIRV_HEADERS_SKIP_INSTAL OFF)
 set(SPIRV_HEADERS_SKIP_EXAMPLES ON)
 
-add_subdirectory(liblist)
+project(libs LANGUAGES C CXX VERSION 1.0.0)
+
 add_subdirectory(glslang)
+add_subdirectory(cglm)
 add_subdirectory(spirv-tools)
 add_subdirectory(shaderc)
 add_subdirectory(glfw)
 
-add_library(libs SHARED 
+add_library(${PROJECT_NAME} SHARED 
     $<TARGET_OBJECTS:shaderc>
-    $<TARGET_OBJECTS:linkedlist>
-    $<TARGET_OBJECTS:glfw>)
+    $<TARGET_OBJECTS:glfw>
+    $<TARGET_OBJECTS:cglm>)
 
 target_link_libraries(libs PUBLIC
-    linkedlist
     shaderc
-    glfw)
+    glfw
+    cglm)

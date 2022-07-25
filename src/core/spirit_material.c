@@ -131,8 +131,8 @@ size_t spMaterialRecordCommands(
         struct t_MaterialListNode *oldNode = currentMesh;
         currentMesh = LIST_NEXT(currentMesh, data);
         spReleaseMesh(oldNode->mesh);
-        free(oldNode);
         LIST_REMOVE(oldNode, data);
+        free(oldNode);
     }
 
     endRenderPass(context->commandBuffers[context->commandBufferIndex]);

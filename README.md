@@ -4,7 +4,7 @@ A vulkan rendering engine. It should be cross platform, and there are utilties t
 Not finished yet, cannot actually do anything.
 
 # Cloning
-You must clone the repository using `git clone [link] --recurse-submodules`, then copy the libs/SPIRV-Headers into the right folder of libs/SPIRV-Tools, otherwise it will get angry and won't compile.
+You must clone the repository using `git clone [link] --recurse-submodules`, then copy the libs/SPIRV-Headers into the `external` folder of libs/SPIRV-Tools, otherwise it will get angry and won't compile.
 
 ## Build Instructions
 Must have the VulkanSDK and glfw installed. Probably only works on MacOS and Linux, and I have only tested
@@ -24,7 +24,7 @@ This is the syntax I am using
  7. CONST_NAME - constant or definition
  8. Brackets do the thing where you put them under
  ```c
-void funcName (void)
+void funcName(void)
 {
  // stuffs
 }

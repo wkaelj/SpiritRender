@@ -13,12 +13,14 @@ u32 g_executableDirectoryLength = 0;
 
 void spPlatformSetExecutableFolder(char *name)
 {
+
+    // remove executable fild name from the path
     u32 pathLength = 0;
-    spStringTruncate(NULL, &pathLength, name, '/', true); // remove exectuable name from path
-    g_executableDirectory =malloc(pathLength + 1);
+    spStringTruncate(NULL, &pathLength, name, '/', true);
+    g_executableDirectory = malloc(pathLength);
     spStringTruncate(g_executableDirectory, &pathLength, name, '/', true);
 
-    g_executableDirectoryLength = pathLength;
+    g_executableDirectoryLength = --pathLength;
     db_assert(g_executableDirectoryLength == strlen(g_executableDirectory), "");
 }
 
@@ -40,9 +42,9 @@ SpiritResult spPlatformLocalizeFileName(char *output, const char *path, u32 *max
 
     db_assert(path, "'path' cannot be NULL");
     db_assert(max, "'max' cannot be NULL");
-    if (!(path && max)) return SPIRIT_FAILURE;
+    if (!(path && max)) return SPIRIT_FAILURE; // max and path must not be null
 
-    const u32 pathLength = strlen (path);
+    const u32 pathLength = strlen(path);
 
     // handle paths that have been set to be non relative
     if (
@@ -56,7 +58,7 @@ SpiritResult spPlatformLocalizeFileName(char *output, const char *path, u32 *max
             return SPIRIT_SUCCESS;
         }
         strncpy (output, path, *max);
-        for (u32 i = 0; output[i] != '\0'; i++)
+        for (u32 i = 0; i < *max && output[i] != '\0'; i++)
         {
             if (output[i] == '\\')
                 output[i] = SPIRIT_PLATFORM_FOLDER_BREAK;
@@ -65,29 +67,32 @@ SpiritResult spPlatformLocalizeFileName(char *output, const char *path, u32 *max
         return SPIRIT_SUCCESS;
     }
 
-    // catch cases
+    // set max if max was not set by user
     if (*max == 0)
-        *max = pathLength + g_executableDirectoryLength;
-    if (pathLength + g_executableDirectoryLength + 1 < *max)
-        return 0;
+        *max = pathLength + g_executableDirectoryLength + 1;
 
+    // if max is too small, return failure
+    if (*max < pathLength + g_executableDirectoryLength + 1)
+        return SPIRIT_FAILURE;
+
+    // if a output location was set, use it
     if (output)
     {
-        npf_snprintf(output, *max, "%s%s", g_executableDirectory, path);
+        strncpy(output, g_executableDirectory, *max);
+        strncat(output, path, *max - strlen(output));
     }
 
     // convert windows filepaths to unix systems
     // idk if this is enough i don't use windows
     // im sure there is more code that that will also break
-    for (u32 i = 0; output && output[i] != '\0'; i++)
+    for (u32 i = 0; output && i < *max && output[i] != '\0'; i++)
     {
-        if (output[i] == '\\')
-            output[i] = SPIRIT_PLATFORM_FOLDER_BREAK;
+        if (output[i] == '\\') output[i] = SPIRIT_PLATFORM_FOLDER_BREAK;
     }
 
-    output && (output[*max] = '\0');
+    output && (output[*max - 1] = '\0');
 
-    return g_executableDirectoryLength + pathLength;
+    return SPIRIT_SUCCESS;
 }
 
 char *spPlatformGetCWD(void)
@@ -97,15 +102,26 @@ char *spPlatformGetCWD(void)
 
 bool spPlatformTestForFile(const char *filepath)
 {
-    if ((unsigned) access(filepath, F_OK | R_OK)) return false;
+
+    u32 pathLength = 0;
+    spPlatformLocalizeFileName(NULL, filepath, &pathLength);
+    char path[pathLength];
+    spPlatformLocalizeFileName(path, filepath, &pathLength);
+
+    if ((unsigned) access(path, F_OK | R_OK)) return false;
     return true;
 }
 
 u64 spPlatformTestFileSize(const char *filepath)
 {
 
+    u32 pathLength = 0;
+    spPlatformLocalizeFileName(NULL, filepath, &pathLength);
+    char path[pathLength];
+    spPlatformLocalizeFileName(path, filepath, &pathLength);
+
     struct stat data = (struct stat) {};
-    if (stat(filepath, &data) == -1)
+    if (stat(path, &data) == -1)
     {
         if (errno == EEXIST) return 0;
         log_perror("stat('%s') failed", filepath);
@@ -122,43 +138,39 @@ time_t spPlatformGetTime(void)
 
 time_t spPlatformGetFileModifiedDate(const char *filepath)
 {
+    db_assert(filepath, "Must have valid filepath");
+    if(!filepath) return 0;
+
+    u32 pathLength = 0;
+    spPlatformLocalizeFileName(NULL, filepath, &pathLength);
+    char path[pathLength];
+    spPlatformLocalizeFileName(path, filepath, &pathLength);
 
     struct stat data;
-    if (stat(filepath, &data))
+    if(stat(path, &data) == -1)
     {
         if (errno == EEXIST) return 0;
-        
-        log_perror("stat() failed");
+        log_perror("stat('%s') failed", filepath);
         return 1;
     }
 
-    return data.st_mtime;
+    return data.st_ctim.tv_sec;
+
 }
 
-SpiritResult spPlatformCreateFolder (const char *path)
+SpiritResult spPlatformCreateFolder(const char *filepath)
 {
+    db_assert(filepath, "Must pass a valid filepath");
 
-    db_assert(path, "Must pass a valid filepath");
-    if (!path) return SPIRIT_FAILURE;
+    u32 pathLength = 0;
+    spPlatformLocalizeFileName(NULL, filepath, &pathLength);
+    char path[pathLength];
+    spPlatformLocalizeFileName(path, filepath, &pathLength);
 
-    const u32 pathLength = strlen (path);
+    if (path[pathLength - 1] == SPIRIT_PLATFORM_FOLDER_BREAK)
+        path[pathLength - 1] = '\0';
 
-    // localize filepath
-    u32 localizerLength = 0;
-    spPlatformLocalizeFileName(
-        NULL,
-        path,
-        &localizerLength);
-    char filepath[localizerLength];
-    spPlatformLocalizeFileName(
-        filepath,
-        path,
-        &localizerLength);
-
-    if (filepath[localizerLength - 1] == SPIRIT_PLATFORM_FOLDER_BREAK)
-        filepath[localizerLength - 1] = '\0';
-
-    for (char *p = filepath; *p != '\0'; p++)
+    for (char *p = path; *p != '\0'; p++)
         if (*p == SPIRIT_PLATFORM_FOLDER_BREAK)
         {
             *p = '\0';

@@ -1,7 +1,7 @@
 include(./.env.cmake OPTIONAL RESULT_VARIABLE LOCAL_ENV)
 message(STATUS "Local .env.cmake: ${LOCAL_ENV}")
 
-cmake_minimum_required(VERSION 3.23.0)
+cmake_minimum_required(VERSION 3.22.0)
 
 set(NAME SpiritRender)
 
@@ -15,7 +15,7 @@ if (CMAKE_GENERATOR STREQUAL "MinGW Makefiles")
     set(CMAKE_CXX_COMPILER  ${MINGW_PATH}/bin/g++.exe)
 endif()
 
-project(${NAME} VERSION 0.23.0)
+project(${NAME} LANGUAGES C CXX VERSION 0.23.0)
 
 # 1. Set VULKAN_SDK_PATH in .env.cmake to target specific vulkan version
 if (DEFINED VULKAN_SDK_PATH)
@@ -51,6 +51,10 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CM
 # BUILD TYPE
 set(CMAKE_BUILD_TYPE "Debug")
 # add_compile_options(-D_FORTIFY_SOURCE=2 -fsanitize=address)
+
+target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=address)
+target_link_options(${PROJECT_NAME} PRIVATE -fsanitize=address)
+
 set(CMAKE_C_STANDARD c2x)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
