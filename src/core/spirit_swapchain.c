@@ -76,7 +76,7 @@ SpiritSwapchain spCreateSwapchain (
     swapInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 
     // image count
-    u32 swapImageCount = device->swapchainDetails.capabilties.minImageCount + 1;
+    u32 swapImageCount = 3;
     log_debug("Swapchain minImageCount + 1 = %u", swapImageCount);
     if (device->swapchainDetails.capabilties.maxImageCount > 0 &&
     swapImageCount > device->swapchainDetails.capabilties.maxImageCount)
@@ -168,20 +168,15 @@ SpiritResult spSwapchainSubmitCommandBuffer(
     db_assert(swapchain, "must have a valid swapchain");
     db_assert(buffer, "Must have a valid command buffer");
 
-    if (swapchain->imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
-        if (vkWaitForFences(
-            device->device, 
-            1, 
-            &swapchain->imagesInFlight[imageIndex], 
-            VK_TRUE, UINT64_MAX))
-        {
-            log_fatal("Error wating for swapchain fence %u", imageIndex);
-            abort();
-        }
+    if (vkWaitForFences(
+        device->device, 
+        1, 
+        &swapchain->fences[imageIndex], 
+        VK_TRUE, UINT64_MAX))
+    {
+        log_fatal("Error wating for swapchain fence %u", imageIndex);
+        return SPIRIT_FAILURE;
     }
-
-    swapchain->imagesInFlight[imageIndex] = 
-        swapchain->inFlightFences[swapchain->currentFrame];
 
     VkSubmitInfo submitInfo = {};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -208,7 +203,7 @@ SpiritResult spSwapchainSubmitCommandBuffer(
     if (vkResetFences(
         device->device, 
         1, 
-        &swapchain->inFlightFences[swapchain->currentFrame]))
+        &swapchain->fences[imageIndex]))
     {
         log_fatal("Failed to reset fence %u", swapchain->currentFrame);
     }
@@ -217,11 +212,13 @@ SpiritResult spSwapchainSubmitCommandBuffer(
         device->graphicsQueue, 
         1, 
         &submitInfo, 
-        swapchain->inFlightFences[swapchain->currentFrame]) != VK_SUCCESS)
+        swapchain->fences[imageIndex]) != VK_SUCCESS)
     {
         log_fatal("Failed to submit graphics queue");
         abort();
     }
+
+    swapchain->currentFence = imageIndex;
 
     VkPresentInfoKHR presentInfo = {};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -238,7 +235,7 @@ SpiritResult spSwapchainSubmitCommandBuffer(
     VkResult result = vkQueuePresentKHR(device->presentQueue, &presentInfo);
 
     swapchain->currentFrame = (swapchain->currentFrame + 1) % 
-        SPIRIT_SWAPCHAIN_MAX_FRAMES_IN_FLIGHT;
+        swapchain->maxFramesInFlight;
     
     if(result != VK_SUCCESS)
     {
@@ -264,7 +261,7 @@ SpiritResult spSwapchainAquireNextImage(
     if (vkWaitForFences(
         device->device,
         1,
-        &swapchain->inFlightFences[swapchain->currentFrame],
+        &swapchain->fences[swapchain->currentFence],
         VK_TRUE,
         UINT64_MAX))
     {
@@ -468,17 +465,16 @@ void destroyImages(const SpiritDevice device, SpiritSwapchain swapchain)
 SpiritResult createSyncObjects(const SpiritDevice device, SpiritSwapchain swapchain) {
     
     // sync options
-    swapchain->maxFramesInFlight = SPIRIT_SWAPCHAIN_MAX_FRAMES_IN_FLIGHT;
+    swapchain->maxFramesInFlight = swapchain->imageCount - 1;
 
     swapchain->imageAvailableSemaphores = 
-        new_array(VkSemaphore, SPIRIT_SWAPCHAIN_MAX_FRAMES_IN_FLIGHT);
+        new_array(VkSemaphore, swapchain->maxFramesInFlight);
     swapchain->renderFinishedSemaphores = 
-        new_array(VkSemaphore, SPIRIT_SWAPCHAIN_MAX_FRAMES_IN_FLIGHT);
-    swapchain->inFlightFences = 
-        new_array(VkFence, SPIRIT_SWAPCHAIN_MAX_FRAMES_IN_FLIGHT);
-    swapchain->imagesInFlight = 
-        new_array(VkFence, SPIRIT_SWAPCHAIN_MAX_FRAMES_IN_FLIGHT);
+        new_array(VkSemaphore, swapchain->maxFramesInFlight);
 
+    swapchain->fences = new_array(VkFence, swapchain->imageCount);
+
+    
     VkSemaphoreCreateInfo semaphoreInfo = {};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
@@ -486,7 +482,7 @@ SpiritResult createSyncObjects(const SpiritDevice device, SpiritSwapchain swapch
     fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-    for (size_t i = 0; i < SPIRIT_SWAPCHAIN_MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < swapchain->maxFramesInFlight; i++) {
 
         bool failure = false;
         if (vkCreateSemaphore(
@@ -499,17 +495,20 @@ SpiritResult createSyncObjects(const SpiritDevice device, SpiritSwapchain swapch
             &semaphoreInfo, 
             NULL, 
             &swapchain->renderFinishedSemaphores[i])) failure = true;
-        if (vkCreateFence(
-            device->device, 
-            &fenceInfo, 
-            NULL, 
-            &swapchain->inFlightFences[i])) failure = true;
-
-        swapchain->imagesInFlight[i] = VK_NULL_HANDLE;        
 
         if (failure)
         {
             log_error("Failed to create syncronization objects");
+            return SPIRIT_FAILURE;
+        }
+    }
+
+    // create fences, 1 per image
+    for (u32 i = 0; i < swapchain->imageCount; i++)
+    {
+        if (vkCreateFence(device->device, &fenceInfo, NULL, &swapchain->fences[i]))
+        {
+            log_error("Failed to create fence");
             return SPIRIT_FAILURE;
         }
     }
@@ -519,18 +518,22 @@ SpiritResult createSyncObjects(const SpiritDevice device, SpiritSwapchain swapch
 
 void destroySyncObjects(const SpiritDevice device, SpiritSwapchain swapchain)
 {
-    for (u32 i = 0; i < SPIRIT_SWAPCHAIN_MAX_FRAMES_IN_FLIGHT; i++)
+    for (u32 i = 0; i < swapchain->maxFramesInFlight; i++)
     {
-        vkDestroySemaphore(device->device, swapchain->renderFinishedSemaphores[i], NULL);
-        vkDestroySemaphore(device->device, swapchain->imageAvailableSemaphores[i], NULL);
-        vkDestroyFence(device->device, swapchain->inFlightFences[i], NULL);
-        vkDestroyFence(device->device, swapchain->imagesInFlight[i], NULL);
+        vkDestroySemaphore(device->device, swapchain->renderFinishedSemaphores[i],
+            NULL);
+        vkDestroySemaphore(device->device, swapchain->imageAvailableSemaphores[i],
+            NULL);
+        vkDestroyFence(device->device, swapchain->fences[i], NULL);
     }
+
+    vkDestroyFence(
+        device->device, 
+        swapchain->fences[swapchain->maxFramesInFlight], NULL);
 
     free(swapchain->imageAvailableSemaphores);
     free(swapchain->renderFinishedSemaphores);
-    free(swapchain->inFlightFences);
-    free(swapchain->imagesInFlight);
+    free(swapchain->fences);
 }
 
 SpiritResult createDepthObjects(const SpiritDevice device, SpiritSwapchain swapchain)

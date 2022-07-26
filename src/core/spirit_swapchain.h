@@ -11,8 +11,6 @@
  */
 
 
-#define SPIRIT_SWAPCHAIN_MAX_FRAMES_IN_FLIGHT (2)
-
 /**
  * Used to configure an SpiritSwapchain.
  * 
@@ -72,8 +70,9 @@ struct t_SpiritSwapchain
     u32 maxFramesInFlight; // the size of all sync objects
     VkSemaphore *imageAvailableSemaphores;
     VkSemaphore *renderFinishedSemaphores;
-    VkFence *inFlightFences;
-    VkFence *imagesInFlight;
+
+    VkFence *fences;
+    u32 currentFence; // the fence currently rendering
 
     // framebuffers
     VkFramebuffer *framebuffers;

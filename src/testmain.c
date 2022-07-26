@@ -64,13 +64,16 @@ void mainlooptest (void) {
     context->materialCount = 1;
 
     vec3 meshVerts[] = {
-        {0.0f, -0.5f, 0.0f},
-        {0.5f, 0.5f, 0.0f},
-        {-0.5f, 0.5f, 0.0f}
+        {-0.5, -0.5f, 0.0f},
+        {-0.5f, 0.5f, 0.0f},
+        {0.5f, -0.5f, 0.0f},
+        {0.5f, -0.5f, 0.0f},
+        {-0.5f, 0.5f, 0.0f},
+        {0.5f, 0.5f, 0.0f}
     };
 
     SpiritMeshCreateInfo meshInfo = {};
-    meshInfo.vertCount = 3;
+    meshInfo.vertCount = 6;
     meshInfo.verts = meshVerts;
 
     SpiritMesh mesh = spCreateMesh(context, &meshInfo);
@@ -82,17 +85,14 @@ void mainlooptest (void) {
     {
         if (spMaterialAddMesh(material, meshRef))
         {
-            log_fatal("Failed to add mesh to material");
-            exit(1);
+            log_error("Failed to add mesh to material");
         }
 
         if(spContextSubmitFrame(context))
         {
             log_fatal("Failed to submit frame");
-            exit(1);
         }
 
-        sleep(1);
     }
 
     vkDeviceWaitIdle(context->device->device);
