@@ -40,7 +40,7 @@ VkFormat findDepthFormat(const SpiritDevice device);
 
 // create swapchain instance
 SpiritSwapchain spCreateSwapchain (
-        SpiritSwapchainCreateInfo createInfo,
+        SpiritSwapchainCreateInfo *createInfo,
         SpiritDevice device,
         SpiritSwapchain optionalSwapchain)
 {
@@ -48,47 +48,61 @@ SpiritSwapchain spCreateSwapchain (
     db_assert(device, "Device cannot be NULL when creating swapchain");
 
     // set present and format to fallback values
-    if (!createInfo.selectedFormat)
+    if (!createInfo->selectedFormat)
     {
-        createInfo.preferedFormat.format = VK_FORMAT_R8G8B8_SRGB;
-        createInfo.preferedFormat.colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+        createInfo->preferedFormat.format = VK_FORMAT_R8G8B8_SRGB;
+        createInfo->preferedFormat.colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
     }
-    if (!createInfo.selectedPresentMode)
+    if (!createInfo->selectedPresentMode)
     {
-        createInfo.preferredPresentMode = VK_PRESENT_MODE_FIFO_KHR;
+        createInfo->preferredPresentMode = VK_PRESENT_MODE_FIFO_KHR;
     }
 
+    spDeviceUpdateSwapchainSupport(device);
+
     // clamp window resolution to capabilties
-    createInfo.windowWidthPx = clamp_value(
-        createInfo.windowWidthPx,
+    createInfo->windowRes.w = clamp_value(
+        createInfo->windowRes.w,
         device->swapchainDetails.capabilties.minImageExtent.width,
         device->swapchainDetails.capabilties.maxImageExtent.width);
-    createInfo.windowHeightPx = clamp_value(
-        createInfo.windowHeightPx,
+    createInfo->windowRes.h = clamp_value(
+        createInfo->windowRes.h,
         device->swapchainDetails.capabilties.minImageExtent.height,
         device->swapchainDetails.capabilties.maxImageExtent.height);
 
-    log_verbose("Window resolution '%ix%i'", createInfo.windowWidthPx, createInfo.windowHeightPx);
-
-    SpiritSwapchain out = new_var(struct t_SpiritSwapchain);
+    log_verbose("Window resolution '%ux%u'",
+        createInfo->windowRes.w,
+        createInfo->windowRes.h);
+    
+    // use old swapchain memory to save memory
+    SpiritSwapchain out;
+    if (optionalSwapchain)
+    {
+        destroySyncObjects(device, optionalSwapchain);
+        destroyDepthObjects(device, optionalSwapchain);
+        destroyImages(device, optionalSwapchain);
+        out = optionalSwapchain;
+    } else
+        out = new_var(struct t_SpiritSwapchain);
 
     VkSwapchainCreateInfoKHR swapInfo = {};
     swapInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 
+    const u32 maxImageCount = device->swapchainDetails.capabilties.maxImageCount;
+    const u32 minImageCount = device->swapchainDetails.capabilties.minImageCount;
+
     // image count
-    u32 swapImageCount = 3;
-    log_debug("Swapchain minImageCount + 1 = %u", swapImageCount);
-    if (device->swapchainDetails.capabilties.maxImageCount > 0 &&
-    swapImageCount > device->swapchainDetails.capabilties.maxImageCount)
-    {
-        swapImageCount = device->swapchainDetails.capabilties.maxImageCount;
-    }
+    u32 swapImageCount = clamp_value(
+        3,
+        minImageCount,
+        maxImageCount > 0 ? maxImageCount : 3);
+
     swapInfo.minImageCount = swapImageCount;
 
     // output info
     VkExtent2D outExtent = {
-        createInfo.windowWidthPx,
-        createInfo.windowHeightPx
+        createInfo->windowRes.w,
+        createInfo->windowRes.h
     };
     out->extent = outExtent;
 
@@ -96,12 +110,12 @@ SpiritSwapchain spCreateSwapchain (
     out->presentMode = chooseSwapPresentMode(
         device->swapchainDetails.presentModeCount,
         device->swapchainDetails.presentModes,
-        createInfo.preferredPresentMode);
+        createInfo->preferredPresentMode);
     // surface format
     out->surfaceFormat = chooseSwapSurfaceFormat(
         device->swapchainDetails.formatCount, 
         device->swapchainDetails.formats, 
-        createInfo.preferedFormat);
+        createInfo->preferedFormat);
     out->supportInfo = device->swapchainDetails;
 
     swapInfo.imageExtent = out->extent;
@@ -123,26 +137,21 @@ SpiritSwapchain spCreateSwapchain (
         swapInfo.pQueueFamilyIndices = NULL; // Optional
     }
 
-    // viewport?
     swapInfo.preTransform = device->swapchainDetails.capabilties.currentTransform;
     swapInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     swapInfo.clipped = VK_TRUE;
 
     // old swapchain
-    if (optionalSwapchain != NULL) swapInfo.oldSwapchain = optionalSwapchain->swapchain;
+    if (optionalSwapchain) swapInfo.oldSwapchain = optionalSwapchain->swapchain;
 
     // TODO fix swapchain create info
     // out->createInfo = swapInfo;
     // actually created swapchain
     if (vkCreateSwapchainKHR(device->device, &swapInfo, NULL, &out->swapchain)) {
         log_error("Failed to create swapchain");
+        free(optionalSwapchain);
         return NULL;
     }
-
-
-    // framebuffers must be NULL
-    out->framebufferCount = 0;
-    out->framebuffers = NULL;
 
     // images
     if (createImages(device, out)) return NULL;
@@ -151,8 +160,12 @@ SpiritSwapchain spCreateSwapchain (
     if (createSyncObjects(device, out)) return NULL;
 
     out->currentFrame = 0;
+    out->currentFence = 0;
 
-    log_verbose("Created Swapchain, image count %u", out->imageCount);
+    // store create info
+    out->createInfo = *createInfo;
+
+    log_verbose("Created Swapchain, image count %u", swapInfo.minImageCount);
     return out;
 
 } // spCreateSwapchain
@@ -284,72 +297,6 @@ SpiritResult spSwapchainAquireNextImage(
     return result;
 }
 
-SpiritResult spSwapchainAddFramebuffers(
-    const SpiritDevice device,
-    SpiritSwapchain swapchain,
-    const SpiritRenderPass renderPass)
-{
-
-    // destroy existing framebuffers
-    if(swapchain->framebuffers)
-    {
-        for (u32 i = 0; i < swapchain->framebufferCount; i++)
-        {
-            vkDestroyFramebuffer(
-                device->device, 
-                swapchain->framebuffers[i], 
-                NULL);
-        }
-
-        free(swapchain->framebuffers);
-    }
-
-    // allocate memory to fit framebuffers
-    swapchain->framebuffers = new_array(VkFramebuffer, swapchain->imageCount);
-    swapchain->framebufferCount = swapchain->imageCount;
-
-    for (size_t i = 0; i < swapchain->imageCount; i++)
-    {
-
-        VkImageView attachments[2] = { 
-            swapchain->imageViews[i],
-            swapchain->depthImageViews[i]
-        };
-        VkFramebufferCreateInfo framebufferInfo = {};
-        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebufferInfo.renderPass = renderPass->renderPass;
-        db_assert(renderPass && renderPass->renderPass, "No renderpass");
-        framebufferInfo.attachmentCount = 2;
-        framebufferInfo.pAttachments = attachments;
-        framebufferInfo.width = swapchain->extent.width;
-        framebufferInfo.height = swapchain->extent.height;
-        framebufferInfo.layers = 1;
-
-        if (vkCreateFramebuffer(
-            device->device,
-            &framebufferInfo,
-            NULL,
-            &swapchain->framebuffers[i]) != VK_SUCCESS)
-        {
-            log_error("Failed to add framebuffers to swapchain");
-            // destroy already created swapchains
-            for (size_t x = 0; x < i; x++)
-            {
-                vkDestroyFramebuffer(
-                    device->device, 
-                    swapchain->framebuffers[x], 
-                    NULL);
-            }
-
-            free(swapchain->framebuffers);
-
-            return SPIRIT_FAILURE;
-        }
-    }
-
-
-    return SPIRIT_SUCCESS;
-}
 
 
 // destroy swapchain instance
@@ -362,31 +309,8 @@ SpiritResult spDestroySwapchain (SpiritSwapchain swapchain, const SpiritDevice d
     destroySyncObjects(device, swapchain);
     destroyImages(device, swapchain);
 
-    // destroy existing framebuffers
-    if(swapchain->framebuffers)
-    {
-        for (u32 i = 0; i < swapchain->framebufferCount; i++)
-        {
-            vkDestroyFramebuffer(
-                device->device, 
-                swapchain->framebuffers[i], 
-                NULL);
-
-        }
-
-        free(swapchain->framebuffers);
-    }
-
     vkDestroySwapchainKHR(device->device, swapchain->swapchain, NULL);
 
-    for (u32 i = 0; i < swapchain->imageCount; i++)
-    {
-        vkDestroyImageView(device->device, swapchain->imageViews[i], NULL);
-
-        // maybe unbind image
-        
-        vkFreeMemory(device->device, swapchain->depthImageMemory[i], NULL);
-    }
 
     free(swapchain);
 
@@ -396,6 +320,8 @@ SpiritResult spDestroySwapchain (SpiritSwapchain swapchain, const SpiritDevice d
 //
 // Helper implementation
 //
+
+
 
 SpiritResult createImages(const SpiritDevice device, SpiritSwapchain swapchain)
 {

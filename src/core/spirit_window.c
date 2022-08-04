@@ -1,12 +1,15 @@
+
+
 #include "spirit_window.h"
 #include <GLFW/glfw3.h>
 
-#define GLFW_INCLUDE_VULKAN
 struct t_SpiritWindow {
     GLFWwindow *window;
     SpiritResolution windowSize;
     const char *title;
 };
+
+void window_size_callback(GLFWwindow* window, int width, int height);
 
 SpiritWindow spCreateWindow (SpiritWindowCreateInfo *createInfo) {
 
@@ -40,7 +43,7 @@ SpiritWindow spCreateWindow (SpiritWindowCreateInfo *createInfo) {
     }
 
     glfwWindowHint (GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint (GLFW_RESIZABLE, GLFW_FALSE); // RESIZABLE
+    // glfwWindowHint (GLFW_RESIZABLE, GLFW_FALSE); // RESIZABLE
 
     window->window = glfwCreateWindow (
         window->windowSize.w, 
@@ -53,6 +56,8 @@ SpiritWindow spCreateWindow (SpiritWindowCreateInfo *createInfo) {
         glfwGetError (&glfwError);
         log_fatal("Failed to create window. GLFW Error: %s", glfwError);
     }
+
+    glfwSetWindowSizeCallback(window->window, &window_size_callback);
 
     return window;
 }
@@ -76,23 +81,52 @@ SpiritResult spDestroyWindow (SpiritWindow window) {
     return SPIRIT_SUCCESS;
 }
 
-bool spWindowShouldClose (SpiritWindow window) {
-    const char *description;
-    assert (window->window != NULL);
-    glfwPollEvents ();
-    if (glfwGetError (&description) != GLFW_NO_ERROR) {
+static bool g_glfwWindowWasResized = false;
+static SpiritResolution g_windowSize = {
+    .w = 0,
+    .h = 0
+};
+
+void window_size_callback(GLFWwindow* window, int width, int height)
+{
+    g_glfwWindowWasResized = true;
+    g_windowSize = (SpiritResolution) {
+        .w = width,
+        .h = height
+    };
+}
+
+SpiritWindowState spWindowGetState(SpiritWindow window)
+{
+    
+    db_assert(window && window->window, "Window cannot be null");
+    const char *description = NULL;
+    glfwPollEvents();
+    if (glfwGetError(&description))
+    {
         log_error("GLFW error: %s", description);
-        return SPIRIT_FAILURE;
+        return SPIRIT_WINDOW_CLOSED;
     }
-    if (glfwWindowShouldClose (window->window)) {
-        if (glfwGetError (&description) != GLFW_NO_ERROR) {
+
+    if (glfwWindowShouldClose(window->window))
+    {
+        if (glfwGetError(&description))
+        {
             log_error("GLFW error: %s", description);
-            return SPIRIT_FAILURE;
+            return SPIRIT_WINDOW_CLOSED;
         }
-        return true;
-    } else {
-        return false;
+        return SPIRIT_WINDOW_CLOSED;
     }
+
+    if (g_glfwWindowWasResized)
+    {
+        g_glfwWindowWasResized = false;
+        window->windowSize = g_windowSize;
+        g_windowSize = (SpiritResolution) {};
+        return SPIRIT_WINDOW_RESIZED;
+    }
+
+    return SPIRIT_WINDOW_NORMAL;
 }
 
 SpiritResult spResizeWindow (SpiritWindow window, uint32_t w, uint32_t h) {
@@ -106,19 +140,25 @@ SpiritResult spResizeWindow (SpiritWindow window, uint32_t w, uint32_t h) {
     return SPIRIT_SUCCESS;
 }
 
-SpiritResult spWindowGetPixelSize (SpiritWindow window, u64 *w, u64 *h) {
+SpiritResolution spWindowGetPixelSize (SpiritWindow window) {
 
     const char *glfwError;
 
-    int sw, sh;
-    glfwGetFramebufferSize (window->window, &sw, &sh);
+    SpiritResolution res = {};
+    int w, h;
+    glfwGetFramebufferSize (window->window, &w, &h);
     if (glfwGetError (&glfwError) != GLFW_NO_ERROR) {
         log_error ("Failed to get framebuffer size. GLFW error: %s", glfwError);
-        return SPIRIT_FAILURE;
+        return res;
     }
+    res.w = w, res.h = h;
 
-    *w = sw, *h = sh;
-    return SPIRIT_SUCCESS;
+    return res;
+}
+
+SpiritResolution spWindowGetSize(SpiritWindow window)
+{
+    return window->windowSize;
 }
 
 VkSurfaceKHR spWindowGetSurface (SpiritWindow window, VkInstance instance) {

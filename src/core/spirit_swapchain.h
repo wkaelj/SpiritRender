@@ -12,21 +12,24 @@
 
 
 /**
- * Used to configure an SpiritSwapchain.
+ * @brief Configure a swapchain. Some settings are optional. If they are
+ * not used, leave the associated bool as false. If a setting was set,
+ * set the bool to true so the engine knows to use your setting.
  * 
- * @author Kael Johnston
  */
 typedef struct t_SpiritSwapchainCreateInfo
 {
 
     // TODO vsync option
+    
+    // optional options, if used set the associated boolean to true
     bool               selectedPresentMode;
     VkPresentModeKHR   preferredPresentMode;
     bool               selectedFormat;
     VkSurfaceFormatKHR preferedFormat;
 
     // dimensions of the window in pixels
-    u32 windowWidthPx, windowHeightPx;
+    SpiritResolution windowRes;
 
 } SpiritSwapchainCreateInfo;
 
@@ -73,12 +76,11 @@ struct t_SpiritSwapchain
 
     VkFence *fences;
     u32 currentFence; // the fence currently rendering
-
-    // framebuffers
-    VkFramebuffer *framebuffers;
-    u32            framebufferCount;
     
     u32 currentFrame;
+
+    // useful for recreating the swapchain
+    SpiritSwapchainCreateInfo createInfo;
 
 };
 
@@ -101,9 +103,9 @@ struct t_SpiritSwapchain
  * @author Kael Johnston
  */
 SpiritSwapchain spCreateSwapchain (
-    SpiritSwapchainCreateInfo createInfo,
-    SpiritDevice              device, 
-    SpiritSwapchain           optionalSwapchain);
+    SpiritSwapchainCreateInfo *createInfo,
+    SpiritDevice               device, 
+    SpiritSwapchain            optionalSwapchain);
 
 /**
  * Submit commands which have been recorded in a command buffer
@@ -148,33 +150,6 @@ SpiritResult spSwapchainAquireNextImage(
     const SpiritDevice device,
     const SpiritSwapchain swapchain,
     u32 *imageIndex);
-
-/**
- * Used to add framebuffers to a swapchain. This must be done once a
- * render pass has been created, which requires a swapchain. The framebuffers are 
- * added seperatel to make this possible. 
- * 
- * The swapchain currently only supports 1 render pass at a time, but the framebuffers
- * can be switched by calling the function again on the same swapchain with a
- * different render pass. This should not be done on a per-frame basis, because
- * it requires the framebuffer resources be created and destroyed.
- * 
- * @param device must be a valid SpiritDevice, created using spCreateDevice or
- * automatically using a context.
- * @param swapchain must be a valid SpiritSwapchain, with or without existing
- * framebuffers. Created using spCreateSwapchain, or automatically using a context.
- * @param renderPass must be a valid SpiritRenderPass, created using spCreateRenderPass,
- * or automaticaly using a material
- * 
- * @return SPIRIT_SUCCESS if the framebuffers were created, otherwise returns
- * SPIRIT_FAILURE.
- * 
- * @author Kael Johnston
- */
-SpiritResult spSwapchainAddFramebuffers(
-    const SpiritDevice device,
-    SpiritSwapchain swapchain,
-    const SpiritRenderPass renderPass);
 
 /**
  * Destroy a swapchain object. This will cause errors if

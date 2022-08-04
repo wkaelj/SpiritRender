@@ -83,6 +83,7 @@ typedef enum t_SpiritShaderType {
 } SpiritShaderType;
 
 typedef u32 *SpiritShaderCode;
+
 // store a vulkan (.spv) shader
 typedef struct t_SpiritShader {
     SpiritShaderType type;

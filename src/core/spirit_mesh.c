@@ -49,11 +49,15 @@ SpiritMesh spCreateMesh(const SpiritContext context, const SpiritMeshCreateInfo 
     return mesh;
 }
 
-SpiritMeshManager spCreateMeshManager(const SpiritMeshManagerCreateInfo *createInfo)
+SpiritMeshManager spCreateMeshManager(
+    const SpiritContext context, 
+    const SpiritMeshManagerCreateInfo *createInfo)
 {
     SpiritMeshManager meshManager = new_var(struct t_SpiritMeshManager);
     meshManager->meshCount = 0;
     LIST_INIT(&meshManager->meshes);
+
+    meshManager->contextReference = context;
 
     return meshManager;
 }
@@ -103,6 +107,9 @@ const SpiritResult spReleaseMesh(
     if (--meshReference.node->referenceCount <= 0)
     {
         LIST_REMOVE(meshReference.node, data);
+        spDestroyMesh(
+            meshReference.meshManager->contextReference, 
+            meshReference.node->mesh);
         free(meshReference.node->mesh);
         free(meshReference.node);
         meshReference.meshManager->meshCount--;

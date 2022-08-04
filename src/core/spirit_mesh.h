@@ -53,6 +53,7 @@ struct t_MeshListNode
 // and when it has 0 references is automatically released
 struct t_SpiritMeshManager
 {
+    SpiritContext contextReference;
     size_t meshCount;
     LIST_HEAD(t_MeshList, t_MeshListNode) meshes;
 };
@@ -82,8 +83,9 @@ extern SpiritMesh spCreateMesh(
 extern SpiritResult spDestroyMesh(const SpiritContext context, SpiritMesh mesh);
 
 // create a mesh manager object
-extern SpiritMeshManager spCreateMeshManager(const SpiritMeshManagerCreateInfo *createInfo);
-
+extern SpiritMeshManager spCreateMeshManager(
+    const SpiritContext context, 
+    const SpiritMeshManagerCreateInfo *createInfo);
 // add a mesh to a mesh manager
 // once a mesh is managed by a mesh manager,
 // it should not be freed or modified by other components

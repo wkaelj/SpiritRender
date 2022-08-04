@@ -41,6 +41,8 @@ SpiritContext spCreateContext(SpiritContextCreateInfo *createInfo)
     windowCreateInfo.fullscreen = createInfo->windowFullscreen;
 
     context->window = spCreateWindow (&windowCreateInfo);
+    context->screenResolution = spWindowGetPixelSize(context->window);
+    context->windowSize = createInfo->windowSize;
     db_assert(context->window, "Must have window");
 
     // create device
@@ -57,7 +59,7 @@ SpiritContext spCreateContext(SpiritContextCreateInfo *createInfo)
     deviceCreateInfo.window = context->window;
 
     const char *deviceExtensions[1] = {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 
     deviceCreateInfo.requiredDeviceExtensions = deviceExtensions;
@@ -67,14 +69,10 @@ SpiritContext spCreateContext(SpiritContextCreateInfo *createInfo)
 
     // create swapchain
     SpiritSwapchainCreateInfo swapCreateInfo = {};
-    spWindowGetPixelSize(
-        context->window, 
-        &context->screenResolution.w, 
-        &context->screenResolution.h);
-    swapCreateInfo.windowWidthPx = context->windowSize.w;
-    swapCreateInfo.windowHeightPx = context->windowSize.h;
+    context->windowSize = spWindowGetPixelSize(context->window);
+    swapCreateInfo.windowRes = context->screenResolution;
 
-    context->swapchain = spCreateSwapchain(swapCreateInfo, context->device, NULL);
+    context->swapchain = spCreateSwapchain(&swapCreateInfo, context->device, NULL);
     db_assert(context->swapchain, "Must have swapchain");
 
     context->commandBufferCount = context->swapchain->imageCount;
@@ -82,16 +80,56 @@ SpiritContext spCreateContext(SpiritContextCreateInfo *createInfo)
         context->device, 
         context->swapchain->imageCount);
 
+    LIST_INIT(&context->materials);
+
     log_verbose("Created Context");
 
     return context;
+}
+
+SpiritResult spContextHandleWindowResized(SpiritContext context)
+{
+    if(!context && context->window) return SPIRIT_FAILURE;
+    
+    // recreate swapchain
+    vkDeviceWaitIdle(context->device->device);
+
+    // update stored sizes
+    context->screenResolution = spWindowGetPixelSize(context->window);
+    context->windowSize = spWindowGetSize(context->window);
+
+    SpiritSwapchainCreateInfo swapInfo = context->swapchain->createInfo;
+    swapInfo.windowRes = context->screenResolution;
+
+    context->swapchain = spCreateSwapchain(
+        &swapInfo,
+        context->device,
+        context->swapchain);
+    
+    if (!context->swapchain)
+    {
+        return SPIRIT_FAILURE;
+    }
+
+    // iterate through materials
+    struct t_ContextMaterialListNode *np;
+    LIST_FOREACH(np, &context->materials, data)
+    {
+        spMaterialUpdate(context, np->material);
+    }
+
+    return SPIRIT_SUCCESS;
+
 }
 
 SpiritResult spContextSubmitFrame(SpiritContext context)
 {
 
     // aquire the image to render too
-    spSwapchainAquireNextImage(context->device, context->swapchain, &context->commandBufferIndex);
+    spSwapchainAquireNextImage(
+        context->device, 
+        context->swapchain, 
+        &context->commandBufferIndex);
 
     if (beginCommandBuffer(context->commandBuffers[context->commandBufferIndex]))
     {
@@ -99,11 +137,11 @@ SpiritResult spContextSubmitFrame(SpiritContext context)
         abort();
     }
     context->isRecording = true;
-    
-    // FIXME does not use linkedlist
-    for (size_t i = 0; i < context->materialCount; i++)
+
+    struct t_ContextMaterialListNode *np;
+    LIST_FOREACH(np, &context->materials, data)
     {
-        spMaterialRecordCommands(context, context->materials[i]);
+        spMaterialRecordCommands(context, np->material);
     }
 
     context->isRecording = false;
@@ -124,17 +162,82 @@ SpiritResult spContextSubmitFrame(SpiritContext context)
     return SPIRIT_SUCCESS;
 }
 
+SpiritResult spContextAddMaterial(
+    SpiritContext context,
+    const SpiritMaterial material)
+{
+
+    db_assert(context, "Must have context");
+    db_assert(material, "Must have material");
+
+    if (!context && material)
+    {
+        return SPIRIT_FAILURE;
+    }
+    
+    // ensure the same material is not added twice
+    // possibly should be added to release builds
+    #ifdef DEBUG
+    struct t_ContextMaterialListNode *np;
+    LIST_FOREACH(np, &context->materials, data)
+    {
+        if (np->material == material)
+        {
+            log_error("Same material added to context twice, address %p",
+                material);
+            return SPIRIT_FAILURE;
+        }
+    }
+    #endif
+
+    struct t_ContextMaterialListNode *node = 
+        new_var(struct t_ContextMaterialListNode);
+
+    node->material = material;
+    
+    LIST_INSERT_HEAD(&context->materials, node, data);
+
+    return SPIRIT_SUCCESS;
+}
+
+SpiritResult spContextRemoveMaterial(
+    SpiritContext context,
+    const SpiritMaterial material)
+{
+
+    struct t_ContextMaterialListNode *np;
+    LIST_FOREACH(np, &context->materials, data)
+    {
+        if (np->material == material)
+        {
+            LIST_REMOVE(np, data);
+            free(np);
+            return SPIRIT_SUCCESS;
+        }
+    }
+
+    return SPIRIT_FAILURE;
+}
 
 SpiritResult spDestroyContext(SpiritContext context)
 {
+
+    // destroy materials
+    struct t_ContextMaterialListNode *np, *op;
+    np = LIST_FIRST(&context->materials);
+    while(!LIST_EMPTY(&context->materials))
+    {
+        op = np;
+        np = LIST_NEXT(np, data);
+        LIST_REMOVE(op, data);
+        free(op);
+    }
 
     destroyCommandBuffers(
         context->device, 
         context->commandBuffers, 
         context->commandBufferCount);
     
-    for (u32 i = 0; i < context->materialCount; i++)
-        spDestroyMaterial(context, context->materials[i]);
     spDestroySwapchain(context->swapchain, context->device);
     spDestroyDevice(context->device);
     spDestroyWindow (context->window);

@@ -22,6 +22,12 @@ typedef struct t_SpiritContextCreateInfo
 
 } SpiritContextCreateInfo;
 
+struct t_ContextMaterialListNode
+{
+    SpiritMaterial material;
+    LIST_ENTRY(t_ContextMaterialListNode) data;
+};
+
 struct t_SpiritContext
 {
     SpiritWindow window;
@@ -29,9 +35,7 @@ struct t_SpiritContext
     SpiritDevice     device;
     SpiritSwapchain  swapchain;
 
-    // materials
-    SpiritMaterial *materials; // TODO linkedlist
-    u32 materialCount;
+    LIST_HEAD(t_ContextMaterialListHead, t_ContextMaterialListNode) materials;
 
     // command buffers
     VkCommandBuffer *commandBuffers;
@@ -45,29 +49,46 @@ struct t_SpiritContext
 
 SpiritContext spCreateContext(SpiritContextCreateInfo *createInfo);
 
-// perform basic tasks including:
-//  - checking if context should remain open
-//  - resizing the swapchain, if required
-//  - selecting the next framebuffer
-//  - beginning the command buffer for draw commands
-SpiritContext spContextUpdateAndBegin(SpiritContext context);
+SpiritResult spContextHandleWindowResized(SpiritContext context);
+
 
 SpiritResult spContextSubmitFrame(SpiritContext context);
 
-// perform basic tasks including:
-//  - checking if context should remain open
-//  - resizing the swapchain, if required
-//  - selecting the next framebuffer
-//  - beginning the command buffer for draw commands
-// and more complex rendering tasks such as
-//  - submitting material commands to the swapchain
-//  - issuing a draw call
+/**
+ * @brief add a new material to the context, which will be rendered.
+ * The material must be destroyed manually by the user.
+ * It can be removed from the context using spContextRemoveMateral.
+ * 
+ * @param context the context the material will be added to. It must be a valid
+ * SpiritContext.
+ * @param material the material which will be added to the context. It must be
+ * kept after the being submitted so that meshes can still be added to the material.
+ * It must be a valid SpiritMaterial.
+ * @return SpiritResult
+ */
 SpiritResult spContextAddMaterial(
     SpiritContext context,
-    SpiritMaterial material);
+    const SpiritMaterial material);
 
+/**
+ * @brief Remove a material from the context that was added using 
+ * spContextAddMaterial. This will not destroy the material, and it can be added
+ * to a different context or added to this context again later.
+ * 
+ * @param context the context the material will be removed from. It must be a valid
+ * SpiritContext.
+ * @param material the material to remove from the context. 
+ * @return SpiritResult 
+ */
 SpiritResult spContextRemoveMaterial(
     SpiritContext context,
-    const char *materialName);
+    const SpiritMaterial material);
 
+/**
+ * @brief Destroy a spirit context. It will not destroy the meshes associated 
+ * with those materials.
+ * 
+ * @param context the context to destroy. It must be a valid SpiritContext
+ * @return SpiritResult 
+ */
 SpiritResult spDestroyContext(SpiritContext context);

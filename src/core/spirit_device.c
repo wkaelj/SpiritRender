@@ -35,10 +35,18 @@ typedef struct {
 //
 
 // create a vulkan instance
-static bool checkValidationLayerSupport (const char *const *requiredLayerNames, u32 requiredLayerCount);
-static VkInstance createInstance (const SpiritDeviceCreateInfo *createInfo, VkDebugUtilsMessengerEXT *debugMessenger); // create a vulkan device
-static VkPhysicalDevice selectPhysicalDevice (const SpiritDeviceCreateInfo *createInfo, const VkInstance instance); // select a gpu
-static VkDevice createDevice (const SpiritDeviceCreateInfo *createInfo, const VkPhysicalDevice physicalDevice, const VkInstance instance);
+static bool checkValidationLayerSupport (
+    const char *const *requiredLayerNames, 
+    u32 requiredLayerCount);
+static VkInstance createInstance (
+    const SpiritDeviceCreateInfo *createInfo, 
+    VkDebugUtilsMessengerEXT *debugMessenger); // create a vulkan device
+static VkPhysicalDevice selectPhysicalDevice (
+    const SpiritDeviceCreateInfo *createInfo, 
+    const VkInstance instance); // select a gpu
+static VkDevice createDevice (
+    const SpiritDeviceCreateInfo *createInfo, 
+    const VkPhysicalDevice physicalDevice, const VkInstance instance);
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback (
     VkDebugUtilsMessageSeverityFlagBitsEXT           messageSeverity,
@@ -52,7 +60,7 @@ static QueueFamilyIndices findDeviceQueues (
     const SpiritDeviceCreateInfo *createInfo, 
     VkPhysicalDevice questionedDevice);
 static SpiritSwapchainSupportInfo querySwapChainSupport (
-    const SpiritDeviceCreateInfo *createInfo, 
+    const VkSurfaceKHR surface, 
     VkPhysicalDevice questionedDevice);
 
 static VkCommandPool createCommandPool(
@@ -121,7 +129,7 @@ SpiritDevice spCreateDevice (SpiritDeviceCreateInfo *createInfo) {
         return NULL;
     }
 
-    out->swapchainDetails = querySwapChainSupport(createInfo, out->physicalDevice);
+    out->swapchainDetails = querySwapChainSupport(createInfo->windowSurface, out->physicalDevice);
     out->device = createDevice(createInfo, out->physicalDevice, out->instance);
     if (out->device == NULL)
     {
@@ -185,6 +193,14 @@ u32 spDeviceFindMemoryType(
     log_fatal("Could not find memory typpe");
     abort();
     return -1;
+}
+
+SpiritResult spDeviceUpdateSwapchainSupport(const SpiritDevice device)
+{
+
+    device->swapchainDetails = querySwapChainSupport(
+        device->windowSurface, 
+        device->physicalDevice);
 }
 
 SpiritResult spDeviceCreateImage(
@@ -619,7 +635,7 @@ static u16 isDeviceSuitable (const SpiritDeviceCreateInfo *createInfo, VkPhysica
     if ( deviceQueue.foundGraphicsQueue && deviceQueue.foundPresentQueue) { supportsQueues = true; }
 
     // check if device has swapchain support
-    SpiritSwapchainSupportInfo swapchainDetails = querySwapChainSupport (createInfo, questionedDevice);
+    SpiritSwapchainSupportInfo swapchainDetails = querySwapChainSupport (createInfo->windowSurface, questionedDevice);
     supportsSwapchain = swapchainDetails.formatCount > 0 && swapchainDetails.presentModeCount > 0;
 
 
@@ -732,33 +748,47 @@ static QueueFamilyIndices findDeviceQueues (const SpiritDeviceCreateInfo *create
 }
 
 // function to check swapchain support
-static SpiritSwapchainSupportInfo querySwapChainSupport (const SpiritDeviceCreateInfo *createInfo, VkPhysicalDevice questionedDevice) {
+SpiritSwapchainSupportInfo querySwapChainSupport (
+    const VkSurfaceKHR surface, 
+    VkPhysicalDevice questionedDevice) 
+{
     SpiritSwapchainSupportInfo details = {};
 
     // check surface capabilities
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR (
         questionedDevice,
-        createInfo->windowSurface, 
+        surface, 
         &details.capabilties);
 
     // formats
     vkGetPhysicalDeviceSurfaceFormatsKHR (
         questionedDevice, 
-        createInfo->windowSurface, 
+        surface, 
         &details.formatCount, NULL);
     db_assert(details.formatCount, "Device surface has no format.");
-    details.formats = malloc (sizeof (VkSurfaceFormatKHR) * details.formatCount);
-    vkGetPhysicalDeviceSurfaceFormatsKHR (questionedDevice, createInfo->windowSurface, &details.formatCount, details.formats);
+    details.formats = new_array(VkSurfaceFormatKHR, details.formatCount);
+    vkGetPhysicalDeviceSurfaceFormatsKHR (
+        questionedDevice,
+        surface,
+        &details.formatCount,
+        details.formats);
     db_assert (details.formats, "Device surface has no formats");
 
     if (details.formatCount == 0) { details.formats = NULL; }
 
     // present modes
-    vkGetPhysicalDeviceSurfacePresentModesKHR (questionedDevice, createInfo->windowSurface, &details.presentModeCount, NULL);
+    vkGetPhysicalDeviceSurfacePresentModesKHR (
+        questionedDevice, 
+        surface, 
+        &details.presentModeCount, NULL);
     db_assert (details.presentModeCount > 0,
         "Device surface has no present modes");
-    details.presentModes = malloc (sizeof (VkSurfaceFormatKHR) * details.presentModeCount);
-    vkGetPhysicalDeviceSurfacePresentModesKHR (questionedDevice, createInfo->windowSurface, &details.presentModeCount, details.presentModes);
+    details.presentModes = new_array(VkPresentModeKHR, details.presentModeCount);
+    vkGetPhysicalDeviceSurfacePresentModesKHR(
+        questionedDevice,
+        surface,
+        &details.presentModeCount,
+        details.presentModes);
     db_assert (details.presentModes != NULL,
         "Device surface has no present modes");
 

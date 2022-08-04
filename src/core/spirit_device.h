@@ -68,15 +68,6 @@ struct t_SpiritDevice
     SpiritSwapchainSupportInfo swapchainDetails;
 };
 
-// create a VkBuffer
-SpiritResult spDeviceCreateBuffer(
-    SpiritDevice          device,
-    VkDeviceSize          size,
-    VkBufferUsageFlags    usage,
-    VkMemoryPropertyFlags properties,
-    VkBuffer             *buffer,
-    VkDeviceMemory       *bufferMemory);
-
 // create a spirit device
 SpiritDevice spCreateDevice (SpiritDeviceCreateInfo *createInfo);
 
@@ -88,13 +79,58 @@ VkFormat spDeviceFindSupportedFormat(
     const VkImageTiling tiling, 
     const VkFormatFeatureFlags features);
 
-// find the memory type
+/**
+ * @brief Find the available memory type from a list of types
+ * 
+ * @param device 
+ * @param typeFilter 
+ * @param properties 
+ * @return u32 
+ */
 u32 spDeviceFindMemoryType(
     const SpiritDevice device, 
     u32 typeFilter, 
     VkMemoryPropertyFlags properties);
 
-// create a image using the specified vulkan device
+/**
+ * @brief Update the stored swapchain support information of a device.
+ * This will update the image size contraints, which will make it possible to
+ * resize the window.
+ * 
+ * @param device 
+ * @return SpiritResult 
+ */
+SpiritResult spDeviceUpdateSwapchainSupport(SpiritDevice device);
+
+/**
+ * @brief Create a buffer on the associated device
+ * 
+ * @param device the device with the buffer
+ * @param size the size of the buffer
+ * @param usage how to buffer will be used
+ * @param properties 
+ * @param buffer the output buffer
+ * @param bufferMemory a pointer to the memory for that buffer
+ * @return SpiritResult 
+ */
+SpiritResult spDeviceCreateBuffer(
+    SpiritDevice          device,
+    VkDeviceSize          size,
+    VkBufferUsageFlags    usage,
+    VkMemoryPropertyFlags properties,
+    VkBuffer             *buffer,
+    VkDeviceMemory       *bufferMemory);
+
+/**
+ * @brief Create an image on the associated device
+ * 
+ * @param device 
+ * @param imageInfo 
+ * @param memoryFlags 
+ * @param image 
+ * @param imageMemory 
+ * @return SpiritResult 
+ */
 SpiritResult spDeviceCreateImage(
     const SpiritDevice device,
     const VkImageCreateInfo *imageInfo,
@@ -102,5 +138,10 @@ SpiritResult spDeviceCreateImage(
     VkImage *image,
     VkDeviceMemory *imageMemory);
 
-// destroy spirit device
+/**
+ * @brief Destroy a vulkan device
+ * 
+ * @param device 
+ * @return SpiritResult 
+ */
 SpiritResult spDestroyDevice (SpiritDevice device);

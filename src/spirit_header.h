@@ -1,7 +1,7 @@
 #pragma once
 // Header file stores global dependencies for project
 
-
+#define DEBUG
 
 // std
 
@@ -48,7 +48,7 @@
             sizeof(flexmembertype) * elementcount))
 
 // find the size of a STACK ALLOCATED array
-#define array_length(array) = (sizeof(array)/sizeof(array[0]))
+#define array_length(array) (sizeof(array)/sizeof(array[0]))
 
 // functions to clamp value, work for all(numeric) types
 #define min_value(x, y) ((x < y) ? x : y)
@@ -65,7 +65,7 @@
 // will be replaced with calles to a custom memory allocator
 
 // debug
-#ifndef DEBUG
+#ifdef DEBUG
 #define db_assert(statement, errmsg) \
     if (!(statement)) { \
         log_fatal("Assertion '%s' failed: %s", #statement, #errmsg); \

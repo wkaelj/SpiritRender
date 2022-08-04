@@ -40,6 +40,10 @@ SpiritMaterial spCreateMaterial(
     const SpiritContext context,
     const SpiritMaterialCreateInfo *createInfo);
 
+SpiritResult spMaterialUpdate(
+    const SpiritContext context, 
+    SpiritMaterial material);
+
 SpiritResult spMaterialAddMesh(
     const SpiritMaterial material,
     const SpiritMeshReference meshRef);

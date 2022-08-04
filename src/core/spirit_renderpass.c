@@ -1,4 +1,5 @@
 #include "spirit_renderpass.h"
+#include "core/spirit_types.h"
 
 // Renderpass implementation
 //
@@ -11,6 +12,14 @@ VkRenderPass createRenderPass(
     const SpiritDevice device,
     const SpiritSwapchain swapchain);
 
+SpiritResult createFramebuffers(
+    const SpiritDevice device,
+    const SpiritSwapchain swapchain,
+    SpiritRenderPass renderPass);
+
+void destroyFrameBuffers(const SpiritDevice device, SpiritRenderPass renderPass);
+
+
 SpiritRenderPass spCreateRenderPass (
     SpiritRenderPassCreateInfo *createInfo, 
     const SpiritDevice          device,
@@ -19,18 +28,28 @@ SpiritRenderPass spCreateRenderPass (
     SpiritRenderPass out = new_var(struct t_SpiritRenderPass);
 
     out->renderPass = createRenderPass(createInfo, device, swapchain);
+    out->framebufferCount = 0;
+    out->framebuffers = NULL;
 
-        // add framebuffers to associated render pass
-    // i don't know how to handle a failure for this
-    if (spSwapchainAddFramebuffers(device, swapchain, out)) abort();
+    createFramebuffers(device, swapchain, out);
 
     return out;
+}
+
+SpiritResult spRenderPassRecreateFramebuffers(
+    const SpiritDevice device,
+    SpiritRenderPass renderPass,
+    const SpiritSwapchain swapchain)
+{
+    return createFramebuffers(device, swapchain, renderPass);
 }
 
 SpiritResult spDestroyRenderPass (
     SpiritRenderPass renderPass, 
     SpiritDevice     device)
 {
+
+    destroyFrameBuffers(device, renderPass);
 
     if (renderPass == NULL) return SPIRIT_FAILURE;
     vkDestroyRenderPass(device->device, renderPass->renderPass, NULL);
@@ -43,7 +62,6 @@ SpiritResult spDestroyRenderPass (
 //
 // Helpers
 //
-
 
 VkRenderPass createRenderPass(
     SpiritRenderPassCreateInfo *createInfo,
@@ -78,39 +96,145 @@ VkRenderPass createRenderPass(
     colorAttachmentRef.attachment = 0;
     colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-    VkSubpassDescription subpass = {};
-    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.colorAttachmentCount = 1;
-    subpass.pColorAttachments = &colorAttachmentRef;
-    subpass.pDepthStencilAttachment = &depthAttachmentRef;
+    VkSubpassDescription subpass = {
+        .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+        .colorAttachmentCount = 1,
+        .pColorAttachments = &colorAttachmentRef,
+        .pDepthStencilAttachment = &depthAttachmentRef
+    };
 
-    VkSubpassDependency dependency = {};
-    dependency.dstSubpass = 0;
-    dependency.dstAccessMask =
-        VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-    dependency.dstStageMask =
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-    dependency.srcAccessMask = 0;
-    dependency.srcStageMask =
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+
+    VkSubpassDependency dependency = {
+        .dstSubpass = 0,
+        .dstAccessMask =
+            VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | 
+            VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+        .dstStageMask =
+            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | 
+            VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+        .srcSubpass = VK_SUBPASS_EXTERNAL,
+        .srcAccessMask = 0,
+        .srcStageMask =
+            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | 
+            VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT
+    };
+
 
     VkAttachmentDescription attachments[2] = {colorAttachment, depthAttachment};
 
     // create info
-    VkRenderPassCreateInfo renderPassInfo = {};
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    renderPassInfo.attachmentCount = 2;
-    renderPassInfo.pAttachments = attachments;
-    renderPassInfo.subpassCount = 1;
-    renderPassInfo.pSubpasses = &subpass;
-    renderPassInfo.dependencyCount = 1;
-    renderPassInfo.pDependencies = &dependency;
+    VkRenderPassCreateInfo renderPassInfo = {
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+        .attachmentCount = 2,
+        .pAttachments = attachments,
+        .subpassCount = 1,
+        .pSubpasses = &subpass,
+        .dependencyCount = 1,
+        .pDependencies = &dependency
+    };
+
+    
+
 
     VkRenderPass renderPass;
-    if (vkCreateRenderPass(device->device, &renderPassInfo, NULL, &renderPass) != VK_SUCCESS) return NULL;
+    if (vkCreateRenderPass(
+        device->device, 
+        &renderPassInfo, 
+        NULL, 
+        &renderPass)) return NULL;
     log_verbose("Created render pass\n");
 
     return renderPass;
+}
+
+SpiritResult createFramebuffers(
+    const SpiritDevice device,
+    const SpiritSwapchain swapchain,
+    SpiritRenderPass renderPass)
+{
+
+    if (renderPass->framebufferCount && 
+        renderPass->framebufferCount != swapchain->imageCount)
+    {
+        log_fatal("Frambuffer image count changed");
+        abort();
+    }
+
+    // destroy existing framebuffers
+    if(renderPass->framebuffers)
+    {
+        for (u32 i = 0; i < renderPass->framebufferCount; i++)
+        {
+            vkDestroyFramebuffer(
+                device->device, 
+                renderPass->framebuffers[i], 
+                NULL);
+        }
+
+    }
+
+    // allocate memory to fit framebuffers
+    renderPass->framebuffers = new_array(VkFramebuffer, swapchain->imageCount);
+    renderPass->framebufferCount = swapchain->imageCount;
+
+    for (size_t i = 0; i < swapchain->imageCount; i++)
+    {
+
+        VkImageView attachments[2] = { 
+            swapchain->imageViews[i],
+            swapchain->depthImageViews[i]
+        };
+        VkFramebufferCreateInfo framebufferInfo = {};
+        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        framebufferInfo.renderPass = renderPass->renderPass;
+        db_assert(renderPass && renderPass->renderPass, "No renderpass");
+        framebufferInfo.attachmentCount = 2;
+        framebufferInfo.pAttachments = attachments;
+        framebufferInfo.width = swapchain->extent.width;
+        framebufferInfo.height = swapchain->extent.height;
+        framebufferInfo.layers = 1;
+
+        if (vkCreateFramebuffer(
+            device->device,
+            &framebufferInfo,
+            NULL,
+            &renderPass->framebuffers[i]) != VK_SUCCESS)
+        {
+            log_error("Failed to add framebuffers to swapchain");
+            // destroy already created swapchains
+            for (size_t x = 0; x < i; x++)
+            {
+                vkDestroyFramebuffer(
+                    device->device, 
+                    renderPass->framebuffers[x], 
+                    NULL);
+            }
+
+            free(renderPass->framebuffers);
+
+            return SPIRIT_FAILURE;
+        }
+    }
+
+
+    return SPIRIT_SUCCESS;
+}
+
+void destroyFrameBuffers(const SpiritDevice device, SpiritRenderPass renderPass)
+{
+    // destroy existing framebuffers
+    if(renderPass->framebuffers)
+    {
+        for (u32 i = 0; i < renderPass->framebufferCount; i++)
+        {
+            vkDestroyFramebuffer(
+                device->device, 
+                renderPass->framebuffers[i], 
+                NULL);
+
+        }
+
+        free(renderPass->framebuffers);
+    }
 }
 

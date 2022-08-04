@@ -74,8 +74,19 @@ SpiritMaterial spCreateMaterial(
 
 }
 
+SpiritResult spMaterialUpdate(
+    const SpiritContext context, 
+    SpiritMaterial material)
+{
+
+    return spRenderPassRecreateFramebuffers(
+        context->device, 
+        material->renderPass, 
+        context->swapchain);
+}
+
 SpiritResult spMaterialAddMesh(
-    const SpiritMaterial material,
+    SpiritMaterial material,
     const SpiritMeshReference meshRef)
 {
     struct t_MaterialListNode *newNode = new_var(struct t_MaterialListNode);
@@ -90,7 +101,8 @@ size_t spMaterialRecordCommands(
     const SpiritContext context,
     SpiritMaterial material)
 {
-    db_assert(context->isRecording, "Context is not recording, cannot record commands");
+    db_assert(context->isRecording, 
+    "Context is not recording, cannot record commands");
 
     if(beginRenderPass(
         context->commandBuffers[context->commandBufferIndex],
@@ -100,6 +112,30 @@ size_t spMaterialRecordCommands(
     {
         return SPIRIT_FAILURE;
     }
+
+    // configure dynamic state
+    VkViewport viewport = {
+        .x = 0.0f,
+        .y = 0.0f,
+        .width = (float) context->screenResolution.w,
+        .height = (float) context->screenResolution.h,
+        .minDepth = 0.0f,
+        .maxDepth = 1.0f
+    };
+
+    VkRect2D scissor = {
+        {0, 0},
+        {context->screenResolution.w, context->screenResolution.h}
+    };
+
+    vkCmdSetViewport(
+        context->commandBuffers[context->commandBufferIndex],
+        0, 1,
+        &viewport);
+    vkCmdSetScissor(
+        context->commandBuffers[context->commandBufferIndex],
+        0, 1,
+        &scissor);
 
     spPipelineBindCommandBuffer(
         material->pipeline, 
@@ -117,7 +153,7 @@ size_t spMaterialRecordCommands(
 
         vkCmdBindVertexBuffers(
             context->commandBuffers[context->commandBufferIndex],
-            0, 
+            0,
             1,
             vertBuffers,
             offsets);
@@ -165,8 +201,7 @@ SpiritResult beginRenderPass(
     VkRenderPassBeginInfo renderPassBeginInfo = {};
     renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     renderPassBeginInfo.renderPass = renderPass->renderPass;
-    db_assert(swapchain->framebuffers, "Did not create swapchain frambuffers");
-    renderPassBeginInfo.framebuffer = swapchain->framebuffers[index];
+    renderPassBeginInfo.framebuffer = renderPass->framebuffers[index];
 
     renderPassBeginInfo.renderArea.offset = (VkOffset2D) {0, 0};
     renderPassBeginInfo.renderArea.extent = swapchain->extent;

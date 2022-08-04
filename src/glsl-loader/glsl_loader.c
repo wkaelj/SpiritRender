@@ -186,6 +186,8 @@ extern SpiritShader spLoadSourceShader(
         db_assert (catchBuffer == SPIRIT_SUCCESS, "Failed to truncate string");
 
         catchBuffer = spWriteFileFolder (outputFolderPath);
+        if (catchBuffer) log_error("Failed to create folder '%s'",
+            outputFolderPath);
 
         db_assert (catchBuffer == SPIRIT_SUCCESS, "Failed to write folder");
 
@@ -194,6 +196,9 @@ extern SpiritShader spLoadSourceShader(
             shaderCodePath,
             out.shader,
             out.shaderSize);
+        if (catchBuffer) log_error("Failed to file '%s'",
+            shaderCodePath);
+
         db_assert (catchBuffer == SPIRIT_SUCCESS, "Failed to write file");
         log_verbose ("Compiled shader '%s'", shaderCodePath);
 

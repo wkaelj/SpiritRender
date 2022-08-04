@@ -22,7 +22,7 @@ bool Test(void);
 
 int main (int argc, char **argv) {
 
-    spPlatformSetExecutableFolder (argv[0]);
+    spPlatformSetExecutableFolder(argv[0]);
 
     // tests
     if (argc >= 2 && strcmp("--test", argv[1]) == 0)
@@ -40,28 +40,38 @@ void mainlooptest (void) {
 
     SpiritContextCreateInfo contextInfo = {};
     contextInfo.enableValidation = true;
-    contextInfo.windowName = "Hi Triangle :D";
-    contextInfo.windowSize = (SpiritResolution) {600, 600};
+    contextInfo.windowName = "Hi Square :D";
+    contextInfo.windowSize = (SpiritResolution) {800, 600};
     contextInfo.windowFullscreen = false;
 
     SpiritContext context = spCreateContext(&contextInfo);
 
+    log_debug("Context res %ux%u", 
+        context->screenResolution.w, 
+        context->screenResolution.w);
+
     if (context == NULL)
         return;
 
-    SpiritMaterialCreateInfo materialInfo = {};
-    materialInfo.name = "std";
-    materialInfo.fragmentShader = "shaders/simple_shader.frag";
-    materialInfo.vertexShader = "shaders/simple_shader.vert";
+    // SpiritMaterialCreateInfo materialInfo = {};
+    // materialInfo.name = "std";
+    // materialInfo.fragmentShader = "shaders/simple_shader.frag";
+    // materialInfo.vertexShader = "shaders/simple_shader.vert";
+
+    SpiritMaterialCreateInfo materialInfo = {
+        .name = "std",
+        .fragmentShader = "shaders/simple_shader.frag",
+        .vertexShader = "shaders/simple_shader.vert"
+    };
 
     SpiritMaterial material = spCreateMaterial(
         context,
         &materialInfo);
+    
     if (material == NULL)
         return;
 
-    context->materials = &material;
-    context->materialCount = 1;
+    spContextAddMaterial(context, material);
 
     vec3 meshVerts[] = {
         {-0.5, -0.5f, 0.0f},
@@ -75,14 +85,21 @@ void mainlooptest (void) {
     SpiritMeshCreateInfo meshInfo = {};
     meshInfo.vertCount = 6;
     meshInfo.verts = meshVerts;
-
+    
     SpiritMesh mesh = spCreateMesh(context, &meshInfo);
 
-    SpiritMeshManager meshManager = spCreateMeshManager(NULL);
+    SpiritMeshManager meshManager = spCreateMeshManager(context, NULL);
     const SpiritMeshReference meshRef = spMeshManagerAddMesh(meshManager, mesh);
 
-    while (!spWindowShouldClose(context->window))
+    SpiritWindowState windowState;
+    while ((windowState = spWindowGetState(context->window)) != SPIRIT_WINDOW_CLOSED)
     {
+        // handle window resized
+        if (windowState == SPIRIT_WINDOW_RESIZED)
+        {
+            if(spContextHandleWindowResized(context)) continue;
+        }
+
         if (spMaterialAddMesh(material, meshRef))
         {
             log_error("Failed to add mesh to material");

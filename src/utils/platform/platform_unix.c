@@ -154,7 +154,7 @@ time_t spPlatformGetFileModifiedDate(const char *filepath)
         return 1;
     }
 
-    return data.st_ctim.tv_sec;
+    return data.st_ctime;
 
 }
 
@@ -174,7 +174,7 @@ SpiritResult spPlatformCreateFolder(const char *filepath)
         if (*p == SPIRIT_PLATFORM_FOLDER_BREAK)
         {
             *p = '\0';
-            if (mkdir(filepath, S_IRWXU) && errno != EEXIST)
+            if (mkdir(path, S_IRWXU) && errno != EEXIST)
             {
                 log_perror("Error creating file");
                 return SPIRIT_FAILURE;
@@ -183,7 +183,7 @@ SpiritResult spPlatformCreateFolder(const char *filepath)
             *p = SPIRIT_PLATFORM_FOLDER_BREAK;
         }
 
-    if (mkdir(filepath, S_IRWXU) && errno != EEXIST)
+    if (mkdir(path, S_IRWXU) && errno != EEXIST)
     {
         log_perror("Failed to create file");
         return SPIRIT_FAILURE;

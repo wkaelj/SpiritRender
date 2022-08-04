@@ -1,0 +1,4 @@
+[ ] update materials to use a pool
+[ ] update swapchain not to reallocate sync object arrays
+[ ] swapchain recreation failure memory leaks
+[ ] device format memory leaks

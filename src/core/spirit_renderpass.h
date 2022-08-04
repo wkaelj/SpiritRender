@@ -43,6 +43,8 @@ typedef struct t_SpiritRenderPassCreateInfo {
 struct t_SpiritRenderPass
 {
     VkRenderPass renderPass;
+    VkFramebuffer *framebuffers;
+    u32 framebufferCount;
 };
 
 //
@@ -55,10 +57,24 @@ SpiritRenderPass spCreateRenderPass(
     const SpiritDevice          device,
     const SpiritSwapchain       swapchain);
 
+/**
+ * @brief Used to recreate the framebuffers for a renderpass.
+ * It should be done if the window is resized, or the resolution is changed.
+ * 
+ * @param renderPass 
+ * @param device 
+ * @return SpiritResult 
+ */
+SpiritResult spRenderPassRecreateFramebuffers(
+    const SpiritDevice device,
+    SpiritRenderPass renderPass,
+    const SpiritSwapchain swapchain);
+
 SpiritResult spDestroyRenderPass(
     SpiritRenderPass renderPass, 
     SpiritDevice     device);
 
 // convert render pass settings into render pass create info
+// UNIMPLEMENTED
 SpiritRenderPassCreateInfo spRenderPassExpandSettings (
     SpiritRenderPassSettings *settings);
