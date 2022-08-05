@@ -98,7 +98,7 @@ void mainlooptest (void) {
         if (windowState == SPIRIT_WINDOW_RESIZED)
         {
             if(spContextHandleWindowResized(context)) continue;
-        }
+        } else if (windowState == SPIRIT_WINDOW_RESIZING) continue;
 
         if (spMaterialAddMesh(material, meshRef))
         {
@@ -107,8 +107,9 @@ void mainlooptest (void) {
 
         if(spContextSubmitFrame(context))
         {
-            log_fatal("Failed to submit frame");
+            log_error("Failed to submit frame");
         }
+
 
     }
 

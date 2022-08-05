@@ -70,9 +70,12 @@ SpiritSwapchain spCreateSwapchain (
         device->swapchainDetails.capabilties.minImageExtent.height,
         device->swapchainDetails.capabilties.maxImageExtent.height);
 
-    log_verbose("Window resolution '%ux%u'",
-        createInfo->windowRes.w,
-        createInfo->windowRes.h);
+    if (!optionalSwapchain)
+    {
+        log_verbose("Window resolution '%ux%u'",
+            createInfo->windowRes.w,
+            createInfo->windowRes.h);
+    }
     
     // use old swapchain memory to save memory
     SpiritSwapchain out;
@@ -165,7 +168,11 @@ SpiritSwapchain spCreateSwapchain (
     // store create info
     out->createInfo = *createInfo;
 
-    log_verbose("Created Swapchain, image count %u", swapInfo.minImageCount);
+    if (!optionalSwapchain)
+    {
+        log_verbose("Created Swapchain, image count %u", swapInfo.minImageCount);
+    }
+
     return out;
 
 } // spCreateSwapchain
@@ -290,7 +297,7 @@ SpiritResult spSwapchainAquireNextImage(
         VK_NULL_HANDLE,
         imageIndex))
     {
-        log_error("Error attempting to aquire next image with semaphore %u", swapchain->currentFrame);
+        log_warning("Error attempting to aquire next image with semaphore %u", swapchain->currentFrame);
         result = SPIRIT_FAILURE;
     }   
 

@@ -276,6 +276,8 @@ SpiritResult spDeviceCreateBuffer(
 // destroy a spirit device and free all memory whatever
 SpiritResult spDestroyDevice (SpiritDevice device) {
 
+    vkDestroyCommandPool(device->device, device->commandPool, NULL);
+
     vkDestroyDevice(device->device, NULL);
 
     vkDestroySurfaceKHR(device->instance, device->windowSurface, NULL);
@@ -284,15 +286,22 @@ SpiritResult spDestroyDevice (SpiritDevice device) {
     if (device->validationEnabled) {
 
         // load destroy function
-        PFN_vkDestroyDebugUtilsMessengerEXT pfnDebugMessengerDestroy = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
+        PFN_vkDestroyDebugUtilsMessengerEXT pfnDebugMessengerDestroy = 
+        (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(
             device->instance, 
             "vkDestroyDebugUtilsMessengerEXT");
 
         // if it fails
         if (pfnDebugMessengerDestroy == NULL) 
             log_warning("Failed to load debug messenger destroy function");
-        else 
-            pfnDebugMessengerDestroy (device->instance, device->debugMessenger, NULL);
+        else
+        {
+            pfnDebugMessengerDestroy(
+                device->instance, 
+                device->debugMessenger, 
+                NULL);
+
+        }
     }
     device->debugMessenger = NULL;
 

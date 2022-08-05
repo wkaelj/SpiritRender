@@ -98,7 +98,9 @@ SpiritResult spContextHandleWindowResized(SpiritContext context)
     context->screenResolution = spWindowGetPixelSize(context->window);
     context->windowSize = spWindowGetSize(context->window);
 
-    SpiritSwapchainCreateInfo swapInfo = context->swapchain->createInfo;
+    // check swapchain exists, in case creation failed last frame
+    SpiritSwapchainCreateInfo swapInfo = {};
+    if (context->swapchain) context->swapchain->createInfo;
     swapInfo.windowRes = context->screenResolution;
 
     context->swapchain = spCreateSwapchain(
@@ -125,11 +127,17 @@ SpiritResult spContextHandleWindowResized(SpiritContext context)
 SpiritResult spContextSubmitFrame(SpiritContext context)
 {
 
+    // if failed to create swapchain last frame, try again now
+    if (!context->swapchain)
+    {
+        spContextHandleWindowResized(context);
+    }
+
     // aquire the image to render too
-    spSwapchainAquireNextImage(
+    if (spSwapchainAquireNextImage(
         context->device, 
         context->swapchain, 
-        &context->commandBufferIndex);
+        &context->commandBufferIndex)) return SPIRIT_FAILURE;
 
     if (beginCommandBuffer(context->commandBuffers[context->commandBufferIndex]))
     {

@@ -7,6 +7,7 @@ struct t_SpiritWindow {
     GLFWwindow *window;
     SpiritResolution windowSize;
     const char *title;
+    bool resizing;
 };
 
 void window_size_callback(GLFWwindow* window, int width, int height);
@@ -58,6 +59,8 @@ SpiritWindow spCreateWindow (SpiritWindowCreateInfo *createInfo) {
     }
 
     glfwSetWindowSizeCallback(window->window, &window_size_callback);
+
+    window->resizing = false;
 
     return window;
 }
@@ -118,13 +121,21 @@ SpiritWindowState spWindowGetState(SpiritWindow window)
         return SPIRIT_WINDOW_CLOSED;
     }
 
+    if(!g_glfwWindowWasResized && window->resizing)
+    {
+        return SPIRIT_WINDOW_RESIZED;
+    }
+
     if (g_glfwWindowWasResized)
     {
         g_glfwWindowWasResized = false;
         window->windowSize = g_windowSize;
+        window->resizing = true;
         g_windowSize = (SpiritResolution) {};
-        return SPIRIT_WINDOW_RESIZED;
+        return SPIRIT_WINDOW_RESIZING;
     }
+
+    window->resizing = false;
 
     return SPIRIT_WINDOW_NORMAL;
 }

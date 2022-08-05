@@ -27,6 +27,7 @@ typedef enum e_SpiritWindowState
 {
     SPIRIT_WINDOW_NORMAL = 0,
     SPIRIT_WINDOW_RESIZED,
+    SPIRIT_WINDOW_RESIZING,
     SPIRIT_WINDOW_CLOSED
 } SpiritWindowState;
 
