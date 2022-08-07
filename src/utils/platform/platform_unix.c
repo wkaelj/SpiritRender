@@ -4,12 +4,56 @@
 #include <time.h>
 #include <errno.h>
 #include <stdio.h>
+#include <dirent.h>
+
+/**
+ * @brief Localize a file name. This macro is more convientent then writing the
+ * same code over and over again.
+ * 
+ * @param inputpath the variable storing the path to localize
+ * @param outputpathname the name of the localized path name. the macro
+ * creates it.
+ * @param outputpathlength the name of the variable storing the localized
+ * filepaths length. the macro creates it
+ * 
+ */
+#define localize_path(inputPath, outputPathName, outputPathLength) \
+    u32 outputPathLength = 0; \
+    spPlatformLocalizeFileName(NULL, inputPath, &outputPathLength); \
+    char outputPathName[outputPathLength]; \
+    spPlatformLocalizeFileName(outputPathName, inputPath, &outputPathLength);
+
+#define assert_executable_directory_set() \
+    if (g_executableDirectory == NULL) \
+    { \
+        log_fatal( \
+            "The executable directory has not been set. The SpiritRender\n" \
+            "requires that the executable directory is set using\n" \
+            "spPlatformSetExecutableDirectory(argv[0] in order to verify\n" \
+            "that file operations are safe, for the developer and the user."); \
+        abort(); \
+    }
+
+#define assert_allowed_file_operation(path) \
+    if(!spPlatformIsAllowedFileOperation(path)) abort();
 
 // store the exectutable files directory
 // so that assets and other relative directories
 // can be located during runtime
 char *g_executableDirectory = NULL;
 u32 g_executableDirectoryLength = 0;
+
+bool spPlatformIsAllowedFileOperation(const char *filepath)
+{
+    if (strncmp(g_executableDirectory, filepath, g_executableDirectoryLength) < 0)
+    {
+        log_fatal("Illigal file operation. A file operation is being made outside\n"
+            "the project directory.");
+        return false;
+    }
+
+    return true;
+}
 
 void spPlatformSetExecutableFolder(char *name)
 {
@@ -103,22 +147,20 @@ char *spPlatformGetCWD(void)
 bool spPlatformTestForFile(const char *filepath)
 {
 
-    u32 pathLength = 0;
-    spPlatformLocalizeFileName(NULL, filepath, &pathLength);
-    char path[pathLength];
-    spPlatformLocalizeFileName(path, filepath, &pathLength);
+    localize_path(filepath, path, pathLength);
 
-    if ((unsigned) access(path, F_OK | R_OK)) return false;
+    if (access(path, F_OK | R_OK) == -1)
+    {
+        log_perror("Failed to test for file '%s'", path);
+        return false;
+    }
     return true;
 }
 
 u64 spPlatformTestFileSize(const char *filepath)
 {
 
-    u32 pathLength = 0;
-    spPlatformLocalizeFileName(NULL, filepath, &pathLength);
-    char path[pathLength];
-    spPlatformLocalizeFileName(path, filepath, &pathLength);
+    localize_path(filepath, path, pathLength);
 
     struct stat data = (struct stat) {};
     if (stat(path, &data) == -1)
@@ -141,10 +183,7 @@ time_t spPlatformGetFileModifiedDate(const char *filepath)
     db_assert(filepath, "Must have valid filepath");
     if(!filepath) return 0;
 
-    u32 pathLength = 0;
-    spPlatformLocalizeFileName(NULL, filepath, &pathLength);
-    char path[pathLength];
-    spPlatformLocalizeFileName(path, filepath, &pathLength);
+    localize_path(filepath, path, pathLength);
 
     struct stat data;
     if(stat(path, &data) == -1)
@@ -162,10 +201,9 @@ SpiritResult spPlatformCreateFolder(const char *filepath)
 {
     db_assert(filepath, "Must pass a valid filepath");
 
-    u32 pathLength = 0;
-    spPlatformLocalizeFileName(NULL, filepath, &pathLength);
-    char path[pathLength];
-    spPlatformLocalizeFileName(path, filepath, &pathLength);
+    localize_path(filepath, path, pathLength);
+
+    assert_allowed_file_operation(path);
 
     if (path[pathLength - 1] == SPIRIT_PLATFORM_FOLDER_BREAK)
         path[pathLength - 1] = '\0';
@@ -190,4 +228,53 @@ SpiritResult spPlatformCreateFolder(const char *filepath)
     }
 
     return SPIRIT_SUCCESS;
+}
+
+SpiritResult spPlatformDeleteFolder(const char *restrict filepath)
+{
+    localize_path(filepath, path, pathLength);
+
+    assert_allowed_file_operation(path);
+
+    // get rid of the slash so the rest of the function works properly
+    if (path[pathLength - 1] == SPIRIT_PLATFORM_FOLDER_BREAK)
+        path[pathLength - 1] = '\0';
+
+    DIR *folder = opendir(path);
+    struct dirent *next_file;
+
+    char filename[256];
+
+    while ( (next_file = readdir(folder)) != NULL )
+    {
+        // build the path for each file in the folder
+        npf_snprintf(filename, array_length(filename), "%s/%s", path, next_file->d_name);
+        if (remove(filename) == -1)
+        {
+            log_perror("%s", filename);
+        }
+    }
+    closedir(folder);
+
+    return SPIRIT_SUCCESS;
+}
+
+SpiritResult spPlatformDeleteFile(const char *restrict filepath)
+{
+    localize_path(filepath, path, pathLength);
+
+    assert_allowed_file_operation(path);
+
+    // check to be sure folders are empty
+    struct stat file_stats;
+    stat(path, &file_stats);
+    if (!S_ISREG(file_stats.st_mode))
+    {
+        DIR *folder = opendir(path);
+        if (readdir(folder))
+        {
+            log_error("Attempting to delete folder '%s', which is not empty", path);
+            return SPIRIT_FAILURE;
+        }
+    }
 }

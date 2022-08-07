@@ -82,6 +82,7 @@ SpiritDevice spCreateDevice (SpiritDeviceCreateInfo *createInfo) {
     out->deviceExtensionCount = createInfo->windowExtensions.count;
     out->deviceExtensions = createInfo->windowExtensions.names;
 
+
     // validation layers
 
     // default validation layers
@@ -120,16 +121,19 @@ SpiritDevice spCreateDevice (SpiritDeviceCreateInfo *createInfo) {
         log_fatal("Failed to create vulkan instance");
         return NULL;
     }
+
+    // get the window surface
     out->windowSurface = spWindowGetSurface(createInfo->window, out->instance); // create window surface
     createInfo->windowSurface = out->windowSurface;
+
     out->physicalDevice = selectPhysicalDevice(createInfo, out->instance); // select physical device
     if (out->physicalDevice == NULL)
     {
         log_fatal("Failed to select GPU");
         return NULL;
     }
-
-    out->swapchainDetails = querySwapChainSupport(createInfo->windowSurface, out->physicalDevice);
+    out->swapchainDetails = (SpiritSwapchainSupportInfo) {};
+    spDeviceUpdateSwapchainSupport(out);
     out->device = createDevice(createInfo, out->physicalDevice, out->instance);
     if (out->device == NULL)
     {
@@ -197,6 +201,10 @@ u32 spDeviceFindMemoryType(
 
 SpiritResult spDeviceUpdateSwapchainSupport(const SpiritDevice device)
 {
+    if (device->swapchainDetails.presentModes)
+        free(device->swapchainDetails.presentModes);
+    if (device->swapchainDetails.formats)
+        free(device->swapchainDetails.formats);
 
     device->swapchainDetails = querySwapChainSupport(
         device->windowSurface, 
@@ -277,7 +285,6 @@ SpiritResult spDeviceCreateBuffer(
 SpiritResult spDestroyDevice (SpiritDevice device) {
 
     vkDestroyCommandPool(device->device, device->commandPool, NULL);
-
     vkDestroyDevice(device->device, NULL);
 
     vkDestroySurfaceKHR(device->instance, device->windowSurface, NULL);
@@ -306,6 +313,10 @@ SpiritResult spDestroyDevice (SpiritDevice device) {
     device->debugMessenger = NULL;
 
     vkDestroyInstance(device->instance, NULL);
+    
+    free(device->swapchainDetails.formats);
+    free(device->swapchainDetails.presentModes);
+
     free(device);
 
     return SPIRIT_SUCCESS;
@@ -347,7 +358,7 @@ static VkInstance createInstance (const SpiritDeviceCreateInfo *createInfo, VkDe
     // extensions
     u32 extensionCount = createInfo->windowExtensions.count;
     if (createInfo->enableValidation) extensionCount += 1; // if using validation, make room for valiation extensions
-    const char **extensions = new_array(const char*, extensionCount);
+    const char *extensions[extensionCount];
     for (u32 i = 0; i < createInfo->windowExtensions.count && i < extensionCount; i++) {
         extensions[i] = createInfo->windowExtensions.names[i];
     }
@@ -644,8 +655,13 @@ static u16 isDeviceSuitable (const SpiritDeviceCreateInfo *createInfo, VkPhysica
     if ( deviceQueue.foundGraphicsQueue && deviceQueue.foundPresentQueue) { supportsQueues = true; }
 
     // check if device has swapchain support
-    SpiritSwapchainSupportInfo swapchainDetails = querySwapChainSupport (createInfo->windowSurface, questionedDevice);
+    SpiritSwapchainSupportInfo swapchainDetails = querySwapChainSupport(
+        createInfo->windowSurface, 
+        questionedDevice);
     supportsSwapchain = swapchainDetails.formatCount > 0 && swapchainDetails.presentModeCount > 0;
+
+    free(swapchainDetails.formats);
+    free(swapchainDetails.presentModes);
 
 
     // DEBUG

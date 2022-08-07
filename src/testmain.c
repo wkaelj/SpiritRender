@@ -24,12 +24,28 @@ int main (int argc, char **argv) {
 
     spPlatformSetExecutableFolder(argv[0]);
 
+    if (argc >= 2 && strcmp("-h", argv[1]) == 0)
+    {
+        printf(
+            "Usage:\n\t"
+            "--test - run the tests\n\t"
+            "--delete-shader-cache - delete the shader cache\n");
+    }
+
     // tests
     if (argc >= 2 && strcmp("--test", argv[1]) == 0)
     {
         Test();
         return 0;
     }
+
+    if (argc >= 2 && strcmp("--delete-shader-cache", argv[1]) == 0)
+    {
+        spPlatformDeleteFolder(GLSL_LOADER_CACHE_FOLDER);
+    }
+
+    // delete shaders
+
 
     mainlooptest();
 
@@ -103,6 +119,7 @@ void mainlooptest (void) {
         if (spMaterialAddMesh(material, meshRef))
         {
             log_error("Failed to add mesh to material");
+            continue;
         }
 
         if(spContextSubmitFrame(context))
@@ -110,10 +127,12 @@ void mainlooptest (void) {
             log_error("Failed to submit frame");
         }
 
+        sleep(2);
 
     }
 
     vkDeviceWaitIdle(context->device->device);
+    spDestroyMeshManager(context, meshManager);
     spDestroyMaterial(context, material);
     spDestroyContext(context);
 

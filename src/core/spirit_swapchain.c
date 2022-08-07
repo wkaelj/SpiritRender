@@ -91,16 +91,13 @@ SpiritSwapchain spCreateSwapchain (
     VkSwapchainCreateInfoKHR swapInfo = {};
     swapInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 
+    // image count
     const u32 maxImageCount = device->swapchainDetails.capabilties.maxImageCount;
     const u32 minImageCount = device->swapchainDetails.capabilties.minImageCount;
-
-    // image count
-    u32 swapImageCount = clamp_value(
-        3,
-        minImageCount,
-        maxImageCount > 0 ? maxImageCount : 3);
+    const u32 swapImageCount = clamp_value(3, minImageCount, maxImageCount);
 
     swapInfo.minImageCount = swapImageCount;
+    log_debug("minimagecount %u", swapImageCount);
 
     // output info
     VkExtent2D outExtent = {
@@ -144,6 +141,7 @@ SpiritSwapchain spCreateSwapchain (
     swapInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     swapInfo.clipped = VK_TRUE;
 
+
     // old swapchain
     if (optionalSwapchain) swapInfo.oldSwapchain = optionalSwapchain->swapchain;
 
@@ -155,6 +153,8 @@ SpiritSwapchain spCreateSwapchain (
         free(optionalSwapchain);
         return NULL;
     }
+
+    out->imageCount = 0;
 
     // images
     if (createImages(device, out)) return NULL;
@@ -170,7 +170,7 @@ SpiritSwapchain spCreateSwapchain (
 
     if (!optionalSwapchain)
     {
-        log_verbose("Created Swapchain, image count %u", swapInfo.minImageCount);
+        log_verbose("Created Swapchain, image count %u", out->imageCount);
     }
 
     return out;
@@ -328,18 +328,22 @@ SpiritResult spDestroySwapchain (SpiritSwapchain swapchain, const SpiritDevice d
 // Helper implementation
 //
 
-
-
 SpiritResult createImages(const SpiritDevice device, SpiritSwapchain swapchain)
 {
 
     swapchain->imageFormat = swapchain->surfaceFormat.format;
+
+    swapchain->imageCount = 0;
+
     // images
     vkGetSwapchainImagesKHR(
         device->device,
         swapchain->swapchain, 
         &swapchain->imageCount, 
         NULL);
+
+    log_debug("Fetched image count %u", swapchain->imageCount);
+
     // allocate new array of images, and populate it
     swapchain->images = new_array(VkImage, swapchain->imageCount);
     vkGetSwapchainImagesKHR(

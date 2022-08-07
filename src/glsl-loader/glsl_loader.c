@@ -114,10 +114,7 @@ extern SpiritShader spLoadSourceShader(
         strippedShaderName,
         ".spv");
 
-    log_verbose("Scanning for shader '%s'", shaderCodePath);
-
-    if (spReadFileExists (shaderCodePath) &&
-        spReadFileModifiedTime(shaderCodePath) > spReadFileModifiedTime (path))
+    if (spReadFileModifiedTime(shaderCodePath) > spReadFileModifiedTime (path))
     {
         log_verbose ("Loading compiled shader '%s'",
             shaderCodePath);
@@ -171,8 +168,7 @@ extern SpiritShader spLoadSourceShader(
             return out;
         }
 
-        // write output file
-        log_verbose ("Caching shader '%s' with size %u", shaderCodePath, out.shaderSize);
+        log_verbose ("Compiled shader '%s'", shaderCodePath);
 
         // create folder
         char outputFolderPath[shaderCodePathLength];
@@ -200,7 +196,8 @@ extern SpiritShader spLoadSourceShader(
             shaderCodePath);
 
         db_assert (catchBuffer == SPIRIT_SUCCESS, "Failed to write file");
-        log_verbose ("Compiled shader '%s'", shaderCodePath);
+
+        log_verbose ("Cached shader '%s' with size %u", shaderCodePath, out.shaderSize);
 
         return out;
     }

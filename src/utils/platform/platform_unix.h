@@ -63,6 +63,16 @@ const char *spPlatformGetExecutableFolder (void);
 u32 spPlatformGetExecutableFolderStrLen (void);
 
 /**
+ * @brief Test if a file operation will be permitted. Only file operations within
+ * the engine executables directory will be permitted.
+ * 
+ * @param filepath the file to be operated on
+ * @return true the operation is allowed.
+ * @return false the operation will be prevented
+ */
+bool spPlatformIsAllowedFileOperation(const char *filepath);
+
+/**
  * Convert the path argument to be relative the the executable file, 
  * and to the respective OS.
  * 
@@ -141,4 +151,22 @@ time_t spPlatformGetFileModifiedDate(const char *filepath);
  * 
  * @author Kael Johnston
  */
-SpiritResult spPlatformCreateFolder(const char *filepath);
+SpiritResult spPlatformCreateFolder(const char *restrict filepath);
+
+/**
+ * @brief Delete folders contents. Be careful and do not
+ * misuse this function. This operation is permanent.
+ * 
+ * @param filepath the folder or file to delete
+ * @return SpiritResult 
+ */
+SpiritResult spPlatformDeleteFolder(const char *restrict filepath);
+
+/**
+ * @brief Delete a file or folder. It will
+ * not work on folders with contents.
+ * 
+ * @param filepath the file to delete
+ * @return SpiritResult 
+ */
+SpiritResult spPlatformDeleteFile(const char *restrict filepath);

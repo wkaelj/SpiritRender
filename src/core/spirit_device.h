@@ -59,7 +59,7 @@ struct t_SpiritDevice
     u32        queueCount;
     const u32 *queueIndices;
 
-    const char *const *deviceExtensions;
+    const char **deviceExtensions;
     u32                deviceExtensionCount;
 
     bool powerSaveMode;

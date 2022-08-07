@@ -142,7 +142,7 @@ VkRenderPass createRenderPass(
         &renderPassInfo, 
         NULL, 
         &renderPass)) return NULL;
-    log_verbose("Created render pass\n");
+    log_verbose("Created render pass");
 
     return renderPass;
 }

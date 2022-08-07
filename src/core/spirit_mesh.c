@@ -139,15 +139,17 @@ SpiritResult spDestroyMeshManager(
     SpiritMeshManager meshManager)
 {
     
-    struct t_MeshListNode *currentNode = meshManager->meshes.lh_first;
-    while(currentNode != NULL)
+    struct t_MeshListNode *cn = NULL;
+    LIST_FOREACH(cn, &meshManager->meshes, data)
     {
-        spDestroyMesh(context, currentNode->mesh);
+        spDestroyMesh(context, cn->mesh);
+    }
 
-        void *next = LIST_NEXT(currentNode, data);
-        LIST_REMOVE(currentNode, data);
-        free(currentNode);
-        currentNode = next;
+    while(!LIST_EMPTY(&meshManager->meshes))
+    {
+        struct t_MeshListNode *first = LIST_FIRST(&meshManager->meshes);
+        LIST_REMOVE(first, data);
+        free(first);
     }
 
     free(meshManager);
