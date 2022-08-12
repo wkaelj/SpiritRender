@@ -14,9 +14,11 @@ run:
 
 test:
 	./$(BUILDFDR)/$(EXEC) --test
+valgrind:
+	valgrind --leak-check=full ./$(BUILDFDR)/$(EXEC) --test
 
 noshade:
-	rm bin/glsl-loader-cache/*.spv
+	./$(BUILDFDR)/$(EXEC) --delete-shader-cache
 
 debug:
 	cd $(BUILDFDR)

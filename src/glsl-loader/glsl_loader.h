@@ -16,7 +16,7 @@
  */
 
 // file to store cached shaders, relative to the executable
-#define GLSL_LOADER_CACHE_FOLDER "glsl-loader-cache/"
+extern const char GLSL_LOADER_CACHE_FOLDER[];
 
 /**
  * Load a compiled SPIR-V shader. You can compile a GLSL shader to SPIR-V using

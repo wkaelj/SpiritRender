@@ -98,6 +98,14 @@ SpiritResult spPlatformLocalizeFileName(char *output, const char *path, u32* max
 time_t spPlatformGetTime(void);
 
 /**
+ * @brief Get the time the program has been running, in ticks. It may roll over
+ * unexpectedly, so be carefull to check for that.
+ * 
+ * @return u64 
+ */
+u64 spPlatformGetRunningTime(void);
+
+/**
  * Test if a file exists. It will automatically localize the filename,
  * like all other file utilities.
  * 
@@ -123,6 +131,15 @@ bool spPlatformTestForFile(const char *filepath);
  * @author Kael Johnston
  */
 size_t spPlatformTestFileSize (const char *filepath);
+
+/**
+ * @brief Check if a folder is empty
+ * 
+ * @param filepath 
+ * @return true 
+ * @return false 
+ */
+bool spPlatformIsDirectoryEmpty(char *filepath);
 
 /**
  * Find the last time a file was modified. The time is stored in unix time,

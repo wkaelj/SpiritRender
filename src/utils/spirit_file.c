@@ -14,9 +14,9 @@ bool spReadFileExists(const char *path)
 }
 
 SpiritResult spReadFileBinary(
-    void *dest,
-    const char *path,
-    u64 *size)
+    void *restrict dest,
+    const char *restrict path,
+    const u64 size)
 {
 
     // localize filepath
@@ -40,15 +40,8 @@ SpiritResult spReadFileBinary(
     const u64 fileSize = ftell(file);
     fseek(file, 0, SEEK_SET);
 
-    // set the filesize if it has not already been set
-    if (*size == 0)
-        *size = fileSize;
-
     // read/store contents
-    if (dest)
-    {
-        fread(dest, *size, 1, file);
-    }
+    if (dest) fread(dest, size, 1, file);
 
     fclose(file);
 
@@ -56,9 +49,9 @@ SpiritResult spReadFileBinary(
 }
 
 SpiritResult spReadFileText(
-    char *dest,
-    const char *path,
-    u64 *length)
+    char *restrict dest,
+    const char *restrict path,
+    const u64 length)
 {
 
         // localize filepath
@@ -81,14 +74,11 @@ SpiritResult spReadFileText(
     const u64 fileSize = ftell(file);
     fseek(file, 0, SEEK_SET);
 
-    if (*length == 0)
-        *length = fileSize + 1;
-
     // read file
     if (dest)
     {
-        fread(dest, *length, 1, file);
-        dest[*length] = '\0';
+        fread(dest, min_value(fileSize, length - 1), 1, file);
+        dest[min_value(fileSize, length)] = '\0';
     }
 
     fclose(file);

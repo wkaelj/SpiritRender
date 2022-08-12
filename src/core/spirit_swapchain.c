@@ -53,7 +53,11 @@ SpiritSwapchain spCreateSwapchain (
         createInfo->preferedFormat.format = VK_FORMAT_R8G8B8_SRGB;
         createInfo->preferedFormat.colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
     }
-    if (!createInfo->selectedPresentMode)
+    if (device->powerSaveMode)
+    {
+        createInfo->preferredPresentMode = VK_PRESENT_MODE_FIFO_KHR;
+    }
+    else if (!createInfo->selectedPresentMode)
     {
         createInfo->preferredPresentMode = VK_PRESENT_MODE_FIFO_KHR;
     }
@@ -145,9 +149,6 @@ SpiritSwapchain spCreateSwapchain (
     // old swapchain
     if (optionalSwapchain) swapInfo.oldSwapchain = optionalSwapchain->swapchain;
 
-    // TODO fix swapchain create info
-    // out->createInfo = swapInfo;
-    // actually created swapchain
     if (vkCreateSwapchainKHR(device->device, &swapInfo, NULL, &out->swapchain)) {
         log_error("Failed to create swapchain");
         free(optionalSwapchain);
@@ -575,9 +576,6 @@ VkPresentModeKHR chooseSwapPresentMode(
     const VkPresentModeKHR *availablePresentModes,
     VkPresentModeKHR preferredPresentMode)
 {
-
-    // return power saving present mode if using integrated GPU
-    // FIXME if (preferIntegratedGPU) { return VK_PRESENT_MODE_FIFO_KHR; }
 
     // check if prefered render mode is available
     for (uint32_t i = 0; i < presentModeCount; i++)

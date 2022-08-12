@@ -100,8 +100,8 @@ int unix_log_perror(
     va_end (args);
 
     char prefix[length];
-    npf_snprintf (prefix, length, ">>> %s:%s->%s\n\t%s%s%s",
-        file, func, line,
+    npf_snprintf (prefix, length, ">>> %s (%s:%s)\n\t%s%s%s",
+        func, file, line,
         messegePrefix,
         consolidatedMessege,
         messegeSuffix);

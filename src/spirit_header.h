@@ -33,6 +33,11 @@
 #include "utils/platform.h" // usefull stuff, like time and whatnot
 #include "utils/spirit_string.h"
 
+#ifndef DEBUG
+#define FUNCTION_TIMER_NO_DIAGNOSTIC
+#endif
+#include "debug/function_timer.h"
+
 // enable messeges upon success, not just failure
 // object creation will log succesful creation as well as failure
 #define ENABLE_VERBOSE
@@ -44,8 +49,8 @@
 
 #define new_flex_array(structname, flexmembertype, elementcount) \
     ((structname*)malloc(\
-            sizeof(structname) + \
-            sizeof(flexmembertype) * elementcount))
+        sizeof(structname) + \
+        sizeof(flexmembertype) * elementcount))
 
 // find the size of a STACK ALLOCATED array
 #define array_length(array) (sizeof(array)/sizeof(array[0]))
