@@ -1,6 +1,8 @@
 #pragma once
 #include <spirit_header.h>
+#include <vulkan/vulkan_core.h>
 
+#include "core/spirit_types.h"
 #include "spirit_window.h"
 
 // Create and return rendering device
@@ -36,7 +38,7 @@ typedef struct t_SpiritDeviceCreateInfo {
     u32                    requiredValidationLayerCount;
     const char *const     *requiredValidationLayers;
 
-    VkSurfaceKHR windowSurface; // will be overridden   
+    VkSurfaceKHR windowSurface; // will be overridden
 
     u32                requiredDeviceExtensionCount;
     const char *const *requiredDeviceExtensions;
@@ -74,44 +76,69 @@ SpiritDevice spCreateDevice (SpiritDeviceCreateInfo *createInfo);
 // find the format supported by the device
 VkFormat spDeviceFindSupportedFormat(
     const SpiritDevice device,
-    const VkFormat *candidates, 
-    const u32 candidateCount, 
-    const VkImageTiling tiling, 
-    const VkFormatFeatureFlags features);
+    const VkFormat *candidates,
+    const u32 candidateCount,
+    const VkImageTiling tiling,
+    const VkFormatFeatureFlags features) SPIRIT_NONULL(2);
 
 /**
  * @brief Find the available memory type from a list of types
- * 
- * @param device 
- * @param typeFilter 
- * @param properties 
- * @return u32 
+ *
+ * @param device
+ * @param typeFilter
+ * @param properties
+ * @return u32
  */
 u32 spDeviceFindMemoryType(
-    const SpiritDevice device, 
-    u32 typeFilter, 
+    const SpiritDevice device,
+    const u32 typeFilter,
     VkMemoryPropertyFlags properties);
 
 /**
  * @brief Update the stored swapchain support information of a device.
  * This will update the image size contraints, which will make it possible to
  * resize the window.
- * 
- * @param device 
- * @return SpiritResult 
+ *
+ * @param device
+ * @return SpiritResult
  */
 SpiritResult spDeviceUpdateSwapchainSupport(SpiritDevice device);
 
 /**
+ * @brief Allocate gpu memory
+ *
+ * @param device a valid SpiritDevice
+ * @param size the amount of memory (bytes)
+ * @param memoryType the type of memory (spDeviceFindMemoryType)
+ * @param memory the VkDeviceMemory object to use for the memory
+ * @return SpiritResult
+ */
+SpiritResult spDeviceAllocateMemory(
+    const SpiritDevice device,
+    const size_t size,
+    const u32 memoryType,
+    VkDeviceMemory *memory) SPIRIT_NONULL(4);
+
+/**
+ * @brief Free memory allocated by spDeviceAllocateMemory
+ *
+ * @param device the device used to allocate the memory
+ * @param memory a valid VkDeviceMemory object
+ */
+inline void spDeviceFreeMemory(
+    const SpiritDevice device,
+    VkDeviceMemory memory) SPIRIT_INLINE;
+
+/**
  * @brief Create a buffer on the associated device
- * 
+ *
  * @param device the device with the buffer
  * @param size the size of the buffer
  * @param usage how to buffer will be used
- * @param properties 
+ * @param properties
  * @param buffer the output buffer
  * @param bufferMemory a pointer to the memory for that buffer
- * @return SpiritResult 
+ * @return SpiritResult
  */
 SpiritResult spDeviceCreateBuffer(
     SpiritDevice          device,
@@ -119,29 +146,44 @@ SpiritResult spDeviceCreateBuffer(
     VkBufferUsageFlags    usage,
     VkMemoryPropertyFlags properties,
     VkBuffer             *buffer,
-    VkDeviceMemory       *bufferMemory);
+    VkDeviceMemory       *bufferMemory) SPIRIT_NONULL(5, 6);
 
 /**
- * @brief Create an image on the associated device
- * 
- * @param device 
- * @param imageInfo 
- * @param memoryFlags 
- * @param image 
- * @param imageMemory 
- * @return SpiritResult 
+ * @brief (DEPRACATED) Create an image on the associated device
+ *
+ * @param device
+ * @param imageInfo
+ * @param memoryFlags
+ * @param image
+ * @param imageMemory
+ * @return SpiritResult
  */
 SpiritResult spDeviceCreateImage(
     const SpiritDevice device,
     const VkImageCreateInfo *imageInfo,
     VkMemoryPropertyFlags memoryFlags,
     VkImage *image,
-    VkDeviceMemory *imageMemory);
+    VkDeviceMemory *imageMemory) SPIRIT_NONULL(2, 4, 5) SPIRIT_DEPRECATED;
+
+/**
+ * @brief Create an image view for an existing image
+ *
+ * @param device
+ * @param imageFormat the image format, can be found using
+ spDeviceFindSupportedFormat
+ * @param image the image to create an imageView for
+ * @return VkImageView will be null on failure
+ */
+VkImageView spDeviceCreateImageView(
+    const SpiritDevice device,
+    const VkFormat imageFormat,
+    const VkImage image,
+    VkImageAspectFlags);
 
 /**
  * @brief Destroy a vulkan device
- * 
- * @param device 
- * @return SpiritResult 
+ *
+ * @param device
+ * @return SpiritResult
  */
-SpiritResult spDestroyDevice (SpiritDevice device);
+SpiritResult spDestroyDevice(SpiritDevice device);
