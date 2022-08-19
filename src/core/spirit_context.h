@@ -38,13 +38,11 @@ struct t_SpiritContext
     LIST_HEAD(t_ContextMaterialListHead, t_ContextMaterialListNode) materials;
 
     // command buffers
-    VkCommandBuffer *commandBuffers;
+    SpiritCommandBuffer *commandBuffers;
     size_t           commandBufferCount;
-    u32              commandBufferIndex; // which command buffer to use to draw
-    bool isRecording; // if the command buffers are currently recording
 
     SpiritResolution windowSize; // use for UI sizes, stored as screen units
-    SpiritResolution screenResolution; // resolution in px, use for 
+    SpiritResolution screenResolution; // resolution in px, use for
 };
 
 SpiritContext spCreateContext(SpiritContextCreateInfo *createInfo);
@@ -58,7 +56,7 @@ SpiritResult spContextSubmitFrame(SpiritContext context);
  * @brief add a new material to the context, which will be rendered.
  * The material must be destroyed manually by the user.
  * It can be removed from the context using spContextRemoveMateral.
- * 
+ *
  * @param context the context the material will be added to. It must be a valid
  * SpiritContext.
  * @param material the material which will be added to the context. It must be
@@ -71,24 +69,24 @@ SpiritResult spContextAddMaterial(
     const SpiritMaterial material);
 
 /**
- * @brief Remove a material from the context that was added using 
+ * @brief Remove a material from the context that was added using
  * spContextAddMaterial. This will not destroy the material, and it can be added
  * to a different context or added to this context again later.
- * 
+ *
  * @param context the context the material will be removed from. It must be a valid
  * SpiritContext.
- * @param material the material to remove from the context. 
- * @return SpiritResult 
+ * @param material the material to remove from the context.
+ * @return SpiritResult
  */
 SpiritResult spContextRemoveMaterial(
     SpiritContext context,
     const SpiritMaterial material);
 
 /**
- * @brief Destroy a spirit context. It will not destroy the meshes associated 
+ * @brief Destroy a spirit context. It will not destroy the meshes associated
  * with those materials.
- * 
+ *
  * @param context the context to destroy. It must be a valid SpiritContext
- * @return SpiritResult 
+ * @return SpiritResult
  */
 SpiritResult spDestroyContext(SpiritContext context);

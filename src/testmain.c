@@ -10,6 +10,7 @@
 #include "core/spirit_material.h"
 
 // utils
+#include "core/spirit_types.h"
 #include "glsl-loader/glsl_loader.h"
 #include "utils/spirit_file.h"
 #include "utils/platform.h"
@@ -17,10 +18,11 @@
 void mainlooptest (void);
 
 // run all the tests
-bool Test(void);
+void Test(void);
 
 
 int main (int argc, char **argv) {
+
 
     spPlatformSetExecutableFolder(argv[0]);
 
@@ -44,8 +46,12 @@ int main (int argc, char **argv) {
         spPlatformDeleteFolder(GLSL_LOADER_CACHE_FOLDER);
         return 0;
     }
+    init_timer();
+
 
     mainlooptest();
+
+    terminate_timer();
 
     return 0;
 }
@@ -58,10 +64,11 @@ void mainlooptest (void) {
     contextInfo.windowSize = (SpiritResolution) {800, 600};
     contextInfo.windowFullscreen = false;
 
+    struct FunctionTimerData startup = start_timer("startup");
     SpiritContext context = spCreateContext(&contextInfo);
 
-    log_debug("Context res %ux%u", 
-        context->screenResolution.w, 
+    log_debug("Context res %lux%lu",
+        context->screenResolution.w,
         context->screenResolution.w);
 
     if (context == NULL)
@@ -81,7 +88,7 @@ void mainlooptest (void) {
     SpiritMaterial material = spCreateMaterial(
         context,
         &materialInfo);
-    
+
     if (material == NULL)
         return;
 
@@ -99,37 +106,36 @@ void mainlooptest (void) {
     SpiritMeshCreateInfo meshInfo = {};
     meshInfo.vertCount = 6;
     meshInfo.verts = meshVerts;
-    
+
     SpiritMesh mesh = spCreateMesh(context, &meshInfo);
 
     SpiritMeshManager meshManager = spCreateMeshManager(context, NULL);
     const SpiritMeshReference meshRef = spMeshManagerAddMesh(meshManager, mesh);
 
+    end_timer(startup);
+
     SpiritWindowState windowState;
     while ((windowState = spWindowGetState(context->window)) != SPIRIT_WINDOW_CLOSED)
     {
+
+        struct FunctionTimerData frametime = start_timer("frametime");
         // handle window resized
         if (windowState == SPIRIT_WINDOW_RESIZED)
         {
             if(spContextHandleWindowResized(context)) continue;
         } else if (windowState == SPIRIT_WINDOW_RESIZING) continue;
 
-        if (spMaterialAddMesh(material, meshRef))
-        {
-            log_error("Failed to add mesh to material");
-            continue;
-        }
+        time_function(spMaterialAddMesh(material, meshRef));
 
-        if(spContextSubmitFrame(context))
-        {
-            log_error("Failed to submit frame");
-        }
+        time_function(spContextSubmitFrame(context));
+
+        end_timer(frametime);
 
         // sleep(2);
 
     }
 
-    vkDeviceWaitIdle(context->device->device);
+    spDeviceWaitIdle(context->device);
     spDestroyMeshManager(context, meshManager);
     spDestroyMaterial(context, material);
     spDestroyContext(context);
@@ -191,7 +197,7 @@ bool TestStringStrip(const char *input, const char slicer, const char *expected)
 
     u32 len = strlen(input) + 1;
     char dest[len];
-    
+
     time_function(spStringStrip(dest, &len, input, slicer));
 
     if (strcmp(dest, expected))
@@ -206,14 +212,14 @@ bool TestStringStrip(const char *input, const char slicer, const char *expected)
  * @brief Test the built in file utilities. The function will create a file,
  * write text to it, read the file and verify the contents. It then deletes the file.
  * NOTE: this test will fail if the file is inside a folder that doesn't exist.
- * 
- * @param textFileName 
- * @param testFileContents 
- * @return true 
- * @return false 
+ *
+ * @param textFileName
+ * @param testFileContents
+ * @return true
+ * @return false
  */
 bool TestFileUtilities(
-    const char *restrict testFileName, 
+    const char *restrict testFileName,
     const char *restrict testFileContents)
 {
 
@@ -270,12 +276,12 @@ bool TestGLSLLoader(const char *restrict shaderPath)
     {
         return false;
     }
-    
+
     SpiritShader testShaderBinary; // loaded from binary
     time_function_with_return(spLoadSourceShader(
         shaderPath,
         SPIRIT_SHADER_TYPE_FRAGMENT), testShaderBinary);
-    
+
     if (testShaderBinary.shaderSize == 0)
     {
         spDestroyShader(testShaderSource);
@@ -293,8 +299,8 @@ bool TestGLSLLoader(const char *restrict shaderPath)
 
 
     if (equal && memcmp(
-        testShaderSource.shader, 
-        testShaderBinary.shader, 
+        testShaderSource.shader,
+        testShaderBinary.shader,
         testShaderSource.shaderSize) != 0)
     {
         equal = false;
@@ -317,7 +323,7 @@ bool TestGLSLLoader(const char *restrict shaderPath)
 }
 
 
-bool Test(void)
+void Test(void)
 {
     init_timer();
     for (size_t i = 0; i < 1; i++)

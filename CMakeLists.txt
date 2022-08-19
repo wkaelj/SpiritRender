@@ -7,7 +7,7 @@ set(NAME SpiritRender)
 
 message(STATUS "using ${CMAKE_GENERATOR}")
 if (CMAKE_GENERATOR STREQUAL "MinGW Makefiles")
-    if (NOT MINGW_PATH) 
+    if (NOT MINGW_PATH)
       message(FATAL_ERROR "MINGW_PATH not set in .env.cmake")
     endif()
     set(USE_MINGW "True")
@@ -32,7 +32,7 @@ else()
 	message(STATUS "Using vulkan lib at: ${Vulkan_LIBRARIES}")
 endif()
 
-file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.c ${PROJECT_SOURCE_DIR}/src/*.h)
+file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.c)
 
 # COMPILE OPTIONS
 set(LIB_COMPILE_FLAGS "-D_FORTIFY_SOURCE=2 -fsanitize=address")
@@ -53,10 +53,10 @@ set(CMAKE_BUILD_TYPE "Debug")
 # add_compile_options(-D_FORTIFY_SOURCE=2 -fsanitize=address)
 
 # address sanitizer
-# target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=address)
-# target_link_options(${PROJECT_NAME} PRIVATE -fsanitize=address)
+target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=address)
+target_link_options(${PROJECT_NAME} PRIVATE -fsanitize=address)
 
-set(CMAKE_C_STANDARD c2x)
+set(CMAKE_C_STANDARD gnu2x)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
   libs
@@ -100,13 +100,13 @@ endif()
 # Find all vertex and fragment sources within shaders directory
 # taken from VBlancos vulkan tutorial
 # https://github.com/vblanco20-1/vulkan-guide/blob/all-chapters/CMakeLists.txt
-find_program(GLSL_VALIDATOR glslangValidator HINTS 
-  ${Vulkan_GLSLANG_VALIDATOR_EXECUTABLE} 
-  /usr/bin 
-  /usr/local/bin 
+find_program(GLSL_VALIDATOR glslangValidator HINTS
+  ${Vulkan_GLSLANG_VALIDATOR_EXECUTABLE}
+  /usr/bin
+  /usr/local/bin
   ${VULKAN_SDK_PATH}/Bin
   ${VULKAN_SDK_PATH}/Bin32
-  $ENV{VULKAN_SDK}/Bin/ 
+  $ENV{VULKAN_SDK}/Bin/
   $ENV{VULKAN_SDK}/Bin32/
 )
 

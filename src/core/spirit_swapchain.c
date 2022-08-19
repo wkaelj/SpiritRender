@@ -1,4 +1,11 @@
 #include "spirit_swapchain.h"
+#include "core/spirit_sync.h"
+#include "core/spirit_types.h"
+#include "debug/messenger.h"
+#include "spirit_header.h"
+#include "spirit_image.h"
+#include <stdint.h>
+#include <vulkan/vulkan_core.h>
 
 // swapchain implementation
 
@@ -12,14 +19,14 @@
 
 // choose desired or best swap chain mode
 VkSurfaceFormatKHR chooseSwapSurfaceFormat (
-    uint32_t                  formatCount, 
-    const VkSurfaceFormatKHR *availableFormats, 
+    uint32_t                  formatCount,
+    const VkSurfaceFormatKHR *availableFormats,
     VkSurfaceFormatKHR        preferedFormat);
 
 
 // choose best or desired surface format
 VkPresentModeKHR chooseSwapPresentMode (
-    uint32_t                presentModeCount, 
+    uint32_t                presentModeCount,
     const VkPresentModeKHR *availablePresentModes,
     VkPresentModeKHR        preferredPresentMode);
 
@@ -44,7 +51,7 @@ SpiritSwapchain spCreateSwapchain (
         SpiritDevice device,
         SpiritSwapchain optionalSwapchain)
 {
-    
+
     db_assert(device, "Device cannot be NULL when creating swapchain");
 
     // set present and format to fallback values
@@ -76,11 +83,11 @@ SpiritSwapchain spCreateSwapchain (
 
     if (!optionalSwapchain)
     {
-        log_verbose("Window resolution '%ux%u'",
+        log_verbose("Window resolution '%lux%lu'",
             createInfo->windowRes.w,
             createInfo->windowRes.h);
     }
-    
+
     // use old swapchain memory to save memory
     SpiritSwapchain out;
     if (optionalSwapchain)
@@ -117,8 +124,8 @@ SpiritSwapchain spCreateSwapchain (
         createInfo->preferredPresentMode);
     // surface format
     out->surfaceFormat = chooseSwapSurfaceFormat(
-        device->swapchainDetails.formatCount, 
-        device->swapchainDetails.formats, 
+        device->swapchainDetails.formatCount,
+        device->swapchainDetails.formats,
         createInfo->preferedFormat);
     out->supportInfo = device->swapchainDetails;
 
@@ -158,13 +165,24 @@ SpiritSwapchain spCreateSwapchain (
     out->imageCount = 0;
 
     // images
-    if (createImages(device, out)) return NULL;
-    if (createDepthObjects(device, out)) return NULL;
+    if (createImages(device, out))
+    {
+        log_error("Failed to create images");
+        return NULL;
+    }
+    if (createDepthObjects(device, out))
+    {
+        log_error("Failed to create depth objects");
+        return NULL;
+    }
     // sync objects
-    if (createSyncObjects(device, out)) return NULL;
+    if (createSyncObjects(device, out))
+    {
+        log_error("Failed to create sync objects");
+        return NULL;
+    }
 
     out->currentFrame = 0;
-    out->currentFence = 0;
 
     // store create info
     out->createInfo = *createInfo;
@@ -181,7 +199,7 @@ SpiritSwapchain spCreateSwapchain (
 SpiritResult spSwapchainSubmitCommandBuffer(
     SpiritDevice device,
     SpiritSwapchain swapchain,
-    VkCommandBuffer buffer,
+    SpiritCommandBuffer buffer,
     u32 imageIndex)
 {
 
@@ -189,15 +207,20 @@ SpiritResult spSwapchainSubmitCommandBuffer(
     db_assert(swapchain, "must have a valid swapchain");
     db_assert(buffer, "Must have a valid command buffer");
 
-    if (vkWaitForFences(
-        device->device, 
-        1, 
-        &swapchain->fences[imageIndex], 
-        VK_TRUE, UINT64_MAX))
+
+    if (swapchain->imagesInFlight[imageIndex])
     {
-        log_fatal("Error wating for swapchain fence %u", imageIndex);
-        return SPIRIT_FAILURE;
+        if (spFenceWait(device, *swapchain->imagesInFlight[imageIndex], UINT64_MAX))
+        {
+            log_fatal("Error wating for swapchain fence %u", imageIndex);
+            return SPIRIT_FAILURE;
+        }
     }
+
+    swapchain->imagesInFlight[imageIndex] =
+        &swapchain->inFlightFences[swapchain->currentFrame];
+
+    spFenceReset(device, swapchain->inFlightFences[swapchain->currentFrame]);
 
     VkSubmitInfo submitInfo = {};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -206,40 +229,32 @@ SpiritResult spSwapchainSubmitCommandBuffer(
         swapchain->imageAvailableSemaphores[swapchain->currentFrame]
     };
 
-    VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+    VkPipelineStageFlags waitStages[] = {
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+    };
     submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.pWaitDstStageMask = waitStages;
 
     submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &buffer;
+    submitInfo.pCommandBuffers = &buffer->handle;
 
     VkSemaphore signalSemaphores[] = {
-        swapchain->renderFinishedSemaphores[swapchain->currentFrame]
+        swapchain->queueCompleteSemaphores[swapchain->currentFrame]
     };
 
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
 
-    if (vkResetFences(
-        device->device, 
-        1, 
-        &swapchain->fences[imageIndex]))
-    {
-        log_fatal("Failed to reset fence %u", swapchain->currentFrame);
-    }
-    
     if (vkQueueSubmit(
-        device->graphicsQueue, 
-        1, 
-        &submitInfo, 
-        swapchain->fences[imageIndex]) != VK_SUCCESS)
+        device->graphicsQueue,
+        1,
+        &submitInfo,
+        swapchain->inFlightFences[imageIndex]->handle) != VK_SUCCESS)
     {
         log_fatal("Failed to submit graphics queue");
         abort();
     }
-
-    swapchain->currentFence = imageIndex;
 
     VkPresentInfoKHR presentInfo = {};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -255,9 +270,9 @@ SpiritResult spSwapchainSubmitCommandBuffer(
 
     VkResult result = vkQueuePresentKHR(device->presentQueue, &presentInfo);
 
-    swapchain->currentFrame = (swapchain->currentFrame + 1) % 
-        swapchain->maxFramesInFlight;
-    
+    swapchain->currentFrame = (swapchain->currentFrame + 1) %
+        swapchain->maxImagesInFlight;
+
     if(result != VK_SUCCESS)
     {
         log_warning("Failed to present present queue");
@@ -279,11 +294,9 @@ SpiritResult spSwapchainAquireNextImage(
     db_assert(imageIndex, "imageIndex must be a valid pointer to a u32");
 
     SpiritResult result = SPIRIT_SUCCESS;
-    if (vkWaitForFences(
-        device->device,
-        1,
-        &swapchain->fences[swapchain->currentFence],
-        VK_TRUE,
+    if (spFenceWait(
+        device,
+        swapchain->inFlightFences[swapchain->currentFrame],
         UINT64_MAX))
     {
         log_error("Error while waiting for fence %u", swapchain->currentFrame);
@@ -294,24 +307,24 @@ SpiritResult spSwapchainAquireNextImage(
         device->device,
         swapchain->swapchain,
         UINT64_MAX,
-        swapchain->imageAvailableSemaphores[swapchain->currentFrame],  // must be a not signaled semaphore
+        swapchain->imageAvailableSemaphores[swapchain->currentFrame],
         VK_NULL_HANDLE,
         imageIndex))
     {
         log_warning("Error attempting to aquire next image with semaphore %u", swapchain->currentFrame);
         result = SPIRIT_FAILURE;
-    }   
+    }
 
     return result;
 }
-
-
 
 // destroy swapchain instance
 SpiritResult spDestroySwapchain (SpiritSwapchain swapchain, const SpiritDevice device) {
 
     db_assert(swapchain != NULL, "swapchain cannot be NULL");
     db_assert(device != NULL, "device cannot be NULL");
+
+    spDeviceWaitIdle(device);
 
     destroyDepthObjects(device, swapchain);
     destroySyncObjects(device, swapchain);
@@ -331,59 +344,44 @@ SpiritResult spDestroySwapchain (SpiritSwapchain swapchain, const SpiritDevice d
 
 SpiritResult createImages(const SpiritDevice device, SpiritSwapchain swapchain)
 {
-
-    swapchain->imageFormat = swapchain->surfaceFormat.format;
-
     swapchain->imageCount = 0;
 
     // images
     vkGetSwapchainImagesKHR(
         device->device,
-        swapchain->swapchain, 
-        &swapchain->imageCount, 
+        swapchain->swapchain,
+        &swapchain->imageCount,
         NULL);
 
     log_debug("Fetched image count %u", swapchain->imageCount);
 
     // allocate new array of images, and populate it
-    swapchain->images = new_array(VkImage, swapchain->imageCount);
+    VkImage imageBuf[swapchain->imageCount];
     vkGetSwapchainImagesKHR(
         device->device,
         swapchain->swapchain,
         &swapchain->imageCount,
-        swapchain->images);
+        imageBuf);
 
-    // image views
-    VkImageViewCreateInfo imageViewInfo = {};
-    imageViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-
-    imageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    imageViewInfo.format = swapchain->imageFormat;
-    imageViewInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-    imageViewInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-    imageViewInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-    imageViewInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-
-    imageViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    imageViewInfo.subresourceRange.baseMipLevel = 0;
-    imageViewInfo.subresourceRange.levelCount = 1;
-    imageViewInfo.subresourceRange.baseArrayLayer = 0;
-    imageViewInfo.subresourceRange.layerCount = 1;
-    swapchain->imageCount = swapchain->imageCount;
-    swapchain->imageViews = new_array(VkImageView, swapchain->imageCount);
-
-    for (u8 i = 0; i < swapchain->imageCount; i++)
+    if (imageBuf[0] == NULL)
     {
-        imageViewInfo.image = swapchain->images[i];
-        if (vkCreateImageView (
-            device->device,
-            &imageViewInfo,
-            NULL,
-            &swapchain->imageViews[i]))
-        {
-            log_error("Failed to create swapchain image views");
-            return SPIRIT_FAILURE;
-        }
+        return SPIRIT_FAILURE;
+    }
+
+    swapchain->images = new_array(SpiritImage, swapchain->imageCount);
+
+    // convert swapchain images to SpiritImages, and create image views
+    for (u32 i = 0; i < swapchain->imageCount; ++i)
+    {
+        SpiritImage *image = &swapchain->images[i];
+        image->image = imageBuf[i];
+        image->imageFormat = swapchain->surfaceFormat.format;
+        image->memory = NULL;
+        image->aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
+        image->size.w = swapchain->extent.width;
+        image->size.h = swapchain->extent.height;
+
+        spCreateImageView(device, image);
     }
 
     return SPIRIT_SUCCESS;
@@ -393,26 +391,25 @@ void destroyImages(const SpiritDevice device, SpiritSwapchain swapchain)
 {
     for (u32 i = 0; i < swapchain->imageCount; i++)
     {
-        vkDestroyImageView(device->device, swapchain->imageViews[i], NULL);
+        spDestroyImageView(device, &swapchain->images[i]);
     }
 
     free(swapchain->images);
-    free(swapchain->imageViews);
 }
 
 SpiritResult createSyncObjects(const SpiritDevice device, SpiritSwapchain swapchain) {
-    
+
     // sync options
-    swapchain->maxFramesInFlight = swapchain->imageCount - 1;
+    swapchain->maxImagesInFlight = swapchain->imageCount - 1;
 
-    swapchain->imageAvailableSemaphores = 
-        new_array(VkSemaphore, swapchain->maxFramesInFlight);
-    swapchain->renderFinishedSemaphores = 
-        new_array(VkSemaphore, swapchain->maxFramesInFlight);
+    swapchain->imageAvailableSemaphores =
+        new_array(VkSemaphore, swapchain->maxImagesInFlight);
+    swapchain->queueCompleteSemaphores =
+        new_array(VkSemaphore, swapchain->maxImagesInFlight);
+    swapchain->inFlightFences =
+        new_array(SpiritFence, swapchain->maxImagesInFlight);
 
-    swapchain->fences = new_array(VkFence, swapchain->imageCount);
 
-    
     VkSemaphoreCreateInfo semaphoreInfo = {};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
@@ -420,19 +417,24 @@ SpiritResult createSyncObjects(const SpiritDevice device, SpiritSwapchain swapch
     fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-    for (size_t i = 0; i < swapchain->maxFramesInFlight; i++) {
+    for (size_t i = 0; i < swapchain->maxImagesInFlight; i++) {
 
         bool failure = false;
         if (vkCreateSemaphore(
-            device->device, 
-            &semaphoreInfo, 
-            NULL, 
+            device->device,
+            &semaphoreInfo,
+            NULL,
             &swapchain->imageAvailableSemaphores[i])) failure = true;
        if (vkCreateSemaphore(
-            device->device, 
-            &semaphoreInfo, 
-            NULL, 
-            &swapchain->renderFinishedSemaphores[i])) failure = true;
+            device->device,
+            &semaphoreInfo,
+            NULL,
+            &swapchain->queueCompleteSemaphores[i])) failure = true;
+
+        if (!(swapchain->inFlightFences[i] = spCreateFence(device, true)))
+        {
+            failure = true;
+        }
 
         if (failure)
         {
@@ -441,14 +443,10 @@ SpiritResult createSyncObjects(const SpiritDevice device, SpiritSwapchain swapch
         }
     }
 
-    // create fences, 1 per image
+    swapchain->imagesInFlight = new_array(SpiritFence*, swapchain->imageCount);
     for (u32 i = 0; i < swapchain->imageCount; i++)
     {
-        if (vkCreateFence(device->device, &fenceInfo, NULL, &swapchain->fences[i]))
-        {
-            log_error("Failed to create fence");
-            return SPIRIT_FAILURE;
-        }
+        swapchain->imagesInFlight[i] = NULL;
     }
 
     return SPIRIT_SUCCESS;
@@ -456,81 +454,47 @@ SpiritResult createSyncObjects(const SpiritDevice device, SpiritSwapchain swapch
 
 void destroySyncObjects(const SpiritDevice device, SpiritSwapchain swapchain)
 {
-    for (u32 i = 0; i < swapchain->maxFramesInFlight; i++)
+    for (u32 i = 0; i < swapchain->maxImagesInFlight; i++)
     {
-        vkDestroySemaphore(device->device, swapchain->renderFinishedSemaphores[i],
+        vkDestroySemaphore(device->device, swapchain->queueCompleteSemaphores[i],
             NULL);
         vkDestroySemaphore(device->device, swapchain->imageAvailableSemaphores[i],
             NULL);
-        vkDestroyFence(device->device, swapchain->fences[i], NULL);
+        spDestroyFence(device, swapchain->inFlightFences[i]);
     }
 
-    vkDestroyFence(
-        device->device, 
-        swapchain->fences[swapchain->maxFramesInFlight], NULL);
-
     free(swapchain->imageAvailableSemaphores);
-    free(swapchain->renderFinishedSemaphores);
-    free(swapchain->fences);
+    free(swapchain->queueCompleteSemaphores);
+    free(swapchain->inFlightFences);
+    free(swapchain->imagesInFlight);
 }
 
 SpiritResult createDepthObjects(const SpiritDevice device, SpiritSwapchain swapchain)
 {
     VkFormat depthFormat = findDepthFormat(device);
-    swapchain->depthFormat = depthFormat;
     VkExtent2D swapChainExtent = swapchain->extent;
 
-    swapchain->depthImages = 
-        new_array(VkImage, swapchain->imageCount);
-    swapchain->depthImageMemory =
-        new_array(VkDeviceMemory, swapchain->imageCount);
-    swapchain->depthImageViews = 
-        new_array(VkImageView, swapchain->imageCount);
+    swapchain->depthImages =
+        new_array(SpiritImage, swapchain->imageCount);
 
     for (u32 i = 0; i < swapchain->imageCount; i++)
     {
-        VkImageCreateInfo imageInfo = {};
-        imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-        imageInfo.imageType = VK_IMAGE_TYPE_2D;
-        imageInfo.extent.width = swapChainExtent.width;
-        imageInfo.extent.height = swapChainExtent.height;
-        imageInfo.extent.depth = 1;
-        imageInfo.mipLevels = 1;
-        imageInfo.arrayLayers = 1;
-        imageInfo.format = depthFormat;
-        imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-        imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-        imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-        imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-        imageInfo.flags = 0;
 
-        spDeviceCreateImage(
-            device,
-            &imageInfo,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            &swapchain->depthImages[i],
-            &swapchain->depthImageMemory[i]);
+        SpiritImageCreateInfo depthImageInfo = {
+            .flags = 0,
+            .size.w = swapChainExtent.width,
+            .size.h = swapChainExtent.height,
+            .format = depthFormat,
+            .tiling = VK_IMAGE_TILING_OPTIMAL,
+            .usageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+            .memoryFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            .aspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT,
+            .mipLevels = 1,
+            .withImageView = true
+        };
 
-        VkImageViewCreateInfo viewInfo = {};
-        viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        viewInfo.image = swapchain-> depthImages[i];
-        viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        viewInfo.format = depthFormat;
-        viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-        viewInfo.subresourceRange.baseMipLevel = 0;
-        viewInfo.subresourceRange.levelCount = 1;
-        viewInfo.subresourceRange.baseArrayLayer = 0;
-        viewInfo.subresourceRange.layerCount = 1;
+        spCreateImage(device, &depthImageInfo, &swapchain->depthImages[i]);
 
-        if (vkCreateImageView(
-            device->device, 
-            &viewInfo, 
-            NULL,
-            &swapchain->depthImageViews[i]) != VK_SUCCESS)
-        {
-            return SPIRIT_FAILURE;
-        }
     }
 
     return SPIRIT_SUCCESS;
@@ -540,14 +504,10 @@ void destroyDepthObjects(const SpiritDevice device, SpiritSwapchain swapchain)
 {
     for (u32 i = 0; i < swapchain->imageCount; i++)
     {
-        vkDestroyImageView(device->device, swapchain->depthImageViews[i], NULL);
-        vkDestroyImage(device->device, swapchain->depthImages[i], NULL);
-        vkFreeMemory(device->device, swapchain->depthImageMemory[i], NULL);
+        spDestroyImage(device, & swapchain->depthImages[i]);
     }
 
     free(swapchain->depthImages);
-    free(swapchain->depthImageViews);
-    free(swapchain->depthImageMemory);
 }
 
 // swapchain
@@ -560,7 +520,7 @@ VkSurfaceFormatKHR chooseSwapSurfaceFormat (
     for (uint32_t i = 0; i < formatCount; i++)
     {
         if (
-            availableFormats[i].format == preferedFormat.format && 
+            availableFormats[i].format == preferedFormat.format &&
             availableFormats[i].colorSpace == preferedFormat.colorSpace)
         {
             return availableFormats[i];
@@ -590,13 +550,13 @@ VkPresentModeKHR chooseSwapPresentMode(
     return VK_PRESENT_MODE_FIFO_KHR;
 }
 
-VkFormat findDepthFormat(const SpiritDevice device) 
+VkFormat findDepthFormat(const SpiritDevice device)
 {
     return spDeviceFindSupportedFormat(
         device,
         (VkFormat[]){
-            VK_FORMAT_D32_SFLOAT, 
-            VK_FORMAT_D32_SFLOAT_S8_UINT, 
+            VK_FORMAT_D32_SFLOAT,
+            VK_FORMAT_D32_SFLOAT_S8_UINT,
             VK_FORMAT_D24_UNORM_S8_UINT
         },
         3,

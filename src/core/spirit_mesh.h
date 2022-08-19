@@ -6,7 +6,7 @@
 //
 // It also counts references to each mesh, so that when a mesh is
 // no longer referenced it can be destroyed
-// 
+//
 // Meshes must be checked out and released by the user,
 // otherwise they may be held in memory without any references to them,
 // or may be destroyed while some references still remain
@@ -66,8 +66,6 @@ typedef struct t_SpiritMeshManagerCreateInfo
 } SpiritMeshManagerCreateInfo;
 
 
-
-
 //
 // Functions
 //
@@ -84,23 +82,23 @@ extern SpiritResult spDestroyMesh(const SpiritContext context, SpiritMesh mesh);
 
 // create a mesh manager object
 extern SpiritMeshManager spCreateMeshManager(
-    const SpiritContext context, 
+    const SpiritContext context,
     const SpiritMeshManagerCreateInfo *createInfo);
 // add a mesh to a mesh manager
 // once a mesh is managed by a mesh manager,
 // it should not be freed or modified by other components
-extern const SpiritMeshReference spMeshManagerAddMesh(
+extern SpiritMeshReference spMeshManagerAddMesh(
     SpiritMeshManager manager,
     SpiritMesh mesh);
 
 // release a reference to a mesh
-extern const SpiritResult spReleaseMesh(const SpiritMeshReference meshReference);
+extern SpiritResult spReleaseMesh(const SpiritMeshReference meshReference);
 
 // checkout a new reference to a mesh
-extern const SpiritMeshReference spCheckoutMesh(const SpiritMeshReference meshReference);
+extern SpiritMeshReference spCheckoutMesh(const SpiritMeshReference meshReference);
 
 // access the mesh referenced by a meshreference
-extern const SpiritMesh spMeshManagerAccessMesh(const SpiritMeshReference ref);
+extern SpiritMesh spMeshManagerAccessMesh(const SpiritMeshReference ref);
 
 // destroy a mesh manager
 // it will throw a warning if meshes included are still referenced
@@ -109,8 +107,7 @@ extern SpiritResult spDestroyMeshManager(
     const SpiritContext context,
     SpiritMeshManager meshManager);
 
-const VkVertexInputAttributeDescription spMeshGetAttributeDescription(void);
+VkVertexInputAttributeDescription spMeshGetAttributeDescription(void);
 
-const VkVertexInputBindingDescription spMeshGetBindingDescription(void);
-
+VkVertexInputBindingDescription spMeshGetBindingDescription(void);
 

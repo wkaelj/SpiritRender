@@ -1,6 +1,9 @@
 #include "spirit_renderpass.h"
 #include "core/spirit_types.h"
 
+#include "spirit_image.h"
+#include "spirit_command_buffer.h"
+
 // Renderpass implementation
 //
 //
@@ -21,7 +24,7 @@ void destroyFrameBuffers(const SpiritDevice device, SpiritRenderPass renderPass)
 
 
 SpiritRenderPass spCreateRenderPass (
-    SpiritRenderPassCreateInfo *createInfo, 
+    SpiritRenderPassCreateInfo *createInfo,
     const SpiritDevice          device,
     const SpiritSwapchain       swapchain) {
 
@@ -45,7 +48,7 @@ SpiritResult spRenderPassRecreateFramebuffers(
 }
 
 SpiritResult spDestroyRenderPass (
-    SpiritRenderPass renderPass, 
+    SpiritRenderPass renderPass,
     SpiritDevice     device)
 {
 
@@ -59,17 +62,51 @@ SpiritResult spDestroyRenderPass (
     return SPIRIT_SUCCESS;
 }
 
+SpiritResult spRenderPassBegin(
+    SpiritRenderPass renderPass,
+    SpiritResolution framebufferSize,
+    const u32 imageIndex,
+    SpiritCommandBuffer commandBuffer)
+{
+
+    VkRenderPassBeginInfo renderPassBeginInfo = {};
+    renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassBeginInfo.renderPass = renderPass->renderPass;
+    renderPassBeginInfo.framebuffer = renderPass->framebuffers[imageIndex];
+
+    renderPassBeginInfo.renderArea.offset = (VkOffset2D) {0, 0};
+    renderPassBeginInfo.renderArea.extent = (VkExtent2D) {
+        .width = framebufferSize.w,
+        .height = framebufferSize.h
+    };
+
+    const u32 clearValueCount = 2;
+    VkClearValue clearValues[2];
+    clearValues[0].color = (VkClearColorValue) {{0.1f, 0.1f, 0.1f}};
+    clearValues[1].depthStencil = (VkClearDepthStencilValue) {1.0f, 0};
+
+    renderPassBeginInfo.clearValueCount = clearValueCount;
+    renderPassBeginInfo.pClearValues = clearValues;
+
+    vkCmdBeginRenderPass(
+        commandBuffer->handle,
+        &renderPassBeginInfo,
+        VK_SUBPASS_CONTENTS_INLINE);
+
+    return SPIRIT_SUCCESS;
+}
+
 //
 // Helpers
 //
 
 VkRenderPass createRenderPass(
-    SpiritRenderPassCreateInfo *createInfo,
+    SpiritRenderPassCreateInfo *createInfo __attribute_maybe_unused__,
     const SpiritDevice device,
     const SpiritSwapchain swapchain)
 {
     VkAttachmentDescription depthAttachment = {};
-    depthAttachment.format = swapchain->depthFormat;
+    depthAttachment.format = spImageGetFormat(&swapchain->depthImages[0]);
     depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
     depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -83,7 +120,7 @@ VkRenderPass createRenderPass(
     depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
     VkAttachmentDescription colorAttachment = {};
-    colorAttachment.format = swapchain->imageFormat;
+    colorAttachment.format = spImageGetFormat(&swapchain->images[0]);
     colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
     colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -107,15 +144,15 @@ VkRenderPass createRenderPass(
     VkSubpassDependency dependency = {
         .dstSubpass = 0,
         .dstAccessMask =
-            VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | 
+            VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
             VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
         .dstStageMask =
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | 
+            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
             VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
         .srcSubpass = VK_SUBPASS_EXTERNAL,
         .srcAccessMask = 0,
         .srcStageMask =
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | 
+            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
             VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT
     };
 
@@ -133,14 +170,11 @@ VkRenderPass createRenderPass(
         .pDependencies = &dependency
     };
 
-    
-
-
     VkRenderPass renderPass;
     if (vkCreateRenderPass(
-        device->device, 
-        &renderPassInfo, 
-        NULL, 
+        device->device,
+        &renderPassInfo,
+        NULL,
         &renderPass)) return NULL;
     log_verbose("Created render pass");
 
@@ -153,7 +187,7 @@ SpiritResult createFramebuffers(
     SpiritRenderPass renderPass)
 {
 
-    if (renderPass->framebufferCount && 
+    if (renderPass->framebufferCount &&
         renderPass->framebufferCount != swapchain->imageCount)
     {
         log_fatal("Frambuffer image count changed");
@@ -166,8 +200,8 @@ SpiritResult createFramebuffers(
         for (u32 i = 0; i < renderPass->framebufferCount; i++)
         {
             vkDestroyFramebuffer(
-                device->device, 
-                renderPass->framebuffers[i], 
+                device->device,
+                renderPass->framebuffers[i],
                 NULL);
         }
 
@@ -180,14 +214,16 @@ SpiritResult createFramebuffers(
     for (size_t i = 0; i < swapchain->imageCount; i++)
     {
 
-        VkImageView attachments[2] = { 
-            swapchain->imageViews[i],
-            swapchain->depthImageViews[i]
+        VkImageView attachments[2] = {
+            spImageGetVkView(&swapchain->images[i]),
+            spImageGetVkView(&swapchain->depthImages[i])
         };
+
+        db_assert(renderPass && renderPass->renderPass, "No renderpass");
+
         VkFramebufferCreateInfo framebufferInfo = {};
         framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         framebufferInfo.renderPass = renderPass->renderPass;
-        db_assert(renderPass && renderPass->renderPass, "No renderpass");
         framebufferInfo.attachmentCount = 2;
         framebufferInfo.pAttachments = attachments;
         framebufferInfo.width = swapchain->extent.width;
@@ -205,8 +241,8 @@ SpiritResult createFramebuffers(
             for (size_t x = 0; x < i; x++)
             {
                 vkDestroyFramebuffer(
-                    device->device, 
-                    renderPass->framebuffers[x], 
+                    device->device,
+                    renderPass->framebuffers[x],
                     NULL);
             }
 
@@ -228,8 +264,8 @@ void destroyFrameBuffers(const SpiritDevice device, SpiritRenderPass renderPass)
         for (u32 i = 0; i < renderPass->framebufferCount; i++)
         {
             vkDestroyFramebuffer(
-                device->device, 
-                renderPass->framebuffers[i], 
+                device->device,
+                renderPass->framebuffers[i],
                 NULL);
 
         }

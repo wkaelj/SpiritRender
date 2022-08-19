@@ -41,7 +41,7 @@ SpiritResult spReadFileBinary(
     fseek(file, 0, SEEK_SET);
 
     // read/store contents
-    if (dest) fread(dest, size, 1, file);
+    if (dest) fread(dest, min_value(fileSize, size), 1, file);
 
     fclose(file);
 

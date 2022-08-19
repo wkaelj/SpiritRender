@@ -23,9 +23,9 @@
 #ifndef FUNCTION_TIMER_NO_DIAGNOSTIC
 #define time_function(call) \
     do { \
-        start_timer(#call); \
+        struct FunctionTimerData t = start_timer(#call); \
         call; \
-        end_timer(); \
+        end_timer(t); \
     } while (0)
 #else
 #define time_function(call) \
@@ -42,9 +42,9 @@
 #ifndef FUNCTION_TIMER_NO_DIAGNOSTIC
 #define time_function_with_return(function, variable) \
     do { \
-        start_timer(#function); \
+        struct FunctionTimerData t = start_timer(#function); \
         variable = function; \
-        end_timer(); \
+        end_timer(t); \
     } while(0)
 #else
 #define time_function_with_return(function, variable) \
@@ -52,6 +52,11 @@
         variable = function; \
     } while(0)
 #endif
+
+struct FunctionTimerData {
+    unsigned long long startTime;
+    char functionName[128];
+};
 
 /**
  * @brief Initialize the function timer
@@ -72,11 +77,13 @@ void terminate_timer(void);
  * 
  * @param func the name of the function being timed.
  */
-void start_timer(const char *func);
+struct FunctionTimerData start_timer(const char *func);
 
 /**
  * @brief End the function timer and store data. It should be called right after
  * the end of the function timer
  * 
+ * @param t the object returned by start_timer, to calulate duration
+ * 
  */
-void end_timer(void);
+void end_timer(struct FunctionTimerData t);

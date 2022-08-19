@@ -41,7 +41,7 @@ SpiritMaterial spCreateMaterial(
     const SpiritMaterialCreateInfo *createInfo);
 
 SpiritResult spMaterialUpdate(
-    const SpiritContext context, 
+    const SpiritContext context,
     SpiritMaterial material);
 
 SpiritResult spMaterialAddMesh(
@@ -51,9 +51,10 @@ SpiritResult spMaterialAddMesh(
 // will submit all commands to draw associated meshes, and will
 // release references to all meshes
 // returns the number of vertices submit
-size_t spMaterialRecordCommands(
+SpiritResult spMaterialRecordCommands(
     const SpiritContext context,
-    SpiritMaterial material);
+    SpiritMaterial material,
+    const u32 imageIndex);
 
 SpiritResult spDestroyMaterial(
     const SpiritContext context,

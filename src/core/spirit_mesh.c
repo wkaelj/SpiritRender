@@ -1,7 +1,12 @@
 #include "spirit_mesh.h"
 
+#include "core/spirit_types.h"
+#include "debug/messenger.h"
 #include "spirit_device.h"
 #include "spirit_context.h"
+#include "spirit_header.h"
+#include <sys/cdefs.h>
+#include <vulkan/vulkan_core.h>
 //
 // Public Functions
 //
@@ -9,7 +14,7 @@
 
 SpiritMesh spCreateMesh(const SpiritContext context, const SpiritMeshCreateInfo *createInfo)
 {
-    
+
     SpiritMesh mesh = new_flex_array(struct t_SpiritMesh, Vertex, createInfo->vertCount);
 
     // process vertex data
@@ -28,11 +33,12 @@ SpiritMesh spCreateMesh(const SpiritContext context, const SpiritMeshCreateInfo 
     if(spDeviceCreateBuffer(
         context->device,
         bufferSize,
-        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
         &vertBuffer,
         &vertBufferMemory))
     {
+        log_error("Failed to create mesh");
         return NULL;
     }
 
@@ -50,8 +56,8 @@ SpiritMesh spCreateMesh(const SpiritContext context, const SpiritMeshCreateInfo 
 }
 
 SpiritMeshManager spCreateMeshManager(
-    const SpiritContext context, 
-    const SpiritMeshManagerCreateInfo *createInfo)
+    const SpiritContext context,
+    __attribute__((unused)) const SpiritMeshManagerCreateInfo *createInfo)
 {
     SpiritMeshManager meshManager = new_var(struct t_SpiritMeshManager);
     meshManager->meshCount = 0;
@@ -62,10 +68,18 @@ SpiritMeshManager spCreateMeshManager(
     return meshManager;
 }
 
-const SpiritMeshReference spMeshManagerAddMesh(
+SpiritMeshReference spMeshManagerAddMesh(
     SpiritMeshManager manager,
     SpiritMesh mesh)
 {
+
+    db_assert(mesh && manager, "Must have both a mesh and a manager");
+
+    if (!mesh || !manager)
+    {
+        return (SpiritMeshReference) {NULL, 0, NULL};
+    }
+
     struct t_MeshListNode *newNode = new_var(struct t_MeshListNode);
     newNode->mesh = mesh;
     newNode->referenceCount = 0;
@@ -79,28 +93,28 @@ const SpiritMeshReference spMeshManagerAddMesh(
     return spCheckoutMesh(ref);
 }
 
-const SpiritMesh spMeshManagerAccessMesh(
+SpiritMesh spMeshManagerAccessMesh(
     const SpiritMeshReference ref)
 {
     return ref.node->mesh;
 }
 
 // checkout a new reference to a mesh
-const SpiritMeshReference spCheckoutMesh(const SpiritMeshReference meshReference)
+SpiritMeshReference spCheckoutMesh(const SpiritMeshReference meshReference)
 {
      meshReference.node->referenceCount++;
      return meshReference;
 }
 
 // release a reference to a mesh
-const SpiritResult spReleaseMesh(
+SpiritResult spReleaseMesh(
     const SpiritMeshReference meshReference)
 {
 
     // check to ensure meshmanager is valid
-    if(meshReference.node 
+    if(meshReference.node
         && meshReference.node->mesh
-        && meshReference.vertCount 
+        && meshReference.vertCount
         && meshReference.meshManager); else { return SPIRIT_FAILURE; }
 
     // reduce reference count, and if no more references free mesh
@@ -108,7 +122,7 @@ const SpiritResult spReleaseMesh(
     {
         LIST_REMOVE(meshReference.node, data);
         spDestroyMesh(
-            meshReference.meshManager->contextReference, 
+            meshReference.meshManager->contextReference,
             meshReference.node->mesh);
         free(meshReference.node->mesh);
         free(meshReference.node);
@@ -138,7 +152,7 @@ SpiritResult spDestroyMeshManager(
     const SpiritContext context,
     SpiritMeshManager meshManager)
 {
-    
+
     struct t_MeshListNode *cn = NULL;
     LIST_FOREACH(cn, &meshManager->meshes, data)
     {
@@ -156,18 +170,16 @@ SpiritResult spDestroyMeshManager(
     return SPIRIT_SUCCESS;
 }
 
-const VkVertexInputAttributeDescription spMeshGetAttributeDescription(void)
+SPIRIT_INLINE VkVertexInputAttributeDescription spMeshGetAttributeDescription(void)
 {
     return (VkVertexInputAttributeDescription) {
         0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0};
 }
 
-const VkVertexInputBindingDescription spMeshGetBindingDescription(void)
+SPIRIT_INLINE VkVertexInputBindingDescription spMeshGetBindingDescription(void)
 {
     return (VkVertexInputBindingDescription) {
-        0, 
-        sizeof(Vertex), 
+        0,
+        sizeof(Vertex),
         VK_VERTEX_INPUT_RATE_VERTEX };
 }
-
-

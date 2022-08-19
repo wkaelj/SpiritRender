@@ -1,6 +1,6 @@
 #pragma once
 
-#include <spirit_header.h> 
+#include <spirit_header.h>
 
 /**
  * @brief Functions to output and log debug messeges. Use the debug macros pls not the function itself
@@ -9,7 +9,7 @@
  */
 
 
-//should enable 
+//should enable
 #define ENABLE_FATAL // log a unrecoverable error
 #define ENABLE_ERROR // log a failure that might not crash, but behavoir is undefined
 #define ENABLE_WARNING
@@ -93,15 +93,15 @@ int unix_log_perror (
     const char *func,
     const char *line,
     const char *m,
-    ...);
+    ...) __attribute__((format(printf, 4, 5)));
 #else // disable the function on non-unix systems
 #define log_perror(string) ((void)0)
 #endif
 
 // log debugging messege
 int debug_log (
-    DebugSeverity severity, 
+    DebugSeverity severity,
     const char *file,
     const char *func,
-    const int            line,
-    const char *format, ...);
+    const int   line,
+    const char *format, ...) __attribute__((format(printf, 5, 6)));

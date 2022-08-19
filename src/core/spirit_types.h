@@ -3,8 +3,8 @@
 #include <stdint.h>
 
 // Variables for the spirit render.
-// 
-// 
+//
+//
 // Kael Johnston Feb 26 2022
 
 //
@@ -56,6 +56,8 @@ typedef struct t_SpiritDevice     *SpiritDevice;
 typedef struct t_SpiritWindow     *SpiritWindow;
 typedef struct t_SpiritRenderPass *SpiritRenderPass;
 typedef struct t_SpiritSwapchain  *SpiritSwapchain;
+typedef struct t_SpiritFence      *SpiritFence;
+typedef struct t_SpiritCommandBuffer *SpiritCommandBuffer;
 typedef struct t_SpiritPipeline   *SpiritPipeline;
 typedef struct t_SpiritMaterial   *SpiritMaterial;
 typedef struct t_SpiritContext    *SpiritContext;
@@ -70,6 +72,8 @@ typedef struct t_SpiritMeshReference
     u32 vertCount;
     SpiritMeshManager meshManager;
 } SpiritMeshReference;
+
+typedef struct t_SpiritImage SpiritImage;
 
 // shaders
 // store wether a shader is frag or vert shader

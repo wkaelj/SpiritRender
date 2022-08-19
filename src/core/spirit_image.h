@@ -12,6 +12,7 @@
 #pragma once
 
 #include <spirit_header.h>
+#include <vulkan/vulkan_core.h>
 
 struct t_SpiritImage {
     VkImage image;
@@ -27,6 +28,7 @@ typedef struct t_SpiritImageCreateInfo {
     VkImageCreateFlags flags;
     VkImageUsageFlags usageFlags;
     VkMemoryPropertyFlags memoryFlags;
+    VkImageAspectFlags aspectFlags;
     // TODO u32 memoryOffset;
     VkFormat format;
     u32 mipLevels;
@@ -34,10 +36,17 @@ typedef struct t_SpiritImageCreateInfo {
     bool withImageView; // if an image view should be created with the image
 } SpiritImageCreateInfo;
 
-// SpiritResult spCreateImage(
-//     const SpiritDevice device,
-//     VkImageType imageType,
-//     );
+/**
+ * @brief Create a image on the gpu
+ *
+ * @param device the the device to create the image on
+ * @param createInfo a SpiritImageCreateInfo struct detailing the image
+ * @param output the handle to the image
+ */
+SpiritResult spCreateImage(
+    const SpiritDevice device,
+    SpiritImageCreateInfo *restrict createInfo,
+    SpiritImage *restrict output) SPIRIT_NONULL(2, 3);
 
 /**
  * @brief add a image view to an existing image
@@ -48,6 +57,22 @@ typedef struct t_SpiritImageCreateInfo {
 SpiritResult spCreateImageView(
     const SpiritDevice device,
     SpiritImage *output) SPIRIT_NONULL(2);
+
+/**
+ * @brief get the format of a spirit image
+ *
+ * @param image
+ * @return VkFormat
+ */
+VkFormat spImageGetFormat(const SpiritImage *image);
+
+/**
+ * @brief Access an images imageView. Will be null if there is no image view
+ *
+ * @param image
+ * @return VkImageView
+ */
+VkImageView spImageGetVkView(const SpiritImage *image);
 
 /**
  * @brief Destroy a SpiritImage object, and its image view

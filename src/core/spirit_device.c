@@ -1,4 +1,7 @@
 #include "spirit_device.h"
+#include "core/spirit_types.h"
+#include "debug/messenger.h"
+#include <sys/cdefs.h>
 
 // Create and manage a rendering device rendering device
 //
@@ -40,18 +43,18 @@ static bool checkValidationLayerSupport (
     u32 requiredLayerCount);
 static VkInstance createInstance (
     const SpiritDeviceCreateInfo *createInfo,
-    VkDebugUtilsMessengerEXT *debugMessenger); // create a vulkan device
+    VkDebugUtilsMessengerEXT debugMessenger); // create a vulkan device
 static VkPhysicalDevice selectPhysicalDevice (
     const SpiritDeviceCreateInfo *createInfo,
     const VkInstance instance); // select a gpu
 static VkDevice createDevice (
     const SpiritDeviceCreateInfo *createInfo,
-    const VkPhysicalDevice physicalDevice, const VkInstance instance);
+    const VkPhysicalDevice physicalDevice);
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback (
     VkDebugUtilsMessageSeverityFlagBitsEXT           messageSeverity,
     VkDebugUtilsMessageTypeFlagsEXT                  messageTypes,
-    const VkDebugUtilsMessengerCallbackDataEXT*      pCallbackData,
+    VkDebugUtilsMessengerCallbackDataEXT*      pCallbackData,
     void*                                            pUserData);
 
 
@@ -115,7 +118,7 @@ SpiritDevice spCreateDevice (SpiritDeviceCreateInfo *createInfo) {
 
     out->validationEnabled = createInfo->enableValidation;
 
-    out->instance = createInstance(createInfo, &out->debugMessenger); // create vulkan instance
+    out->instance = createInstance(createInfo, out->debugMessenger); // create vulkan instance
     if (out->instance == NULL)
     {
         log_fatal("Failed to create vulkan instance");
@@ -134,7 +137,7 @@ SpiritDevice spCreateDevice (SpiritDeviceCreateInfo *createInfo) {
     }
     out->swapchainDetails = (SpiritSwapchainSupportInfo) {};
     spDeviceUpdateSwapchainSupport(out);
-    out->device = createDevice(createInfo, out->physicalDevice, out->instance);
+    out->device = createDevice(createInfo, out->physicalDevice);
     if (out->device == NULL)
     {
         log_fatal("Failed to create logical device");
@@ -205,7 +208,6 @@ SpiritResult spDeviceAllocateMemory(
     const u32 memoryType,
     VkDeviceMemory *memory)
 {
-
     VkMemoryAllocateInfo allocationInfo = {
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
         .allocationSize = size,
@@ -218,16 +220,12 @@ SpiritResult spDeviceAllocateMemory(
         ALLOCATION_CALLBACK,
         memory))
     {
+        log_error("Failed to allocate memory");
         *memory = VK_NULL_HANDLE;
         return SPIRIT_FAILURE;
     }
 
     return SPIRIT_SUCCESS;
-}
-
-void spDeviceFreeMemory(const SpiritDevice device, VkDeviceMemory memory)
-{
-    vkFreeMemory(device->device, memory, ALLOCATION_CALLBACK);
 }
 
 SpiritResult spDeviceUpdateSwapchainSupport(const SpiritDevice device)
@@ -240,6 +238,8 @@ SpiritResult spDeviceUpdateSwapchainSupport(const SpiritDevice device)
     device->swapchainDetails = querySwapChainSupport(
         device->windowSurface,
         device->physicalDevice);
+
+    return SPIRIT_SUCCESS;
 }
 
 SpiritResult spDeviceCreateImage(
@@ -280,7 +280,7 @@ SpiritResult spDeviceCreateBuffer(
     SpiritDevice          device,
     VkDeviceSize          size,
     VkBufferUsageFlags    usage,
-    VkMemoryPropertyFlags properties,
+    VkMemoryPropertyFlags properties __attribute_maybe_unused__,
     VkBuffer             *buffer,
     VkDeviceMemory       *bufferMemory)
 {
@@ -298,7 +298,9 @@ SpiritResult spDeviceCreateBuffer(
     VkMemoryRequirements req;
     vkGetBufferMemoryRequirements(device->device, *buffer, &req);
 
-    if (spDeviceAllocateMemory(device, req.size, req.memoryTypeBits, &bufferMemory))
+    u32 memType = spDeviceFindMemoryType(device, req.memoryTypeBits,  properties);
+
+    if (spDeviceAllocateMemory(device, req.size, memType, bufferMemory))
     {
         vkDestroyBuffer(device->device, *buffer, ALLOCATION_CALLBACK);
         return SPIRIT_FAILURE;
@@ -306,7 +308,7 @@ SpiritResult spDeviceCreateBuffer(
 
     if (vkBindBufferMemory(device->device, *buffer, *bufferMemory, 0))
     {
-        spDeviceFreeMemory(device, bufferMemory);
+        spDeviceFreeMemory(device, *bufferMemory);
         vkDestroyBuffer(device->device, *buffer, ALLOCATION_CALLBACK);
         return SPIRIT_FAILURE;
     }
@@ -372,9 +374,9 @@ static bool checkDeviceExtensionSupport (const SpiritDeviceCreateInfo *createInf
 // Helper Implementation
 //
 
-static VkInstance createInstance (const SpiritDeviceCreateInfo *createInfo, VkDebugUtilsMessengerEXT *debugMessenger) {
-
-
+static VkInstance createInstance (
+    const SpiritDeviceCreateInfo *createInfo,
+    VkDebugUtilsMessengerEXT debugMessenger) {
 
     VkApplicationInfo appInfo = {};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -427,7 +429,8 @@ static VkInstance createInstance (const SpiritDeviceCreateInfo *createInfo, VkDe
             VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
             VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
             VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-        debugInfo.pfnUserCallback = debugCallback;
+        debugInfo.pfnUserCallback = (PFN_vkDebugUtilsMessengerCallbackEXT)
+            debugCallback;
 
         instanceInfo.pNext = &debugInfo;
 
@@ -444,12 +447,23 @@ static VkInstance createInstance (const SpiritDeviceCreateInfo *createInfo, VkDe
 
     if (createInfo->enableValidation) {
         PFN_vkCreateDebugUtilsMessengerEXT pfnCreateDebugMesseger = NULL;
-        pfnCreateDebugMesseger = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
+        pfnCreateDebugMesseger = (PFN_vkCreateDebugUtilsMessengerEXT)
+            vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
 
-        if (pfnCreateDebugMesseger == NULL) log_error("Failed to load function vkCreateDebugUtilsMessengerEXT. Will log errors to stdout.");
-        else {
-            if (pfnCreateDebugMesseger (instance, &debugInfo, NULL, debugMessenger) != VK_SUCCESS) log_error("Failed to create debug messenger");
-            *debugMessenger = NULL;
+        if (pfnCreateDebugMesseger == NULL)
+            log_error("Failed to load function "
+                "vkCreateDebugUtilsMessengerEXT. Will log errors to stdout.");
+        else
+        {
+            if (pfnCreateDebugMesseger(
+                instance,
+                &debugInfo,
+                NULL,
+                &debugMessenger) != VK_SUCCESS)
+            {
+                log_error("Failed to create debug messenger");
+                debugMessenger = NULL;
+            }
         }
     }
 
@@ -458,10 +472,9 @@ static VkInstance createInstance (const SpiritDeviceCreateInfo *createInfo, VkDe
 
 }
 
-static VkPhysicalDevice selectPhysicalDevice (const SpiritDeviceCreateInfo *createInfo, const VkInstance instance) {
-
-    // set device to NULL so i can mess with it
-    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+static VkPhysicalDevice selectPhysicalDevice (
+    const SpiritDeviceCreateInfo *createInfo,
+    const VkInstance instance) {
 
     // check available rendering devices
     u32 availableDeviceCount = 0;
@@ -519,7 +532,10 @@ static VkPhysicalDevice selectPhysicalDevice (const SpiritDeviceCreateInfo *crea
 
 }
 
-static VkDevice createDevice (const SpiritDeviceCreateInfo *createInfo, const VkPhysicalDevice physicalDevice, const VkInstance instance) {
+static VkDevice createDevice (
+    const SpiritDeviceCreateInfo *createInfo,
+    const VkPhysicalDevice physicalDevice)
+{
 
     QueueFamilyIndices indices = findDeviceQueues (createInfo, physicalDevice);
 
@@ -578,7 +594,8 @@ static VkDevice createDevice (const SpiritDeviceCreateInfo *createInfo, const Vk
 
     VkDevice device;
     VkResult errCode;
-    if ((errCode = vkCreateDevice (physicalDevice, &deviceCreateInfo, NULL, &device)) != VK_SUCCESS) {
+    if ((errCode = vkCreateDevice (physicalDevice, &deviceCreateInfo, NULL, &device)))
+    {
         // debug function
         log_info("Device failure code '%d'", errCode);
         return NULL;
@@ -613,10 +630,10 @@ static VkCommandPool createCommandPool(
 
 // debug callback function
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback (
-    VkDebugUtilsMessageSeverityFlagBitsEXT           messageSeverity,
-    VkDebugUtilsMessageTypeFlagsEXT                  messageTypes,
-    const VkDebugUtilsMessengerCallbackDataEXT      *pCallbackData,
-    void                                            *pUserData) {
+    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+    VkDebugUtilsMessageTypeFlagsEXT messageTypes __attribute_maybe_unused__,
+    VkDebugUtilsMessengerCallbackDataEXT *pCallbackData __attribute_maybe_unused__,
+    void *pUserData __attribute_maybe_unused__) {
 
     if (messageSeverity > VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
         log_validation("%s", pCallbackData->pMessage);

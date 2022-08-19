@@ -1,12 +1,13 @@
 #include "spirit_pipeline.h"
+#include "spirit_command_buffer.h"
 #include <glsl-loader/glsl_loader.h>
 
 // Implementation of spirit_pipeline.h
-// 
-// 
+//
+//
 // Kael Johnston
 
-// 
+//
 // Structures
 //
 
@@ -27,9 +28,9 @@ typedef struct t_FixedFuncInfo
     uint32_t                               subpass;
 } FixedFuncInfo;
 
-// 
+//
 // Helper functions
-// 
+//
 
 // create a graphics pipeline
 static VkPipeline createPipeline(
@@ -59,7 +60,7 @@ static SpiritResult loadShaderCode (
 // automaticaly handles options for pipeline creation
 // using one big spagetti monster
 static void defaultPipelineConfig(
-    const SpiritPipelineCreateInfo *createInfo, 
+    const SpiritPipelineCreateInfo *createInfo,
     FixedFuncInfo *pConfigInfo);
 
 //
@@ -141,15 +142,15 @@ SpiritPipeline spCreatePipeline (
 
 SpiritResult spPipelineBindCommandBuffer(
     SpiritPipeline pipeline,
-    VkCommandBuffer buffer)
+    SpiritCommandBuffer buffer)
 {
     if(pipeline == NULL || buffer == NULL)
     {
         log_warning("Cannot bind pipeline or buffers when one does not exist!");
         return SPIRIT_FAILURE;
     }
-    
-    vkCmdBindPipeline(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipeline);
+
+    vkCmdBindPipeline(buffer->handle, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipeline);
 
     return SPIRIT_SUCCESS;
 }
@@ -171,7 +172,7 @@ SpiritResult spDestroyPipeline (
 
 
 //
-// Helper Function Implementation 
+// Helper Function Implementation
 //
 
 VkPipelineLayout createLayout(SpiritDevice device)
@@ -244,7 +245,7 @@ VkPipeline createPipeline(
 
     pipelineInfo.pDepthStencilState =  &fixedInfo->depthStencilInfo;
     pipelineInfo.pDynamicState =       &fixedInfo->dynamicStateInfo;
-    
+
     pipelineInfo.layout =     layout;
     pipelineInfo.renderPass = renderPass->renderPass;
     pipelineInfo.subpass =    0;
@@ -255,9 +256,9 @@ VkPipeline createPipeline(
     VkPipeline pipeline = NULL;
 
     if (vkCreateGraphicsPipelines (
-        device->device, 
-        NULL, 
-        1, 
+        device->device,
+        NULL,
+        1,
         &pipelineInfo,
         NULL,
         &pipeline) != VK_SUCCESS)
@@ -278,14 +279,14 @@ SpiritResult loadShaderCode (
     // load shader into s, to be error checked
     SpiritShader s = (SpiritShader) {};
     s = spLoadSourceShader (path, shaderType);
-    
+
     // error
     if (s.shaderSize == 0)
     {
         log_error ("Failed to load shader '%s'", path);
         return SPIRIT_FAILURE;
     }
-    
+
     // create shader module
     *dest = spConvertShaderToModule(device, &s);
     spDestroyShader(s);
@@ -300,7 +301,7 @@ SpiritResult loadShaderCode (
 
 // the default piplinse configuration, should work for almost everything
 void defaultPipelineConfig(
-    const SpiritPipelineCreateInfo *createInfo, 
+    const SpiritPipelineCreateInfo *createInfo,
     FixedFuncInfo *pConfigInfo)
 {
 

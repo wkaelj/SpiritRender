@@ -1,5 +1,6 @@
 #include "spirit_image.h"
 #include "core/spirit_device.h"
+#include <vulkan/vulkan_core.h>
 
 SpiritResult spCreateImage(
     const SpiritDevice device,
@@ -36,7 +37,7 @@ SpiritResult spCreateImage(
         device,
         memoryRequirements.memoryTypeBits,
         createInfo->memoryFlags);
-    if (memoryType == -1)
+    if (memoryType == (unsigned) -1)
     {
         spDestroyImage(device, output);
         return SPIRIT_FAILURE;
@@ -45,7 +46,7 @@ SpiritResult spCreateImage(
     if (spDeviceAllocateMemory(
         device,
         memoryRequirements.size,
-        memoryRequirements.memoryTypeBits,
+        memoryType,
         &output->memory))
     {
         spDestroyImage(device, output);
@@ -56,11 +57,14 @@ SpiritResult spCreateImage(
         device->device,
         output->image,
         output->memory,
-        1 /* createInfo->memoryOffset */))
+        0 /* createInfo->memoryOffset */))
     {
         spDestroyImage(device, output);
         return SPIRIT_FAILURE;
     }
+
+    output->imageFormat = createInfo->format;
+    output->aspectFlags = createInfo->aspectFlags;
 
     if (createInfo->withImageView) spCreateImageView(device, output);
     else output->view = NULL;
@@ -94,6 +98,16 @@ SpiritResult spCreateImageView(
         return SPIRIT_FAILURE;
 
     return SPIRIT_SUCCESS;
+}
+
+SPIRIT_INLINE VkFormat spImageGetFormat(const SpiritImage *image)
+{
+    return image->imageFormat;
+}
+
+SPIRIT_INLINE VkImageView spImageGetVkView(const SpiritImage *image)
+{
+    return image->view;
 }
 
 void spDestroyImage(const SpiritDevice device, SpiritImage *image)

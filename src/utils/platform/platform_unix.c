@@ -1,4 +1,5 @@
 #include "platform_unix.h"
+#include <sys/cdefs.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <time.h>
@@ -10,13 +11,13 @@
 /**
  * @brief Localize a file name. This macro is more convientent then writing the
  * same code over and over again.
- * 
+ *
  * @param inputpath the variable storing the path to localize
  * @param outputpathname the name of the localized path name. the macro
  * creates it.
  * @param outputpathlength the name of the variable storing the localized
  * filepaths length. the macro creates it
- * 
+ *
  */
 #define localize_path(inputPath, outputPathName, outputPathLength) \
     u32 outputPathLength = 0; \
@@ -54,7 +55,7 @@ bool spPlatformIsAllowedFileOperation(const char *filepath)
 
     char *match = strstr(filepath, g_executableDirectory);
     if (match == filepath && strlen(filepath) > 0) return true;
-    else 
+    else
     {
         log_fatal("%s", fileErr);
         return false;
@@ -87,9 +88,6 @@ u32 spPlatformGetExecutableFolderStrLen(void)
 
 SpiritResult spPlatformLocalizeFileName(char *output, const char *path, u32 *max)
 {
-
-    // ensure the exectuable directory has been set
-    if (!g_executableDirectory) return SPIRIT_FAILURE;
 
     db_assert(path, "'path' cannot be NULL");
     db_assert(max, "'max' cannot be NULL");
@@ -227,7 +225,7 @@ SpiritResult spPlatformCreateFolder(const char *filepath)
             *p = '\0';
             if (mkdir(path, S_IRWXU) && errno != EEXIST)
             {
-                log_perror("Error creating file");
+                log_perror("Error creating file %s", path);
                 return SPIRIT_FAILURE;
             }
 
@@ -236,7 +234,7 @@ SpiritResult spPlatformCreateFolder(const char *filepath)
 
     if (mkdir(path, S_IRWXU) && errno != EEXIST)
     {
-        log_perror("Failed to create file");
+        log_perror("Failed to create file %s", path);
         return SPIRIT_FAILURE;
     }
 
@@ -263,7 +261,10 @@ bool spPlatformIsDirectoryEmpty(char *filepath)
         return false;
 }
 
-int ftw_deleteFolderCallback(const char *fpath, const struct stat *sb, int typeflag)
+int ftw_deleteFolderCallback(
+    const char *fpath,
+    const struct stat *sb __attribute_maybe_unused__,
+    int typeflag)
 {
     if (typeflag & FTW_D)
     {
@@ -273,6 +274,7 @@ int ftw_deleteFolderCallback(const char *fpath, const struct stat *sb, int typef
             return 0; // shouldn't delete folders
         }
     }
+
     remove(fpath);
     return 0;
 }

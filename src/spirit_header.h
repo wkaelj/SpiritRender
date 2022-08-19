@@ -3,8 +3,14 @@
 
 #define DEBUG
 
-// std
+// attribute definitions
+#define SPIRIT_DEPRECATED __attribute_deprecated__ // mark a deprecated function
+#define SPIRIT_INLINE inline __attribute__((always_inline)) // force a function to be inlined
+#define SPIRIT_API __attribute__((externally_visible, visibility ("default")))
 
+#define SPIRIT_NONULL(...) __attribute__((nonnull(__VA_ARGS__))) // a pointer that may not be null
+
+// std
 #define __STDC_WANT_LIB_EXT1__ 1
 #include <stdlib.h>
 #include <stdint.h>
@@ -27,7 +33,7 @@
 #define CGLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <cglm/cglm.h>
 
-// custom 
+// custom
 #include "debug/messenger.h" // debug messenging functions
 #include "core/spirit_types.h" // custom types
 #include "utils/platform.h" // usefull stuff, like time and whatnot
@@ -79,3 +85,5 @@
 #else
 #define db_assert(statement, errmsg) ((void)0)
 #endif
+
+#define ALLOCATION_CALLBACK ((void*)0)

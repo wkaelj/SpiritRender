@@ -69,7 +69,7 @@ extern SpiritShader spLoadCompiledShader(const char *path, SpiritShaderType type
         return (SpiritShader){
             SPIRIT_SHADER_TYPE_AUTO_DETECT,
             (void *)0,
-            0ll};
+            0ll, 0};
     }
 
     db_assert(shaderCodeSize, "shaderCodeSize was 0");
@@ -90,8 +90,6 @@ extern SpiritShader spLoadSourceShader(
     const char *path,
     SpiritShaderType type)
 {
-    SpiritShader out = {};
-
     // shader filename, without path
     u32 strippedShaderNameLength = 0;
     spStringStrip(NULL, &strippedShaderNameLength, path, SPIRIT_PLATFORM_FOLDER_BREAK);
@@ -132,11 +130,11 @@ extern SpiritShader spLoadSourceShader(
 
         // load source code
         size_t shaderSrcLength = spReadFileSize(path);
-        
+
         if (shaderSrcLength == 0)
         {
-            log_error("Shader '%s' does not exist");
-            return (SpiritShader){0, 0, 0};
+            log_error("Shader '%s' does not exist", path);
+            return (SpiritShader){0, 0, 0, 0};
         }
 
         char shaderSrc[shaderSrcLength + 1];
@@ -175,7 +173,7 @@ extern SpiritShader spLoadSourceShader(
 
         db_assert(catchBuffer == SPIRIT_SUCCESS, "Failed to write file");
 
-        log_verbose("Cached shader '%s' with size %u", shaderCodePath, out.shaderSize);
+        log_verbose("Cached shader '%s' with size %lu", shaderCodePath, out.shaderSize);
 
         return out;
     }
@@ -225,7 +223,7 @@ extern SpiritShader spCompileShader(
         shaderc_compile_options_release(settings);
         shaderc_compiler_release(compiler);
 
-        return (SpiritShader){0, 0, 0};
+        return (SpiritShader){0, 0, 0, 0};
     }
 
     size_t compiledShaderSize = shaderc_result_get_length(result);

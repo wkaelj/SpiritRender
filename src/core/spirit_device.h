@@ -125,9 +125,12 @@ SpiritResult spDeviceAllocateMemory(
  * @param device the device used to allocate the memory
  * @param memory a valid VkDeviceMemory object
  */
-inline void spDeviceFreeMemory(
+SPIRIT_INLINE void spDeviceFreeMemory(
     const SpiritDevice device,
-    VkDeviceMemory memory) SPIRIT_INLINE;
+    VkDeviceMemory memory)
+{
+    vkFreeMemory(device->device, memory, ALLOCATION_CALLBACK);
+}
 
 /**
  * @brief Create a buffer on the associated device
@@ -164,6 +167,11 @@ SpiritResult spDeviceCreateImage(
     VkMemoryPropertyFlags memoryFlags,
     VkImage *image,
     VkDeviceMemory *imageMemory) SPIRIT_NONULL(2, 4, 5) SPIRIT_DEPRECATED;
+
+SPIRIT_INLINE void spDeviceWaitIdle(const SpiritDevice device)
+{
+    vkDeviceWaitIdle(device->device);
+}
 
 /**
  * @brief Create an image view for an existing image

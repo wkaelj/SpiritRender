@@ -1,24 +1,17 @@
 #include "spirit_material.h"
 
+#include "core/spirit_types.h"
+#include "spirit_header.h"
 #include "spirit_renderpass.h"
 #include "spirit_pipeline.h"
 #include "spirit_context.h"
 #include "spirit_mesh.h"
 
+#include "spirit_command_buffer.h"
+
 //
 // Structures
 //
-
-//
-// Helper functions
-//
-SpiritResult beginRenderPass(
-    VkCommandBuffer buffer,
-    const u32 index,
-    const SpiritSwapchain swapchain, 
-    const SpiritRenderPass renderPass);
-
-void endRenderPass(VkCommandBuffer buffer);
 
 //
 // Public functions
@@ -36,8 +29,8 @@ SpiritMaterial spCreateMaterial(
     SpiritRenderPassCreateInfo renderPassCreateInfo = {};
 
     material->renderPass = spCreateRenderPass(
-            &renderPassCreateInfo, 
-            context->device, 
+            &renderPassCreateInfo,
+            context->device,
             context->swapchain);
     if (material->renderPass == NULL)
     {
@@ -54,10 +47,10 @@ SpiritMaterial spCreateMaterial(
     pipelineCreateInfo.resolution = context->screenResolution;
 
     material->pipeline = spCreatePipeline (
-        context->device, 
+        context->device,
         &pipelineCreateInfo,
         context->swapchain,
-        material->renderPass, 
+        material->renderPass,
         NULL);
 
     if (material->pipeline == NULL)
@@ -75,13 +68,13 @@ SpiritMaterial spCreateMaterial(
 }
 
 SpiritResult spMaterialUpdate(
-    const SpiritContext context, 
+    const SpiritContext context,
     SpiritMaterial material)
 {
 
     return spRenderPassRecreateFramebuffers(
-        context->device, 
-        material->renderPass, 
+        context->device,
+        material->renderPass,
         context->swapchain);
 }
 
@@ -97,69 +90,50 @@ SpiritResult spMaterialAddMesh(
     return SPIRIT_SUCCESS;
 }
 
-size_t spMaterialRecordCommands(
+SpiritResult spMaterialRecordCommands(
     const SpiritContext context,
-    SpiritMaterial material)
+    SpiritMaterial material,
+    const u32 imageIndex)
 {
-    db_assert(context->isRecording, 
-    "Context is not recording, cannot record commands");
 
-    if(beginRenderPass(
-        context->commandBuffers[context->commandBufferIndex],
-        context->commandBufferIndex,
-        context->swapchain,
-        material->renderPass))
+    db_assert(imageIndex < context->commandBufferCount, "invalid image index");
+    db_assert(context->commandBuffers[imageIndex]->recording,
+    "Command buffer is not recording, cannot record commands");
+
+    if(spRenderPassBegin(
+        material->renderPass,
+        context->screenResolution,
+        imageIndex,
+        context->commandBuffers[imageIndex]))
     {
         return SPIRIT_FAILURE;
     }
 
-    // configure dynamic state
-    VkViewport viewport = {
-        .x = 0.0f,
-        .y = 0.0f,
-        .width = (float) context->screenResolution.w,
-        .height = (float) context->screenResolution.h,
-        .minDepth = 0.0f,
-        .maxDepth = 1.0f
-    };
 
-    VkRect2D scissor = {
-        {0, 0},
-        {context->screenResolution.w, context->screenResolution.h}
-    };
-
-    vkCmdSetViewport(
-        context->commandBuffers[context->commandBufferIndex],
-        0, 1,
-        &viewport);
-    vkCmdSetScissor(
-        context->commandBuffers[context->commandBufferIndex],
-        0, 1,
-        &scissor);
 
     spPipelineBindCommandBuffer(
-        material->pipeline, 
-        context->commandBuffers[context->commandBufferIndex]);
+        material->pipeline,
+        context->commandBuffers[imageIndex]);
 
     // iterate through meshes and submit vertexes
     struct t_MaterialListNode *currentMesh = material->meshList.lh_first;
     while(currentMesh != NULL)
     {
-        VkBuffer vertBuffers[] = 
+        VkBuffer vertBuffers[] =
         {
             spMeshManagerAccessMesh(currentMesh->mesh)->vertexBuffer
         };
         VkDeviceSize offsets[] = { 0 };
 
         vkCmdBindVertexBuffers(
-            context->commandBuffers[context->commandBufferIndex],
+            context->commandBuffers[imageIndex]->handle,
             0,
             1,
             vertBuffers,
             offsets);
 
         vkCmdDraw(
-            context->commandBuffers[context->commandBufferIndex],
+            context->commandBuffers[imageIndex]->handle,
             currentMesh->mesh.vertCount,
             1, 0, 0);
 
@@ -171,7 +145,7 @@ size_t spMaterialRecordCommands(
         free(oldNode);
     }
 
-    endRenderPass(context->commandBuffers[context->commandBufferIndex]);
+    spRenderPassEnd(context->commandBuffers[imageIndex]);
 
     return SPIRIT_SUCCESS;
 
@@ -185,44 +159,4 @@ SpiritResult spDestroyMaterial(
     spDestroyRenderPass(material->renderPass, context->device);
     free(material);
     return SPIRIT_SUCCESS;
-}
-
-//
-// Command buffer and render pass helper functions
-//
-
-SpiritResult beginRenderPass(
-    VkCommandBuffer buffer,
-    const u32 index,
-    const SpiritSwapchain swapchain, 
-    const SpiritRenderPass renderPass)
-{
-    
-    VkRenderPassBeginInfo renderPassBeginInfo = {};
-    renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassBeginInfo.renderPass = renderPass->renderPass;
-    renderPassBeginInfo.framebuffer = renderPass->framebuffers[index];
-
-    renderPassBeginInfo.renderArea.offset = (VkOffset2D) {0, 0};
-    renderPassBeginInfo.renderArea.extent = swapchain->extent;
-
-    const u32 clearValueCount = 2;
-    VkClearValue clearValues[2];
-    clearValues[0].color = (VkClearColorValue) {0.1f, 0.1f, 0.1f};
-    clearValues[1].depthStencil = (VkClearDepthStencilValue) {1.0f, 0};
-
-    renderPassBeginInfo.clearValueCount = clearValueCount;
-    renderPassBeginInfo.pClearValues = clearValues;
-
-    vkCmdBeginRenderPass(
-        buffer, 
-        &renderPassBeginInfo, 
-        VK_SUBPASS_CONTENTS_INLINE);
-
-    return SPIRIT_SUCCESS;
-}
-
-void endRenderPass(VkCommandBuffer buffer)
-{
-    vkCmdEndRenderPass(buffer);
 }

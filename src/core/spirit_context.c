@@ -1,14 +1,17 @@
 #include "spirit_context.h"
 
+#include "core/spirit_command_buffer.h"
+#include "core/spirit_types.h"
 #include "spirit_device.h"
+#include "spirit_header.h"
 #include "spirit_swapchain.h"
 #include "spirit_renderpass.h"
 #include "spirit_pipeline.h"
 #include "spirit_material.h"
 
-// 
+//
 // Private functions
-// 
+//
 
 VkCommandBuffer *createCommandBuffers(
     SpiritDevice device,
@@ -19,20 +22,15 @@ void destroyCommandBuffers(
     VkCommandBuffer *buffers,
     const u32 bufferCount);
 
-SpiritResult beginCommandBuffer(VkCommandBuffer buffer);
-
-SpiritResult endCommandBuffer(VkCommandBuffer buffer);
-
-
-// 
+//
 // Public functions
-// 
+//
 
 SpiritContext spCreateContext(SpiritContextCreateInfo *createInfo)
 {
 
     SpiritContext context = new_var(struct t_SpiritContext);
-    
+
     // initialize basic components
     // create window
     SpiritWindowCreateInfo windowCreateInfo = {};
@@ -75,10 +73,17 @@ SpiritContext spCreateContext(SpiritContextCreateInfo *createInfo)
     context->swapchain = spCreateSwapchain(&swapCreateInfo, context->device, NULL);
     db_assert(context->swapchain, "Must have swapchain");
 
+    // create command buffers
     context->commandBufferCount = context->swapchain->imageCount;
-    context->commandBuffers = createCommandBuffers(
-        context->device, 
-        context->swapchain->imageCount);
+    context->commandBuffers = new_array(
+        SpiritCommandBuffer,
+        context->commandBufferCount);
+
+    for (u32 i = 0; i < context->commandBufferCount; ++i)
+    {
+        context->commandBuffers[i] = spCreateCommandBuffer(
+            context->device, true);
+    }
 
     LIST_INIT(&context->materials);
 
@@ -90,9 +95,9 @@ SpiritContext spCreateContext(SpiritContextCreateInfo *createInfo)
 SpiritResult spContextHandleWindowResized(SpiritContext context)
 {
     if(!context && context->window) return SPIRIT_FAILURE;
-    
+
     // recreate swapchain
-    vkDeviceWaitIdle(context->device->device);
+    spDeviceWaitIdle(context->device);
 
     // update stored sizes
     context->screenResolution = spWindowGetPixelSize(context->window);
@@ -100,14 +105,13 @@ SpiritResult spContextHandleWindowResized(SpiritContext context)
 
     // check swapchain exists, in case creation failed last frame
     SpiritSwapchainCreateInfo swapInfo = {};
-    if (context->swapchain) context->swapchain->createInfo;
     swapInfo.windowRes = context->screenResolution;
 
     context->swapchain = spCreateSwapchain(
         &swapInfo,
         context->device,
         context->swapchain);
-    
+
     if (!context->swapchain)
     {
         return SPIRIT_FAILURE;
@@ -133,39 +137,61 @@ SpiritResult spContextSubmitFrame(SpiritContext context)
         spContextHandleWindowResized(context);
     }
 
+    u32 imageIndex;
+
     // aquire the image to render too
     if (spSwapchainAquireNextImage(
-        context->device, 
-        context->swapchain, 
-        &context->commandBufferIndex)) return SPIRIT_FAILURE;
+        context->device,
+        context->swapchain,
+        &imageIndex)) return SPIRIT_FAILURE;
 
-    if (beginCommandBuffer(context->commandBuffers[context->commandBufferIndex]))
+    if (spCommandBufferBegin(context->commandBuffers[imageIndex]))
     {
-        log_fatal("Failed to begin command buffer %u", context->commandBufferIndex);
+        log_fatal("Failed to begin command buffer %u", imageIndex);
         abort();
     }
-    context->isRecording = true;
+
+    // configure dynamic state
+    VkViewport viewport = {
+        .x = 0.0f,
+        .y = 0.0f,
+        .width = (float) context->screenResolution.w,
+        .height = (float) context->screenResolution.h,
+        .minDepth = 0.0f,
+        .maxDepth = 1.0f
+    };
+
+    VkRect2D scissor = {
+        {0, 0},
+        {context->screenResolution.w, context->screenResolution.h}
+    };
+
+    vkCmdSetViewport(
+        context->commandBuffers[imageIndex]->handle,
+        0, 1,
+        &viewport);
+    vkCmdSetScissor(
+        context->commandBuffers[imageIndex]->handle,
+        0, 1,
+        &scissor);
 
     struct t_ContextMaterialListNode *np;
     LIST_FOREACH(np, &context->materials, data)
     {
-        spMaterialRecordCommands(context, np->material);
+        spMaterialRecordCommands(context, np->material, imageIndex);
     }
 
-    context->isRecording = false;
-
-
-    if (endCommandBuffer(context->commandBuffers[context->commandBufferIndex]))
+    if (spCommandBufferEnd(context->commandBuffers[imageIndex]))
     {
-        log_fatal("Failed to end command buffer %u", context->commandBufferIndex);
+        log_fatal("Failed to end command buffer %u", imageIndex);
         abort();
     }
 
     spSwapchainSubmitCommandBuffer(
         context->device,
         context->swapchain,
-        context->commandBuffers[context->commandBufferIndex],
-        context->commandBufferIndex);
+        context->commandBuffers[imageIndex],
+        imageIndex);
 
     return SPIRIT_SUCCESS;
 }
@@ -182,7 +208,7 @@ SpiritResult spContextAddMaterial(
     {
         return SPIRIT_FAILURE;
     }
-    
+
     // ensure the same material is not added twice
     // possibly should be added to release builds
     #ifdef DEBUG
@@ -198,11 +224,11 @@ SpiritResult spContextAddMaterial(
     }
     #endif
 
-    struct t_ContextMaterialListNode *node = 
+    struct t_ContextMaterialListNode *node =
         new_var(struct t_ContextMaterialListNode);
 
     node->material = material;
-    
+
     LIST_INSERT_HEAD(&context->materials, node, data);
 
     return SPIRIT_SUCCESS;
@@ -241,81 +267,14 @@ SpiritResult spDestroyContext(SpiritContext context)
         free(op);
     }
 
-    destroyCommandBuffers(
-        context->device, 
-        context->commandBuffers, 
-        context->commandBufferCount);
-    
+    for (u32 i = 0; i < context->commandBufferCount; ++i)
+    {
+        spDestroyCommandBuffer(context->device, context->commandBuffers[i]);
+    }
+
     spDestroySwapchain(context->swapchain, context->device);
     spDestroyDevice(context->device);
     spDestroyWindow (context->window);
 
-    return SPIRIT_SUCCESS;
-}
-
-
-//
-// Command buffers
-//
-
-VkCommandBuffer *createCommandBuffers(
-    SpiritDevice device,
-    u32          bufferCount)
-{
-
-    VkCommandBuffer *buffers = new_array(VkCommandBuffer, bufferCount);
-
-    VkCommandBufferAllocateInfo allocInfo = {};
-    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandPool = device->commandPool;
-    allocInfo.commandBufferCount = bufferCount;
-    
-    if (vkAllocateCommandBuffers(
-        device->device, 
-        &allocInfo, 
-        buffers) != VK_SUCCESS)
-    {
-        log_error("Failed to allocate command buffers");
-        free(buffers);
-        return NULL;
-    }
-
-    return buffers;
-}
-
-void destroyCommandBuffers(
-    const SpiritDevice device,
-    VkCommandBuffer *buffers,
-    const u32 bufferCount)
-{
-
-    vkFreeCommandBuffers(
-        device->device, 
-        device->commandPool, 
-        bufferCount,
-        buffers);
-    free(buffers);
-}
-
-// command buffer creation and destruction
-SpiritResult beginCommandBuffer(VkCommandBuffer buffer)
-{
-
-    VkCommandBufferBeginInfo bufferBeginInfo = {};
-    bufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
-    if(vkBeginCommandBuffer(buffer, &bufferBeginInfo) != VK_SUCCESS)
-    {
-        log_error("Could not begin command buffer");
-        return SPIRIT_FAILURE;
-    }
-
-    return SPIRIT_SUCCESS;
-}
-
-SpiritResult endCommandBuffer(VkCommandBuffer buffer)
-{
-    if (vkEndCommandBuffer(buffer)) return SPIRIT_FAILURE;
     return SPIRIT_SUCCESS;
 }

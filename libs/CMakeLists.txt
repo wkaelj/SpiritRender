@@ -18,7 +18,7 @@ add_subdirectory(spirv-tools)
 add_subdirectory(shaderc)
 add_subdirectory(glfw)
 
-add_library(${PROJECT_NAME} SHARED 
+add_library(${PROJECT_NAME} SHARED
     $<TARGET_OBJECTS:shaderc>
     $<TARGET_OBJECTS:glfw>
     $<TARGET_OBJECTS:cglm>)

@@ -23,19 +23,17 @@ struct TimerData {
     clock_t totalExecutionTime; // used for average
 };
 
+
 struct FunctionListNode_t {
     struct TimerData timerData;
     LIST_ENTRY(FunctionListNode_t) data;
 };
 
 struct {
-    char functionName[FUNCTION_LENGTH_BUFFER];
-    u64 startTime;
-    bool running;
     bool initialized;
 
     LIST_HEAD(FunctionListHead_t, FunctionListNode_t) functions;
-    
+
 } g_timerData = {};
 
 //
@@ -43,7 +41,7 @@ struct {
 //
 
 // update avg, min and max for an existing element
-void addDataPoint(struct FunctionListNode_t *node, u64 executionTime);
+void addDataPoint(struct FunctionListNode_t *node, clock_t executionTime);
 
 // add a new element to the list
 void addNewElement(const char *name, u64 executionTime);
@@ -64,15 +62,15 @@ f64 clockToMs(clock_t time);
 // Public methods
 //
 
-void init_timer(void)
+ void __attribute__((constructor)) init_timer(void)
 {
-        
+
     LIST_INIT(&g_timerData.functions);
 
     g_timerData.initialized = true;
 }
 
-void terminate_timer(void)
+void __attribute__((destructor)) terminate_timer(void)
 {
     // TODO
 
@@ -85,44 +83,41 @@ void terminate_timer(void)
     {
         np = LIST_FIRST(&g_timerData.functions);
         LIST_REMOVE(np, data);
-        free(np);        
+        free(np);
     };
 
     g_timerData.initialized = false;
 }
 
-void start_timer(const char *func)
+struct FunctionTimerData start_timer(const char *func)
 {
 
     if (!g_timerData.initialized)
     {
         printf("function_timer: Timer has not been initialized\n");
-        return;
+        return (struct FunctionTimerData) {0};
     }
 
-    if (g_timerData.running)
-    {
-        printf ("function_timer: Will not start timer, timer is running\n");
-        return;
-    }
+    struct FunctionTimerData t = {};
 
     u32 funcNameLength = FUNCTION_LENGTH_BUFFER;
 
     // truncate and set name
     spStringTruncate(
-        g_timerData.functionName,
+        t.functionName,
         &funcNameLength,
         func,
         '(',
         false);
-    
-    // get time
-    g_timerData.startTime = spPlatformGetRunningTime();
 
-    g_timerData.running = true;
+    // get time
+    t.startTime = spPlatformGetRunningTime();
+
+    return t;
+
 }
 
-void end_timer(void)
+void end_timer(struct FunctionTimerData t)
 {
 
     if (!g_timerData.initialized)
@@ -131,36 +126,26 @@ void end_timer(void)
         return;
     }
 
-    if (!g_timerData.running)
-    {
-        printf("function_timer: Cannot end timer, timer is not running\n");
-        return;
-    }
-
     // get time clock ticks
     u64 endTime = spPlatformGetRunningTime();
-    if (endTime < g_timerData.startTime)
+    if (endTime < t.startTime)
     {
         printf("function_timer: Clock rollover detected, discaring measurement\n");
-        g_timerData.running = false;
         return;
     }
 
-    const u64 executionTime = endTime - g_timerData.startTime;
+    const u64 executionTime = endTime - t.startTime;
 
-    
-    struct FunctionListNode_t *node = findFunctionData(g_timerData.functionName);
+
+    struct FunctionListNode_t *node = findFunctionData(t.functionName);
 
     if (node)
     {
         addDataPoint(node, executionTime);
     } else
     {
-        addNewElement(g_timerData.functionName, executionTime);
+        addNewElement(t.functionName, executionTime);
     }
-
-    g_timerData.startTime = 0;
-    g_timerData.running = false;
 }
 
 //
@@ -170,14 +155,14 @@ void end_timer(void)
 void createTimerString(char *restrict buf, struct TimerData data)
 {
     // func,avgTime,maxTime,minTime, ,totalExecutionCount,totalExecutionTime
-    snprintf(buf, LINE_LENGTH_BUFFER, "%s,%u,%u,%u\n",
+    snprintf(buf, LINE_LENGTH_BUFFER, "%s,%lu,%lu,%lu\n",
         data.functionName,
         data.avgTime,
         data.maxTime,
         data.minTime);
 }
 
-void addDataPoint(struct FunctionListNode_t *node, u64 executionTime)
+void addDataPoint(struct FunctionListNode_t *node, clock_t executionTime)
 {
     struct TimerData *data = &node->timerData;
 
@@ -185,7 +170,7 @@ void addDataPoint(struct FunctionListNode_t *node, u64 executionTime)
     data->totalExecutionCount++;
     data->avgTime = data->totalExecutionTime / data->totalExecutionCount;
     data->maxTime = max_value(data->maxTime, executionTime);
-    data->minTime = 
+    data->minTime =
         data->minTime != 0 ? min_value(data->minTime, executionTime) : executionTime;
 }
 
@@ -253,4 +238,6 @@ f64 clockToMs(clock_t time)
     f64 ftime = time;
     ftime *= 1000.0f;
     ftime /= CLOCKS_PER_SEC;
+
+    return ftime;
 }
