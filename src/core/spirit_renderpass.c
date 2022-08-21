@@ -219,7 +219,7 @@ SpiritResult createFramebuffers(
             spImageGetVkView(&swapchain->depthImages[i])
         };
 
-        db_assert(renderPass && renderPass->renderPass, "No renderpass");
+        db_assert_msg(renderPass && renderPass->renderPass, "No renderpass");
 
         VkFramebufferCreateInfo framebufferInfo = {};
         framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;

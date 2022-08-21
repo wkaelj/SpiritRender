@@ -1,6 +1,7 @@
 # cmake wrapper
 
 DEBUGGER = gdb
+DEBUGGERARGS = --silent
 
 BUILDFDR = bin
 EXEC = SpiritRender
@@ -22,7 +23,7 @@ noshade:
 
 debug:
 	cd $(BUILDFDR)
-	$(DEBUGGER) $(BUILDFDR)/$(EXEC)
+	$(DEBUGGER) $(DEBUGGERARGS) $(BUILDFDR)/$(EXEC)
 
 # use dmalloc sometimes because memory is hard
 dmalloc:
@@ -31,4 +32,4 @@ dmalloc:
 
 cmake:
 	mkdir -p $(BUILDFDR)
-	cmake $(BUILDFDR)
+	cmake -B $(BUILDFDR)

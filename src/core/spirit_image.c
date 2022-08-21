@@ -8,7 +8,7 @@ SpiritResult spCreateImage(
     SpiritImage *restrict output)
 {
 
-    db_assert(output, "Must have a valid SpiritImage reference for output");
+    db_assert_msg(output, "Output cannot be null");
 
     VkImageCreateInfo imageInfo = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
@@ -78,6 +78,12 @@ SpiritResult spCreateImageView(
 {
 
     if (out->image == NULL) return SPIRIT_FAILURE;
+
+    if (out->view)
+    {
+        log_warning("Image view already exists. The image view will be recreated");
+        spDestroyImageView(device, out);
+    }
 
     VkImageViewCreateInfo viewInfo = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,

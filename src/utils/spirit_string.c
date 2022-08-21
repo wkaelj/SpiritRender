@@ -4,7 +4,7 @@
 // Example: "/home/path/to/file/config.txt" -> "config.txt"
 SpiritResult spStringStrip (char *dest, u32 *max, const char *src, const char stripper)
 {
-    db_assert(src, "src must be a valid pointer to a string!");
+    db_assert_msg(src, "src must be a valid pointer to a string!");
     if (!src) return SPIRIT_FAILURE;
 
     u32 lastInstanceOfSlicer = 0;
@@ -36,7 +36,7 @@ SpiritResult spStringTruncate(
     bool inclusive)
 {
 
-    db_assert(str, "String value cannot be NULL");
+    db_assert_msg(str, "String value cannot be NULL");
 
     if (!str) return SPIRIT_FAILURE;
 
@@ -63,7 +63,7 @@ SpiritResult spStringTruncate(
     if (dest)
     {
         // pick shorter, max or slicer
-        u32 l = (max && *max < lastSlicerInstance + inclusive) ? 
+        u32 l = (max && *max < lastSlicerInstance + inclusive) ?
             *max : lastSlicerInstance + inclusive;
         strncpy(dest, str, l);
     }

@@ -27,7 +27,7 @@ struct t_SpiritFence {
  * @param startSignaled whether the fence should be created signaled
  * @return SpiritFence
  */
-SpiritFence spCreateFence(const SpiritDevice device, bool startSignaled);
+SpiritFence spCreateFence(const SpiritDevice device, bool startSignaled) SPIRIT_NONULL(1);
 
 /**
  * @brief Wait for a fence to complete. This function blocks
@@ -38,14 +38,17 @@ SpiritFence spCreateFence(const SpiritDevice device, bool startSignaled);
 SpiritResult spFenceWait(
     const SpiritDevice device,
     SpiritFence fence,
-    u64 timeout_ns);
+    u64 timeout_ns) SPIRIT_NONULL(1, 2);
+
+SpiritResult spFenceSubmit();
+
 
 /**
  * @brief Reset a fence
  *
  * @param fence
  */
-void spFenceReset(const SpiritDevice device, SpiritFence fence);
+void spFenceReset(const SpiritDevice device, SpiritFence fence) SPIRIT_NONULL(1, 2);
 
 /**
  * @brief destroy a spirit fence
@@ -53,4 +56,4 @@ void spFenceReset(const SpiritDevice device, SpiritFence fence);
  * @param device
  * @param fence
  */
-void spDestroyFence(const SpiritDevice device, SpiritFence fence);
+void spDestroyFence(const SpiritDevice device, SpiritFence fence) SPIRIT_NONULL(1, 2);

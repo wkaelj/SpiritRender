@@ -69,7 +69,7 @@ void mainlooptest (void) {
 
     log_debug("Context res %lux%lu",
         context->screenResolution.w,
-        context->screenResolution.w);
+        context->screenResolution.h);
 
     if (context == NULL)
         return;
@@ -115,6 +115,8 @@ void mainlooptest (void) {
     end_timer(startup);
 
     SpiritWindowState windowState;
+
+    u64 frameIndex = 0; // check the current frame being rendered
     while ((windowState = spWindowGetState(context->window)) != SPIRIT_WINDOW_CLOSED)
     {
 
@@ -127,11 +129,18 @@ void mainlooptest (void) {
 
         time_function(spMaterialAddMesh(material, meshRef));
 
-        time_function(spContextSubmitFrame(context));
+        SpiritResult result = SPIRIT_SUCCESS;
+        time_function_with_return(spContextSubmitFrame(context), result);
+
+        if (result)
+        {
+            log_error("Error on frame %lu", frameIndex);
+            sleep(5);
+        }
 
         end_timer(frametime);
 
-        // sleep(2);
+        ++frameIndex;
 
     }
 

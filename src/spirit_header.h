@@ -77,13 +77,25 @@
 
 // debug
 #ifdef DEBUG
-#define db_assert(statement, errmsg) \
-    if (!(statement)) { \
-        log_fatal("Assertion '%s' failed: %s", #statement, #errmsg); \
-        abort (); \
+#define db_assert_msg(statement, errmsg) \
+    if (!(statement)) \
+    { \
+        log_fatal("Assertion (%s) failed: %s", #statement, #errmsg); \
+        abort(); \
     }
 #else
-#define db_assert(statement, errmsg) ((void)0)
+#define db_assert_msg(statement, errmsg) ((void)0)
+#endif
+
+#ifdef DEBUG
+#define db_assert(statement) \
+    if (!(statement)) \
+    { \
+        log_fatal("Assertion (%s) failed", #statement); \
+        abort(); \
+    }
+#else
+#define db_assert(statement) (void(0))
 #endif
 
 #define ALLOCATION_CALLBACK ((void*)0)

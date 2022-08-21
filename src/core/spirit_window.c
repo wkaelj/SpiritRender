@@ -14,7 +14,7 @@ void window_size_callback(GLFWwindow* window, int width, int height);
 
 SpiritWindow spCreateWindow (SpiritWindowCreateInfo *createInfo) {
 
-    SpiritWindow window = new_var(struct t_SpiritWindow); 
+    SpiritWindow window = new_var(struct t_SpiritWindow);
 
     const char *glfwError;
     if (glfwInit () != GLFW_TRUE) {
@@ -35,8 +35,8 @@ SpiritWindow spCreateWindow (SpiritWindowCreateInfo *createInfo) {
 
     if (createInfo->fullscreen) {
         glfwGetMonitorWorkarea (
-                windowMonitor, 
-                NULL, NULL, 
+                windowMonitor,
+                NULL, NULL,
                 (int*) &window->windowSize.w,
                 (int*) &window->windowSize.h);
     } else {
@@ -47,12 +47,12 @@ SpiritWindow spCreateWindow (SpiritWindowCreateInfo *createInfo) {
     // glfwWindowHint (GLFW_RESIZABLE, GLFW_FALSE); // RESIZABLE
 
     window->window = glfwCreateWindow (
-        window->windowSize.w, 
-        window->windowSize.h, 
-        window->title, 
-        windowMonitor, 
+        window->windowSize.w,
+        window->windowSize.h,
+        window->title,
+        windowMonitor,
         NULL);
-    
+
     if (window->window == NULL) {
         glfwGetError (&glfwError);
         log_fatal("Failed to create window. GLFW Error: %s", glfwError);
@@ -101,8 +101,8 @@ void window_size_callback(GLFWwindow* window, int width, int height)
 
 SpiritWindowState spWindowGetState(SpiritWindow window)
 {
-    
-    db_assert(window && window->window, "Window cannot be null");
+
+    db_assert_msg(window && window->window, "Window cannot be null");
     const char *description = NULL;
     glfwPollEvents();
     if (glfwGetError(&description))
@@ -177,12 +177,12 @@ VkSurfaceKHR spWindowGetSurface (SpiritWindow window, VkInstance instance) {
     VkSurfaceKHR surface = NULL;
 
     if (glfwCreateWindowSurface (instance, window->window, NULL, &surface)) log_fatal("Failed to create window surface");
-    db_assert (surface, "Surface cannot be NULL");
+    db_assert_msg (surface, "Surface cannot be NULL");
     return surface;
 }
 
 SpiritWindowExtensions spWindowGetExtensions (SpiritWindow window) {
-    
+
     SpiritWindowExtensions out = {};
 
     out.names = glfwGetRequiredInstanceExtensions(&out.count);

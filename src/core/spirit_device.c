@@ -77,7 +77,7 @@ static VkCommandPool createCommandPool(
 SpiritDevice spCreateDevice (SpiritDeviceCreateInfo *createInfo) {
 
     // asserts
-    db_assert(createInfo->window, "Must have window to create instance");
+    db_assert_msg(createInfo->window, "Must have window to create instance");
 
 
     SpiritDevice out = new_var(struct t_SpiritDevice);
@@ -410,7 +410,7 @@ static VkInstance createInstance (
         log_verbose("Enabling Validation");
 
         // allocate memory for the debugmessenger if it is NULL
-        db_assert(debugMessenger, "debugMessenger was NULL, it should be a \
+        db_assert_msg(debugMessenger, "debugMessenger was NULL, it should be a \
             reference to the &SpiritDevice.debugMessenger variable");
         // layer names and whatnot
         instanceInfo.enabledLayerCount = createInfo->requiredValidationLayerCount;
@@ -635,7 +635,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback (
     VkDebugUtilsMessengerCallbackDataEXT *pCallbackData __attribute_maybe_unused__,
     void *pUserData __attribute_maybe_unused__) {
 
-    if (messageSeverity > VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+    if (messageSeverity > VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
         log_validation("%s", pCallbackData->pMessage);
         return true;
     } else return false;
@@ -841,14 +841,14 @@ SpiritSwapchainSupportInfo querySwapChainSupport (
         questionedDevice,
         surface,
         &details.formatCount, NULL);
-    db_assert(details.formatCount, "Device surface has no format.");
+    db_assert_msg(details.formatCount, "Device surface has no format.");
     details.formats = new_array(VkSurfaceFormatKHR, details.formatCount);
     vkGetPhysicalDeviceSurfaceFormatsKHR (
         questionedDevice,
         surface,
         &details.formatCount,
         details.formats);
-    db_assert (details.formats, "Device surface has no formats");
+    db_assert_msg (details.formats, "Device surface has no formats");
 
     if (details.formatCount == 0) { details.formats = NULL; }
 
@@ -857,7 +857,7 @@ SpiritSwapchainSupportInfo querySwapChainSupport (
         questionedDevice,
         surface,
         &details.presentModeCount, NULL);
-    db_assert (details.presentModeCount > 0,
+    db_assert_msg (details.presentModeCount > 0,
         "Device surface has no present modes");
     details.presentModes = new_array(VkPresentModeKHR, details.presentModeCount);
     vkGetPhysicalDeviceSurfacePresentModesKHR(
@@ -865,7 +865,7 @@ SpiritSwapchainSupportInfo querySwapChainSupport (
         surface,
         &details.presentModeCount,
         details.presentModes);
-    db_assert (details.presentModes != NULL,
+    db_assert_msg (details.presentModes != NULL,
         "Device surface has no present modes");
 
     return details;

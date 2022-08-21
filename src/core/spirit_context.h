@@ -36,6 +36,7 @@ struct t_SpiritContext
     SpiritSwapchain  swapchain;
 
     LIST_HEAD(t_ContextMaterialListHead, t_ContextMaterialListNode) materials;
+    u32 materialCount;
 
     // command buffers
     SpiritCommandBuffer *commandBuffers;
@@ -43,6 +44,17 @@ struct t_SpiritContext
 
     SpiritResolution windowSize; // use for UI sizes, stored as screen units
     SpiritResolution screenResolution; // resolution in px, use for
+
+    // sync
+    u32 maxImagesInFlight; // the size of all sync objects
+    VkSemaphore *imageAvailableSemaphores;
+    VkSemaphore *queueCompleteSemaphores;
+    SpiritFence *inFlightFences;
+
+    SpiritFence *imagesInFlight;
+
+    // u32 currentFence; // the fence currently rendering
+    u32 currentFrame;
 };
 
 SpiritContext spCreateContext(SpiritContextCreateInfo *createInfo);

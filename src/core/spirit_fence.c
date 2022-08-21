@@ -1,4 +1,4 @@
-#include "spirit_sync.h"
+#include "spirit_fence.h"
 #include "core/spirit_types.h"
 #include "spirit_device.h"
 #include "spirit_header.h"
@@ -68,13 +68,16 @@ void spFenceReset(const SpiritDevice device, SpiritFence fence)
         if (vkResetFences(device->device, 1, &fence->handle))
             log_warning("Failed to reset fence");
     }
+
+    fence->isSignaled = false;
 }
 
 
 void spDestroyFence(const SpiritDevice device, SpiritFence fence)
 {
 
-    vkDestroyFence(device->device, fence->handle, ALLOCATION_CALLBACK);
+    if (fence->handle)
+        vkDestroyFence(device->device, fence->handle, ALLOCATION_CALLBACK);
 
     free(fence);
 }

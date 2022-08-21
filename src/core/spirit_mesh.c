@@ -73,7 +73,7 @@ SpiritMeshReference spMeshManagerAddMesh(
     SpiritMesh mesh)
 {
 
-    db_assert(mesh && manager, "Must have both a mesh and a manager");
+    db_assert_msg(mesh && manager, "Must have both a mesh and a manager");
 
     if (!mesh || !manager)
     {

@@ -25,7 +25,7 @@ SpiritResult spReadFileBinary(
     char filepath[pathLength];
     spPlatformLocalizeFileName(filepath, path, &pathLength);
 
-    db_assert(size, "Size cannot have a NULL value"); // size cannot be NULL
+    db_assert_msg(size, "Size cannot have a NULL value"); // size cannot be NULL
 
     // open file
     FILE *file = fopen(filepath, "r");
@@ -60,7 +60,7 @@ SpiritResult spReadFileText(
     char filepath[pathLength];
     spPlatformLocalizeFileName(filepath, path, &pathLength);
 
-    db_assert(length, "Length must have be a valid pointer");
+    db_assert_msg(length, "Length must have be a valid pointer");
 
     FILE *file = fopen(filepath, "r");
     if (!file)
@@ -107,7 +107,7 @@ SpiritResult spWriteFileBinary(
 
 
 
-    db_assert(ftell(file) == 0, "File not at start");
+    db_assert_msg(ftell(file) == 0, "File not at start");
 
     if (fwrite(contents, size, 1, file) == 0 && ferror(file))
     {

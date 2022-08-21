@@ -239,7 +239,7 @@ VkPipeline createPipeline(
     pipelineInfo.pMultisampleState =   &fixedInfo->multisampleInfo;
     pipelineInfo.pRasterizationState = &fixedInfo->rasterizationInfo;
     pipelineInfo.pColorBlendState =    &fixedInfo->colorBlendInfo;
-    db_assert(
+    db_assert_msg(
         pipelineInfo.pColorBlendState->pAttachments[0].blendEnable ==
         fixedInfo->colorBlendAttachment.blendEnable, "");
 

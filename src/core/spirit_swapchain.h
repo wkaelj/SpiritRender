@@ -64,17 +64,6 @@ struct t_SpiritSwapchain
     SpiritImage *images;
     SpiritImage *depthImages;
 
-    // sync
-    u32 maxImagesInFlight; // the size of all sync objects
-    VkSemaphore *imageAvailableSemaphores;
-    VkSemaphore *queueCompleteSemaphores;
-    SpiritFence *inFlightFences;
-
-    SpiritFence **imagesInFlight;
-    // u32 currentFence; // the fence currently rendering
-
-    u32 currentFrame;
-
     // useful for recreating the swapchain
     SpiritSwapchainCreateInfo createInfo;
 
@@ -104,26 +93,19 @@ SpiritSwapchain spCreateSwapchain (
     SpiritSwapchain            optionalSwapchain);
 
 /**
- * Submit commands which have been recorded in a command buffer
- * to the GPU. This should be used after recording commands using a material,
- * or using the functions in the context.
+ * @brief Prersent the swapchain image at index imageIndex
  *
- * @param device must be a valid SpiritDevice, created using spCreateDevice()
- * @param swapchain must be a valid SpiritSwapchain, created using spCreateSwapchain()
- * @param buffer must be a valid VkCommandBuffer, created using vkAllocateCommandBuffers()
- * @param imageIndex the swapchain image for the image to be rendered to.
- * It can be gotten using spSwapchainAquireNextImage
- *
- * @return SPIRIT_SUCCESS if the command buffer was submit successfully, or
- * SPIRIT_FAILURE otherwise.
- *
- * @author Kael Johnston
+ * @param device the device used to create the swapchain
+ * @param swapchain the swapchain
+ * @param waitSemaphore
+ * @param imageIndex the image index to submit
+ * @return SpiritResult
  */
-SpiritResult spSwapchainSubmitCommandBuffer(
-    SpiritDevice device,
-    SpiritSwapchain swapchain,
-    SpiritCommandBuffer buffer,
-    u32 imageIndex);
+SpiritResult spSwapchainPresent(
+    const SpiritDevice device,
+    const SpiritSwapchain swapchain,
+    const VkSemaphore waitSemaphore,
+    const u32 imageIndex);
 
 /**
  * Aquire the next image to render to. This function should be used with
@@ -134,6 +116,7 @@ SpiritResult spSwapchainSubmitCommandBuffer(
  *
  * @param device must be a valid SpiritDevice, created using spCreateDevice()
  * @param swapchain must be a valid SpiritSwapchain, created using spCreateSwapchain()
+ * @param waitSemaphore the semaphore to wait on
  * @param imageIndex must be a valid pointer to a u32, which will be set to the index
  * of the next swapchain image
  *
@@ -145,7 +128,8 @@ SpiritResult spSwapchainSubmitCommandBuffer(
 SpiritResult spSwapchainAquireNextImage(
     const SpiritDevice device,
     const SpiritSwapchain swapchain,
-    u32 *imageIndex);
+    VkSemaphore waitSemaphore,
+    u32 *imageIndex) SPIRIT_NONULL(1, 2, 3, 4);
 
 /**
  * Destroy a swapchain object. This will cause errors if

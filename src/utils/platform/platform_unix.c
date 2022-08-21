@@ -51,7 +51,7 @@ bool spPlatformIsAllowedFileOperation(const char *filepath)
     const char *fileErr = "Illigal file operation. A file operation is "
         "being made outsidethe project directory.";
 
-    db_assert(strlen(filepath) > g_executableDirectoryLength, "");
+    db_assert_msg(strlen(filepath) > g_executableDirectoryLength, "");
 
     char *match = strstr(filepath, g_executableDirectory);
     if (match == filepath && strlen(filepath) > 0) return true;
@@ -68,12 +68,12 @@ void spPlatformSetExecutableFolder(char *name)
     // remove executable fild name from the path
     u32 pathLength = 0;
     spStringTruncate(NULL, &pathLength, name, '/', true);
-    db_assert(pathLength < sizeof(g_executableDirectory), "Executable path too long");
+    db_assert_msg(pathLength < sizeof(g_executableDirectory), "Executable path too long");
     g_executableDirectoryLength = --pathLength;
     pathLength = sizeof(g_executableDirectory);
     spStringTruncate(g_executableDirectory, &pathLength, name, '/', true);
 
-    db_assert(g_executableDirectoryLength == strlen(g_executableDirectory), "");
+    db_assert_msg(g_executableDirectoryLength == strlen(g_executableDirectory), "");
 }
 
 const char *spPlatformGetExecutableFolder(void)
@@ -88,10 +88,6 @@ u32 spPlatformGetExecutableFolderStrLen(void)
 
 SpiritResult spPlatformLocalizeFileName(char *output, const char *path, u32 *max)
 {
-
-    db_assert(path, "'path' cannot be NULL");
-    db_assert(max, "'max' cannot be NULL");
-    if (!(path && max)) return SPIRIT_FAILURE; // max and path must not be null
 
     const u32 pathLength = strlen(path);
 
@@ -191,8 +187,7 @@ u64 spPlatformGetRunningTime(void)
 
 time_t spPlatformGetFileModifiedDate(const char *filepath)
 {
-    db_assert(filepath, "Must have valid filepath");
-    if(!filepath) return 0;
+    db_assert_msg(filepath, "Must have valid filepath");
 
     localize_path(filepath, path, pathLength);
 
@@ -210,16 +205,16 @@ time_t spPlatformGetFileModifiedDate(const char *filepath)
 
 SpiritResult spPlatformCreateFolder(const char *filepath)
 {
-    db_assert(filepath, "Must pass a valid filepath");
+    db_assert_msg(filepath, "Must pass a valid filepath");
 
     localize_path(filepath, path, pathLength);
 
     assert_allowed_file_operation(path);
 
-    if (path[pathLength - 1] == SPIRIT_PLATFORM_FOLDER_BREAK)
-        path[pathLength - 1] = '\0';
+    if (path[pathLength - 2] == SPIRIT_PLATFORM_FOLDER_BREAK)
+        path[pathLength - 2] = '\0';
 
-    for (char *p = path; *p != '\0'; p++)
+    for (char *p = path + 1; *p != '\0'; p++)
         if (*p == SPIRIT_PLATFORM_FOLDER_BREAK)
         {
             *p = '\0';

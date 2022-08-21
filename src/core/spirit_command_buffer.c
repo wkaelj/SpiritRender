@@ -1,10 +1,7 @@
 #include "spirit_command_buffer.h"
 
-#include "core/spirit_types.h"
-#include "debug/messenger.h"
+#include "spirit_fence.h"
 #include "spirit_device.h"
-#include "spirit_header.h"
-#include <vulkan/vulkan_core.h>
 
 SpiritCommandBuffer spCreateCommandBuffer(SpiritDevice device, bool primary)
 {
@@ -17,7 +14,7 @@ SpiritCommandBuffer spCreateCommandBuffer(SpiritDevice device, bool primary)
             VK_COMMAND_BUFFER_LEVEL_PRIMARY :
             VK_COMMAND_BUFFER_LEVEL_SECONDARY,
         .commandPool = device->commandPool,
-        .commandBufferCount = 1
+        .commandBufferCount = 1,
     };
 
     if (vkAllocateCommandBuffers(
@@ -33,6 +30,36 @@ SpiritCommandBuffer spCreateCommandBuffer(SpiritDevice device, bool primary)
     buffer->recording = false;
 
     return buffer;
+}
+
+SpiritResult spCreateCommandBuffers(
+    const SpiritDevice device,
+    SpiritCommandBuffer *buf,
+    bool primary,
+    const u32 count)
+{
+    VkCommandBufferAllocateInfo allocInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .level = primary ?
+            VK_COMMAND_BUFFER_LEVEL_PRIMARY :
+            VK_COMMAND_BUFFER_LEVEL_SECONDARY,
+        .commandPool = device->commandPool,
+        .commandBufferCount = count,
+    };
+
+    VkCommandBuffer buffer[count];
+    if (vkAllocateCommandBuffers(device->device, &allocInfo, buffer))
+    {
+        return SPIRIT_FAILURE;
+    }
+
+    for (u32 i = 0; i < count; ++i)
+    {
+        buf[i]->handle = buffer[i];
+        buf[i]->recording = false;
+    }
+
+    return SPIRIT_SUCCESS;
 }
 
 void spDestroyCommandBuffer(
@@ -69,6 +96,50 @@ SpiritResult spCommandBufferBegin(SpiritCommandBuffer buffer)
     }
 
     buffer->recording = true;
+
+    return SPIRIT_SUCCESS;
+}
+
+SpiritResult spCommandBufferSubmit(
+    const SpiritDevice device,
+    const SpiritCommandBuffer buffer,
+    VkSemaphore waitSemaphore,
+    VkSemaphore signalSemaphore,
+    SpiritFence fence)
+{
+
+    if (buffer->recording)
+    {
+        log_warning("Must end buffer before submitting");
+        return SPIRIT_FAILURE;
+    }
+
+    VkSubmitInfo submitInfo = {};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+    VkPipelineStageFlags waitStages[] = {
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+    };
+
+    submitInfo.waitSemaphoreCount = 1;
+    submitInfo.pWaitSemaphores = &waitSemaphore;
+    submitInfo.pWaitDstStageMask = waitStages;
+
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &buffer->handle;
+
+    submitInfo.signalSemaphoreCount = 1;
+    submitInfo.pSignalSemaphores = &signalSemaphore;
+
+    if (vkQueueSubmit(
+        device->graphicsQueue,
+        1,
+        &submitInfo,
+        fence->handle) != VK_SUCCESS)
+    {
+        log_error("Failed to submit graphics queue");
+        return SPIRIT_FAILURE;
+    }
 
     return SPIRIT_SUCCESS;
 }

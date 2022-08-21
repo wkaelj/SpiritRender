@@ -29,6 +29,21 @@ struct t_SpiritCommandBuffer {
 SpiritCommandBuffer spCreateCommandBuffer(SpiritDevice device, bool primary);
 
 /**
+ * @brief Create an array of command buffers
+ *
+ * @param device the device
+ * @param buf must be an array of at least count
+ * @param primary should they be primary command buffers
+ * @param count how many command buffers
+ * @return SpiritResult
+ */
+SpiritResult spCreateCommandBuffers(
+    const SpiritDevice device,
+    SpiritCommandBuffer *buf,
+    bool primary,
+    const u32 count) SPIRIT_NONULL(1, 2);
+
+/**
  * @brief destroy a command buffer
  *
  * @param device
@@ -43,6 +58,23 @@ void spDestroyCommandBuffer(const SpiritDevice device, SpiritCommandBuffer buffe
  * @return SpiritResult
  */
 SpiritResult spCommandBufferBegin(SpiritCommandBuffer buffer);
+
+/**
+ * @brief Submit a command buffer to the gpu
+ *
+ * @param device
+ * @param buffer
+ * @param waitSemaphore
+ * @param signalSemaphore
+ * @param fence
+ * @return SpiritResult
+ */
+SpiritResult spCommandBufferSubmit(
+    const SpiritDevice device,
+    const SpiritCommandBuffer buffer,
+    VkSemaphore waitSemaphore,
+    VkSemaphore signalSemaphore,
+    SpiritFence fence);
 
 /**
  * @brief End a command buffer, so it can be submitted

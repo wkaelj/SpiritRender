@@ -72,7 +72,7 @@ extern SpiritShader spLoadCompiledShader(const char *path, SpiritShaderType type
             0ll, 0};
     }
 
-    db_assert(shaderCodeSize, "shaderCodeSize was 0");
+    db_assert_msg(shaderCodeSize, "shaderCodeSize was 0");
 
     void *shaderCodeBinary = malloc(shaderCodeSize);
     spReadFileBinary(shaderCodeBinary, path, shaderCodeSize);
@@ -160,7 +160,7 @@ extern SpiritShader spLoadSourceShader(
             log_error("Failed to create folder '%s'",
                       GLSL_LOADER_CACHE_FOLDER);
 
-        db_assert(catchBuffer == SPIRIT_SUCCESS, "Failed to write folder");
+        db_assert_msg(catchBuffer == SPIRIT_SUCCESS, "Failed to write folder");
 
         // write file
         catchBuffer = spWriteFileBinary(
@@ -171,7 +171,7 @@ extern SpiritShader spLoadSourceShader(
             log_error("Failed to file '%s'",
                       shaderCodePath);
 
-        db_assert(catchBuffer == SPIRIT_SUCCESS, "Failed to write file");
+        db_assert_msg(catchBuffer == SPIRIT_SUCCESS, "Failed to write file");
 
         log_verbose("Cached shader '%s' with size %lu", shaderCodePath, out.shaderSize);
 
@@ -193,10 +193,10 @@ extern SpiritShader spCompileShader(
     shaderc_compile_options_t settings = NULL;
 
     compiler = shaderc_compiler_initialize();
-    db_assert(compiler, "Failure to create compiler");
+    db_assert_msg(compiler, "Failure to create compiler");
 
     settings = shaderc_compile_options_initialize();
-    db_assert(settings, "Failed to create shader settings");
+    db_assert_msg(settings, "Failed to create shader settings");
 
     // set shader type
     shaderc_compile_options_set_target_env(
@@ -227,7 +227,7 @@ extern SpiritShader spCompileShader(
     }
 
     size_t compiledShaderSize = shaderc_result_get_length(result);
-    db_assert(compiledShaderSize, "compiled shader size cannot be 0");
+    db_assert_msg(compiledShaderSize, "compiled shader size cannot be 0");
 
     SpiritShaderCode compiledShader = (SpiritShaderCode)malloc(compiledShaderSize);
 
@@ -238,7 +238,7 @@ extern SpiritShader spCompileShader(
         shadercResult,
         compiledShaderSize);
 
-    db_assert(memcmp(
+    db_assert_msg(memcmp(
                   compiledShader,
                   shadercResult,
                   compiledShaderSize) == 0,
@@ -247,7 +247,7 @@ extern SpiritShader spCompileShader(
     SpiritShader out = {};
     out.shader = compiledShader;
     out.shaderSize = compiledShaderSize;
-    db_assert(out.shaderSize == compiledShaderSize, "Shader sizes do not match");
+    db_assert_msg(out.shaderSize == compiledShaderSize, "Shader sizes do not match");
     out.type = type;
 
     // release resources

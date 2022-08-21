@@ -96,9 +96,13 @@ SpiritResult spMaterialRecordCommands(
     const u32 imageIndex)
 {
 
-    db_assert(imageIndex < context->commandBufferCount, "invalid image index");
-    db_assert(context->commandBuffers[imageIndex]->recording,
-    "Command buffer is not recording, cannot record commands");
+    db_assert_msg(imageIndex < context->commandBufferCount, "invalid image index");
+
+    if (!context->commandBuffers[imageIndex]->recording)
+    {
+        log_error("Command buffer must be recording 🤓");
+        return SPIRIT_FAILURE;
+    }
 
     if(spRenderPassBegin(
         material->renderPass,

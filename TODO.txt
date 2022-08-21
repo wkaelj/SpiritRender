@@ -3,6 +3,7 @@
 [ ] arg parser, check if arg is included
 [ ] change function timer to use object to store data, not a global
 [ ] implement push constants
+[ ] fix null char starting file path
 [X] update file operation verification to use strstr. If file path length > 0,
 return should equal the path
 [X] swapchain recreation failure memory leaks
