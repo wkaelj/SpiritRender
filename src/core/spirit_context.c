@@ -79,7 +79,7 @@ SpiritContext spCreateContext(SpiritContextCreateInfo *createInfo)
     swapCreateInfo.windowRes = context->screenResolution;
 
     swapCreateInfo.selectedPresentMode = true;
-    swapCreateInfo.preferredPresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
+    swapCreateInfo.preferredPresentMode = VK_PRESENT_MODE_FIFO_KHR;
 
     context->swapchain = spCreateSwapchain(&swapCreateInfo, context->device, NULL);
     if (!context->swapchain)
@@ -295,18 +295,19 @@ SpiritResult spDestroyContext(SpiritContext context)
 SpiritResult beginFrame(SpiritContext context, u32 *imageIndex)
 {
 
-    // if the imageInFlight fence is not null, wait for it to complete
-    if (context->imagesInFlight[*imageIndex] && spFenceWait(
-        context->device,
-        context->inFlightFences[context->currentFrame],
-        UINT64_MAX)) return SPIRIT_FAILURE;
-
     // aquire image
     if (spSwapchainAquireNextImage(
         context->device,
         context->swapchain,
         context->imageAvailableSemaphores[context->currentFrame],
         imageIndex)) return SPIRIT_FAILURE;
+
+    // if the imageInFlight fence is not null, wait for it to complete
+    if (spCommandBufferWait(
+        context->device,
+        context->commandBuffers[*imageIndex],
+        UINT64_MAX)) return SPIRIT_FAILURE;
+
 
     SpiritCommandBuffer buf = context->commandBuffers[*imageIndex];
 
@@ -343,15 +344,8 @@ SpiritResult endFrame(SpiritContext context, const u32 imageIndex)
 
     spCommandBufferEnd(buf);
 
-    // wait in case another frame was using this image
-    if (context->imagesInFlight[imageIndex] && spFenceWait(
-        context->device,
-        context->imagesInFlight[imageIndex],
-        UINT64_MAX)) return SPIRIT_FAILURE;
-
-    context->imagesInFlight[imageIndex] = context->inFlightFences[currentFrame];
-
-    spFenceReset(context->device, context->inFlightFences[currentFrame]);
+    VkPipelineStageFlags waitStages =
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
     // submit command buffer
     if (spCommandBufferSubmit(
@@ -359,10 +353,10 @@ SpiritResult endFrame(SpiritContext context, const u32 imageIndex)
         buf,
         context->imageAvailableSemaphores[currentFrame],
         context->queueCompleteSemaphores[currentFrame],
-        context->inFlightFences[currentFrame]))
+        &waitStages))
     {
         log_fatal("Failed to submit command buffer");
-        abort();
+       return SPIRIT_FAILURE;
     }
 
     // present image
@@ -392,8 +386,6 @@ SpiritResult createSyncObjects(SpiritContext context)
 
     context->imageAvailableSemaphores = new_array(VkSemaphore, imagesInFlight);
     context->queueCompleteSemaphores = new_array(VkSemaphore, imagesInFlight);
-    context->inFlightFences = new_array(SpiritFence, imagesInFlight);
-
 
     VkSemaphoreCreateInfo semaphoreInfo = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
@@ -415,23 +407,12 @@ SpiritResult createSyncObjects(SpiritContext context)
             NULL,
             &context->queueCompleteSemaphores[i])) failure = true;
 
-        if (!(context->inFlightFences[i] = spCreateFence(context->device, true)))
-        {
-            failure = true;
-        }
-
         if (failure)
         {
             log_error("Failed to create syncronization objects");
             return SPIRIT_FAILURE;
         }
     }
-
-    context->imagesInFlight = new_array (SpiritFence, imageCount);
-
-    // 0 the imagesInFlight memory, so that they are caught by the null
-    // checks when waiting for them
-    memset(context->imagesInFlight, 0, sizeof(SpiritFence) * imageCount);
 
     return SPIRIT_SUCCESS;
 }
@@ -448,12 +429,8 @@ void destroySyncObjects(SpiritContext context)
             vkDestroySemaphore(context->device->device,
                 context->imageAvailableSemaphores[i],
                 NULL);
-        if (context->inFlightFences && context->inFlightFences[i])
-            spDestroyFence(context->device, context->inFlightFences[i]);
     }
 
     if (context->imageAvailableSemaphores) free(context->imageAvailableSemaphores);
     if (context->queueCompleteSemaphores)  free(context->queueCompleteSemaphores);
-    if (context->inFlightFences)           free(context->inFlightFences);
-    if (context->imagesInFlight)           free(context->imagesInFlight);
 }

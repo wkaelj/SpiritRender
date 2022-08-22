@@ -41,12 +41,15 @@ typedef struct {
 static bool checkValidationLayerSupport (
     const char *const *requiredLayerNames,
     u32 requiredLayerCount);
+
 static VkInstance createInstance (
     const SpiritDeviceCreateInfo *createInfo,
-    VkDebugUtilsMessengerEXT debugMessenger); // create a vulkan device
+    VkDebugUtilsMessengerEXT *debugMessenger); // create a vulkan device
+
 static VkPhysicalDevice selectPhysicalDevice (
     const SpiritDeviceCreateInfo *createInfo,
     const VkInstance instance); // select a gpu
+
 static VkDevice createDevice (
     const SpiritDeviceCreateInfo *createInfo,
     const VkPhysicalDevice physicalDevice);
@@ -74,7 +77,8 @@ static VkCommandPool createCommandPool(
 // Public Functions
 //
 
-SpiritDevice spCreateDevice (SpiritDeviceCreateInfo *createInfo) {
+SpiritDevice spCreateDevice(SpiritDeviceCreateInfo *createInfo)
+{
 
     // asserts
     db_assert_msg(createInfo->window, "Must have window to create instance");
@@ -118,7 +122,7 @@ SpiritDevice spCreateDevice (SpiritDeviceCreateInfo *createInfo) {
 
     out->validationEnabled = createInfo->enableValidation;
 
-    out->instance = createInstance(createInfo, out->debugMessenger); // create vulkan instance
+    out->instance = createInstance(createInfo, &out->debugMessenger); // create vulkan instance
     if (out->instance == NULL)
     {
         log_fatal("Failed to create vulkan instance");
@@ -315,6 +319,7 @@ SpiritResult spDeviceCreateBuffer(
 
     return SPIRIT_SUCCESS;
 }
+
 // destroy a spirit device and free all memory whatever
 SpiritResult spDestroyDevice (SpiritDevice device)
 {
@@ -376,7 +381,7 @@ static bool checkDeviceExtensionSupport (const SpiritDeviceCreateInfo *createInf
 
 static VkInstance createInstance (
     const SpiritDeviceCreateInfo *createInfo,
-    VkDebugUtilsMessengerEXT debugMessenger) {
+    VkDebugUtilsMessengerEXT *debugMessenger) {
 
     VkApplicationInfo appInfo = {};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -459,10 +464,10 @@ static VkInstance createInstance (
                 instance,
                 &debugInfo,
                 NULL,
-                &debugMessenger) != VK_SUCCESS)
+                debugMessenger) != VK_SUCCESS)
             {
                 log_error("Failed to create debug messenger");
-                debugMessenger = NULL;
+                *debugMessenger = NULL;
             }
         }
     }

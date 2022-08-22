@@ -40,9 +40,6 @@ SpiritResult spFenceWait(
     SpiritFence fence,
     u64 timeout_ns) SPIRIT_NONULL(1, 2);
 
-SpiritResult spFenceSubmit();
-
-
 /**
  * @brief Reset a fence
  *

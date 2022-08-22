@@ -14,6 +14,7 @@ project(libs LANGUAGES C CXX VERSION 1.0.0)
 
 add_subdirectory(glslang)
 add_subdirectory(cglm)
+add_subdirectory(spirv-headers)
 add_subdirectory(spirv-tools)
 add_subdirectory(shaderc)
 add_subdirectory(glfw)

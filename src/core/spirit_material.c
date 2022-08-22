@@ -98,7 +98,9 @@ SpiritResult spMaterialRecordCommands(
 
     db_assert_msg(imageIndex < context->commandBufferCount, "invalid image index");
 
-    if (!context->commandBuffers[imageIndex]->recording)
+    SpiritCommandBuffer buf = context->commandBuffers[imageIndex];
+
+    if (buf->state != SPIRIT_COMMAND_BUFFER_STATE_RECORDING)
     {
         log_error("Command buffer must be recording 🤓");
         return SPIRIT_FAILURE;
@@ -117,7 +119,7 @@ SpiritResult spMaterialRecordCommands(
 
     spPipelineBindCommandBuffer(
         material->pipeline,
-        context->commandBuffers[imageIndex]);
+        buf);
 
     // iterate through meshes and submit vertexes
     struct t_MaterialListNode *currentMesh = material->meshList.lh_first;
@@ -129,17 +131,9 @@ SpiritResult spMaterialRecordCommands(
         };
         VkDeviceSize offsets[] = { 0 };
 
-        vkCmdBindVertexBuffers(
-            context->commandBuffers[imageIndex]->handle,
-            0,
-            1,
-            vertBuffers,
-            offsets);
+        vkCmdBindVertexBuffers(buf->handle, 0, 1, vertBuffers, offsets);
 
-        vkCmdDraw(
-            context->commandBuffers[imageIndex]->handle,
-            currentMesh->mesh.vertCount,
-            1, 0, 0);
+        vkCmdDraw(buf->handle, currentMesh->mesh.vertCount, 1, 0, 0);
 
         // move to next list element and remove processed element
         struct t_MaterialListNode *oldNode = currentMesh;

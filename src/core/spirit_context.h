@@ -49,9 +49,6 @@ struct t_SpiritContext
     u32 maxImagesInFlight; // the size of all sync objects
     VkSemaphore *imageAvailableSemaphores;
     VkSemaphore *queueCompleteSemaphores;
-    SpiritFence *inFlightFences;
-
-    SpiritFence *imagesInFlight;
 
     // u32 currentFence; // the fence currently rendering
     u32 currentFrame;

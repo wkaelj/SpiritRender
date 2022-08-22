@@ -1,12 +1,8 @@
 #include "spirit_mesh.h"
 
-#include "core/spirit_types.h"
-#include "debug/messenger.h"
+#include "spirit_command_buffer.h"
 #include "spirit_device.h"
 #include "spirit_context.h"
-#include "spirit_header.h"
-#include <sys/cdefs.h>
-#include <vulkan/vulkan_core.h>
 //
 // Public Functions
 //
@@ -27,10 +23,44 @@ SpiritMesh spCreateMesh(const SpiritContext context, const SpiritMeshCreateInfo 
     }
 
     // obtain memory from device
-    VkBuffer vertBuffer;
-    VkDeviceMemory vertBufferMemory;
+    VkBuffer vertBufferBuffer;
+    VkDeviceMemory vertBufferMemoryBuffer;
     VkDeviceSize bufferSize = dataSize;
     if(spDeviceCreateBuffer(
+        context->device,
+        bufferSize,
+        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+        &vertBufferBuffer,
+        &vertBufferMemoryBuffer))
+    {
+        log_error("Failed to create mesh");
+        return NULL;
+    }
+
+    // copy memory into data
+    Vertex *data;
+    vkMapMemory(context->device->device, vertBufferMemoryBuffer, 0, bufferSize, 0, (void**) &data);
+    memcpy(data, mesh->verts, dataSize);
+    vkUnmapMemory(context->device->device, vertBufferMemoryBuffer);
+
+    // copy memory into local buffers
+    if(spDeviceCreateBuffer(
+        context->device,
+        bufferSize,
+        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+        &vertBufferBuffer,
+        &vertBufferMemoryBuffer))
+    {
+        log_error("Failed to create mesh");
+        return NULL;
+    }
+
+    // copy mesh data into local buffer, for performance
+    VkBuffer vertBuffer;
+    VkDeviceMemory vertBufferMemory;
+        if(spDeviceCreateBuffer(
         context->device,
         bufferSize,
         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
@@ -42,11 +72,36 @@ SpiritMesh spCreateMesh(const SpiritContext context, const SpiritMeshCreateInfo 
         return NULL;
     }
 
-    // copy memory into data
-    Vertex *data;
-    vkMapMemory(context->device->device, vertBufferMemory, 0, bufferSize, 0, (void**) &data);
-    memcpy(data, mesh->verts, dataSize);
-    vkUnmapMemory(context->device->device, vertBufferMemory);
+    // use a single-use command buffer to copy the data
+    SpiritCommandBuffer buf = spCreateCommandBufferAndBeginSingleUse(context->device);
+
+    VkBufferCopy copyData = {
+        .dstOffset = 0,
+        .srcOffset = 0,
+        .size = bufferSize
+    };
+
+    vkCmdCopyBuffer(buf->handle, vertBufferBuffer, vertBuffer, 1, &copyData);
+
+    if (spCommandBufferSubmitSingleUse(context->device, buf))
+    {
+        log_fatal("Failed to create mesh");
+        return NULL;
+    }
+
+    spCommandBufferWait(context->device, buf, UINT32_MAX);
+
+    spDestroyCommandBuffer(context->device, buf);
+
+    // destroy temp buffers
+    vkDestroyBuffer(
+        context->device->device,
+        vertBufferBuffer,
+        NULL);
+    vkFreeMemory(
+        context->device->device,
+        vertBufferMemoryBuffer,
+        NULL);
 
     // update mesh t reference vertex data
     mesh->vertexBuffer = vertBuffer;

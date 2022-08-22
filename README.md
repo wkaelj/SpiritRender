@@ -4,7 +4,8 @@ A vulkan rendering engine. It should be cross platform, and there are utilties t
 Not finished yet, cannot actually do anything.
 
 # Cloning
-You must clone the repository using `git clone [link] --recurse-submodules`, then copy the libs/SPIRV-Headers into the `external` folder of libs/SPIRV-Tools, otherwise it will get angry and won't compile.
+You must clone the repository using `git clone [link] --recurse-submodules`, and
+have the vulkan sdk installed
 
 ## Build Instructions
 Must have the VulkanSDK and glfw installed. Probably only works on MacOS and Linux, and I have only tested
