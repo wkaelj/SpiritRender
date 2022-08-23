@@ -46,12 +46,8 @@ int main (int argc, char **argv) {
         spPlatformDeleteFolder(GLSL_LOADER_CACHE_FOLDER);
         return 0;
     }
-    init_timer();
-
 
     mainlooptest();
-
-    terminate_timer();
 
     return 0;
 }
@@ -127,7 +123,7 @@ void mainlooptest (void) {
             if(spContextHandleWindowResized(context)) continue;
         } else if (windowState == SPIRIT_WINDOW_RESIZING) continue;
 
-        time_function(spMaterialAddMesh(material, meshRef));
+        // time_function(spMaterialAddMesh(material, meshRef));
 
         SpiritResult result = SPIRIT_SUCCESS;
         time_function_with_return(spContextSubmitFrame(context), result);

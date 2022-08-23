@@ -43,10 +43,10 @@ SpiritWindow spCreateWindow (SpiritWindowCreateInfo *createInfo) {
         window->windowSize = createInfo->windowSize;
     }
 
-    glfwWindowHint (GLFW_CLIENT_API, GLFW_NO_API);
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     // glfwWindowHint (GLFW_RESIZABLE, GLFW_FALSE); // RESIZABLE
 
-    window->window = glfwCreateWindow (
+    window->window = glfwCreateWindow(
         window->windowSize.w,
         window->windowSize.h,
         window->title,
@@ -76,7 +76,7 @@ SpiritResult spDestroyWindow (SpiritWindow window) {
         glfwTerminate ();
         return SPIRIT_FAILURE;
     }
-    glfwTerminate ();
+    glfwTerminate();
 
     free(window);
 

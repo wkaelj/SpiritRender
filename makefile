@@ -32,4 +32,4 @@ dmalloc:
 
 cmake:
 	mkdir -p $(BUILDFDR)
-	cmake -B $(BUILDFDR)
+	cmake -B $(BUILDFDR) -DCMAKE_BUILD_TYPE=Debug

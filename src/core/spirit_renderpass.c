@@ -208,7 +208,8 @@ SpiritResult createFramebuffers(
     }
 
     // allocate memory to fit framebuffers
-    renderPass->framebuffers = new_array(VkFramebuffer, swapchain->imageCount);
+    if (!renderPass->framebuffers && renderPass->framebufferCount == 0)
+        renderPass->framebuffers = new_array(VkFramebuffer, swapchain->imageCount);
     renderPass->framebufferCount = swapchain->imageCount;
 
     for (size_t i = 0; i < swapchain->imageCount; i++)

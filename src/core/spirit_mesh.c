@@ -23,16 +23,16 @@ SpiritMesh spCreateMesh(const SpiritContext context, const SpiritMeshCreateInfo 
     }
 
     // obtain memory from device
-    VkBuffer vertBufferBuffer;
-    VkDeviceMemory vertBufferMemoryBuffer;
+    VkBuffer hostBuffer;
+    VkDeviceMemory hostBufferMemory;
     VkDeviceSize bufferSize = dataSize;
     if(spDeviceCreateBuffer(
         context->device,
         bufferSize,
-        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
-        &vertBufferBuffer,
-        &vertBufferMemoryBuffer))
+        &hostBuffer,
+        &hostBufferMemory))
     {
         log_error("Failed to create mesh");
         return NULL;
@@ -40,33 +40,19 @@ SpiritMesh spCreateMesh(const SpiritContext context, const SpiritMeshCreateInfo 
 
     // copy memory into data
     Vertex *data;
-    vkMapMemory(context->device->device, vertBufferMemoryBuffer, 0, bufferSize, 0, (void**) &data);
+    vkMapMemory(context->device->device, hostBufferMemory, 0, bufferSize, 0, (void**) &data);
     memcpy(data, mesh->verts, dataSize);
-    vkUnmapMemory(context->device->device, vertBufferMemoryBuffer);
+    vkUnmapMemory(context->device->device, hostBufferMemory);
 
-    // copy memory into local buffers
-    if(spDeviceCreateBuffer(
-        context->device,
-        bufferSize,
-        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
-        &vertBufferBuffer,
-        &vertBufferMemoryBuffer))
-    {
-        log_error("Failed to create mesh");
-        return NULL;
-    }
-
-    // copy mesh data into local buffer, for performance
-    VkBuffer vertBuffer;
-    VkDeviceMemory vertBufferMemory;
+    VkBuffer localBuffer;
+    VkDeviceMemory localBufferMemory;
         if(spDeviceCreateBuffer(
         context->device,
         bufferSize,
         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        &vertBuffer,
-        &vertBufferMemory))
+        &localBuffer,
+        &localBufferMemory))
     {
         log_error("Failed to create mesh");
         return NULL;
@@ -81,7 +67,7 @@ SpiritMesh spCreateMesh(const SpiritContext context, const SpiritMeshCreateInfo 
         .size = bufferSize
     };
 
-    vkCmdCopyBuffer(buf->handle, vertBufferBuffer, vertBuffer, 1, &copyData);
+    vkCmdCopyBuffer(buf->handle, hostBuffer, localBuffer, 1, &copyData);
 
     if (spCommandBufferSubmitSingleUse(context->device, buf))
     {
@@ -96,16 +82,16 @@ SpiritMesh spCreateMesh(const SpiritContext context, const SpiritMeshCreateInfo 
     // destroy temp buffers
     vkDestroyBuffer(
         context->device->device,
-        vertBufferBuffer,
+        hostBuffer,
         NULL);
     vkFreeMemory(
         context->device->device,
-        vertBufferMemoryBuffer,
+        hostBufferMemory,
         NULL);
 
     // update mesh t reference vertex data
-    mesh->vertexBuffer = vertBuffer;
-    mesh->vetexBufferMemory = vertBufferMemory;
+    mesh->vertexBuffer = localBuffer;
+    mesh->vetexBufferMemory = localBufferMemory;
 
     return mesh;
 }
@@ -179,7 +165,6 @@ SpiritResult spReleaseMesh(
         spDestroyMesh(
             meshReference.meshManager->contextReference,
             meshReference.node->mesh);
-        free(meshReference.node->mesh);
         free(meshReference.node);
         meshReference.meshManager->meshCount--;
     }

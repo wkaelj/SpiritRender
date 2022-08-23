@@ -118,6 +118,8 @@ SpiritContext spCreateContext(SpiritContextCreateInfo *createInfo)
 
     LIST_INIT(&context->materials);
 
+    context->currentFrame = 0;
+
     log_verbose("Created Context");
 
     return context;
@@ -172,8 +174,9 @@ SpiritResult spContextSubmitFrame(SpiritContext context)
     }
 
     u32 imageIndex;
-
-    if (beginFrame(context, &imageIndex))
+    SpiritResult result;
+    time_function_with_return(beginFrame(context, &imageIndex), result);
+    if (result)
     {
         log_fatal("Error beginning frame");
         return SPIRIT_FAILURE;
@@ -182,13 +185,18 @@ SpiritResult spContextSubmitFrame(SpiritContext context)
     struct t_ContextMaterialListNode *np;
     LIST_FOREACH(np, &context->materials, data)
     {
-        if (spMaterialRecordCommands(context, np->material, imageIndex))
+        time_function_with_return(
+            spMaterialRecordCommands(context, np->material, imageIndex),
+            result);
+
+        if (result)
         {
             log_error("Material %s failed to record commands", np->material->name);
         }
     }
 
-    if (endFrame(context, imageIndex))
+    time_function_with_return(endFrame(context, imageIndex), result);
+    if (result)
     {
         log_fatal("Error ending frame");
         return SPIRIT_FAILURE;
@@ -275,13 +283,23 @@ SpiritResult spDestroyContext(SpiritContext context)
 
     for (u32 i = 0; context->commandBuffers && i < context->commandBufferCount; ++i)
     {
-        if (context->commandBuffers[i])
-            spDestroyCommandBuffer(context->device, context->commandBuffers[i]);
+        SpiritCommandBuffer buf = context->commandBuffers[i];
+        if (buf)
+        {
+            if (buf->state == SPIRIT_COMMAND_BUFFER_STATE_BUSY)
+                spCommandBufferWait(context->device, buf, UINT32_MAX);
+            else if (buf->state == SPIRIT_COMMAND_BUFFER_STATE_RECORDING)
+                spCommandBufferEnd(buf);
+
+            spDestroyCommandBuffer(context->device, buf);
+        }
     }
 
     context->swapchain && spDestroySwapchain(context->swapchain, context->device);
     context->device && spDestroyDevice(context->device);
     context->window && spDestroyWindow (context->window);
+
+    free(context->commandBuffers);
 
     free(context);
 

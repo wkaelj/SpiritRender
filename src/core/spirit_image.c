@@ -66,8 +66,9 @@ SpiritResult spCreateImage(
     output->imageFormat = createInfo->format;
     output->aspectFlags = createInfo->aspectFlags;
 
+    output->view = NULL;
+
     if (createInfo->withImageView) spCreateImageView(device, output);
-    else output->view = NULL;
 
     return SPIRIT_SUCCESS;
 }
