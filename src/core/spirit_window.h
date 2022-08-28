@@ -2,13 +2,13 @@
 #include <spirit_header.h>
 
 // Create a window, with a given size
-// 
-// 
+//
+//
 // Kael Johnston Feb 26 2022
 
 //
 // types
-// 
+//
 
 typedef struct t_SpiritWindowCreateInfo
 {
@@ -34,70 +34,73 @@ typedef enum e_SpiritWindowState
 
 /**
  * @brief Create a window for the current platform
- * 
+ *
  * @param createInfo a pointer to a SpiritWindowCreateInfo struct, with info
  * on how to create the window
- * @return SpiritWindow 
+ * @return SpiritWindow
  */
-SpiritWindow spCreateWindow(SpiritWindowCreateInfo *createInfo);
+SpiritWindow spCreateWindow(SpiritWindowCreateInfo *createInfo) SPIRIT_NONULL(1);
 
 /**
  * @brief Close and destroy a SpiritWindow
- * 
+ *
  * @param window the window to close
- * @return SpiritResult 
+ * @return SpiritResult
  */
-SpiritResult spDestroyWindow(SpiritWindow window);
+SpiritResult spDestroyWindow(SpiritWindow window) SPIRIT_NONULL(1);
 
 /**
- * @brief Update a window and check if it has been closed or resized by the 
+ * @brief Update a window and check if it has been closed or resized by the
  * user.
- * 
- * @param window 
- * @return SpiritWindowState 
+ *
+ * @param window
+ * @return SpiritWindowState
  */
-SpiritWindowState spWindowGetState(SpiritWindow window);
+SpiritWindowState spWindowGetState(SpiritWindow window) SPIRIT_NONULL(1);
 
 /**
  * @brief resize the window
- * 
- * @param window 
+ *
+ * @param window
  * @param w the window width in screen units
  * @param h the window height in screen units
- * @return SpiritResult 
+ * @return SpiritResult
  */
-SpiritResult spResizeWindow(SpiritWindow window, uint32_t w, uint32_t h);
+SpiritResult spResizeWindow(SpiritWindow window, uint32_t w, uint32_t h)
+    SPIRIT_NONULL(1);
 
 /**
  * @brief Get the window size in pixels, not screen units.
- * 
+ *
  * @param window the window
- * @return SpiritResolution the window size in pixels 
+ * @return SpiritResolution the window size in pixels
  */
-SpiritResolution spWindowGetPixelSize(SpiritWindow window);
+SpiritResolution spWindowGetPixelSize(SpiritWindow window) SPIRIT_NONULL(1);
 
 /**
  * @brief Get the size of the window in screen units
- * 
- * @param window 
- * @return SpiritResolution 
+ *
+ * @param window
+ * @return SpiritResolution
  */
-SpiritResolution spWindowGetSize(SpiritWindow window);
+SpiritResolution spWindowGetSize(SpiritWindow window) SPIRIT_NONULL(1);
 
 /**
  * @brief Get the GPU extensions required to support
  * the window
- * 
- * @param window 
+ *
+ * @param window
  * @return SpiritWindowExtensions (const char **)
  */
-SpiritWindowExtensions spWindowGetExtensions (SpiritWindow window);
+SpiritWindowExtensions spWindowGetExtensions(SpiritWindow window)
+    SPIRIT_NONULL(1);
 
 /**
  * @brief Get a window surface for vulkan to render too.
- * 
- * @param window 
+ *
+ * @param window
  * @param instance a vulkan instance
- * @return VkSurfaceKHR 
+ * @return VkSurfaceKHR
  */
-VkSurfaceKHR spWindowGetSurface(SpiritWindow window, VkInstance instance);
+VkSurfaceKHR spWindowGetSurface(SpiritWindow window, VkInstance instance)
+    SPIRIT_NONULL(1, 2);

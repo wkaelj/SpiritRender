@@ -14,10 +14,11 @@ void window_size_callback(GLFWwindow* window, int width, int height);
 
 SpiritWindow spCreateWindow (SpiritWindowCreateInfo *createInfo) {
 
-    SpiritWindow window = new_var(struct t_SpiritWindow);
+    SpiritWindow window = new_var(struct t_SpiritWindow); // alloc
 
     const char *glfwError;
-    if (glfwInit () != GLFW_TRUE) {
+    if (glfwInit () != GLFW_TRUE) // alloc
+    {
         glfwGetError (&glfwError);
         log_error("GLFW error: %s", glfwError);
         return NULL;
@@ -26,7 +27,7 @@ SpiritWindow spCreateWindow (SpiritWindowCreateInfo *createInfo) {
     window->title = createInfo->title;
 
     GLFWmonitor *windowMonitor = NULL;
-    if (createInfo->fullscreen) windowMonitor = glfwGetPrimaryMonitor ();
+    if (createInfo->fullscreen) windowMonitor = glfwGetPrimaryMonitor();
     if (createInfo->fullscreen && windowMonitor == NULL) {
         glfwGetError (&glfwError);
         log_error("No fullscreen monitor available! GLFW error %s", glfwError);
@@ -34,26 +35,32 @@ SpiritWindow spCreateWindow (SpiritWindowCreateInfo *createInfo) {
     }
 
     if (createInfo->fullscreen) {
+
+        // use fullscreen window height
+        int fullWidth, fullHeight;
         glfwGetMonitorWorkarea (
                 windowMonitor,
                 NULL, NULL,
-                (int*) &window->windowSize.w,
-                (int*) &window->windowSize.h);
+                &fullWidth,
+                &fullHeight);
+
+        window->windowSize.w = fullWidth;
+        window->windowSize.h = fullHeight;
     } else {
         window->windowSize = createInfo->windowSize;
     }
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    // glfwWindowHint (GLFW_RESIZABLE, GLFW_FALSE); // RESIZABLE
 
-    window->window = glfwCreateWindow(
+    window->window = glfwCreateWindow( // alloc
         window->windowSize.w,
         window->windowSize.h,
         window->title,
         windowMonitor,
         NULL);
 
-    if (window->window == NULL) {
+    if (window->window == NULL)
+    {
         glfwGetError (&glfwError);
         log_fatal("Failed to create window. GLFW Error: %s", glfwError);
     }
@@ -65,20 +72,12 @@ SpiritWindow spCreateWindow (SpiritWindowCreateInfo *createInfo) {
     return window;
 }
 
-SpiritResult spDestroyWindow (SpiritWindow window) {
+SpiritResult spDestroyWindow (SpiritWindow window)
+{
 
-    glfwDestroyWindow (window->window);
-    // handle error
-    if (glfwGetError (NULL) != GLFW_NO_ERROR) {
-        const char *description;
-        glfwGetError (&description);
-        log_error("Failed to close window: %s", description);
-        glfwTerminate ();
-        return SPIRIT_FAILURE;
-    }
-    glfwTerminate();
-
+    glfwDestroyWindow(window->window);
     free(window);
+    glfwTerminate();
 
     log_verbose("Closing window");
     return SPIRIT_SUCCESS;
@@ -101,9 +100,8 @@ void window_size_callback(GLFWwindow* window, int width, int height)
 
 SpiritWindowState spWindowGetState(SpiritWindow window)
 {
-
-    db_assert_msg(window && window->window, "Window cannot be null");
     const char *description = NULL;
+
     glfwPollEvents();
     if (glfwGetError(&description))
     {
