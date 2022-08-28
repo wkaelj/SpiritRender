@@ -46,9 +46,11 @@ shaderc_shader_kind convertShaderType(SpiritShaderType type)
     case SPIRIT_SHADER_TYPE_AUTO_DETECT:
         log_error("Must pass a valid shader type for shader compilation");
         shadercType = 0;
-    case SPIRIT_SHADER_TYPE_MAX:
+        break;
+    default: // SPIRIT_SHADER_TYPE_MAX
         log_error("Must pass a valid shader type for shader compilation(not MAX)");
         shadercType = 0;
+        break;
     }
 
     return shadercType;
@@ -72,7 +74,7 @@ extern SpiritShader spLoadCompiledShader(const char *path, SpiritShaderType type
             0ll, 0};
     }
 
-    db_assert_msg(shaderCodeSize, "shaderCodeSize was 0");
+    db_assert(shaderCodeSize != 0);
 
     void *shaderCodeBinary = malloc(shaderCodeSize);
     spReadFileBinary(shaderCodeBinary, path, shaderCodeSize);

@@ -1,20 +1,25 @@
+/**
+ * @file spirit_pipeline.h
+ * @author Kael Johnston (wkaelj@gmail.com)
+ * @brief Create rendering pipelines
+ * @version 0.2
+ * @date 2022-08-28
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
+
 #pragma once
 #include <spirit_header.h>
-#include "core/spirit_types.h"
-#include "spirit_device.h"
-#include "spirit_renderpass.h"
-#include "spirit_mesh.h"
-
-// Creating and managment of pipelines
-// multiple pipelines can share the same device
-//
-//
-// Kael Johnston April 22 2022
 
 //
 // Types
 //
 
+/**
+ * @brief Informatino to create a pipeline.
+ *
+ */
 typedef struct t_SpiritPipelineCreateInfo {
     const char *vertexShader;     // array of shader names
     const char *fragmentShader; // num of shaders
@@ -27,20 +32,39 @@ struct t_SpiritPipeline
     VkPipelineLayout layout;
 };
 
-// create a new render pass, can optionaly pass a old pipeline which will
-// be recreated
+/**
+ * @brief Create a new pipeline
+ *
+ * @param device
+ * @param createInfo
+ * @param renderPass
+ * @param optionalPipeline
+ * @return SpiritPipeline
+ */
 SpiritPipeline spCreatePipeline (
     const SpiritDevice        device,
     SpiritPipelineCreateInfo *createInfo,
-    const SpiritSwapchain     swapchain,
     const SpiritRenderPass    renderPass,
     SpiritPipeline            optionalPipeline);
 
+/**
+ * @brief Bind a pipeline to a command buffer
+ *
+ * @param pipeline
+ * @param buffer
+ * @return SpiritResult
+ */
 SpiritResult spPipelineBindCommandBuffer(
     SpiritPipeline pipeline,
     SpiritCommandBuffer buffer);
 
-// destroy a pipeline and free associated memory
+/**
+ * @brief Destroy a pipeline
+ *
+ * @param device
+ * @param pipeline
+ * @return SpiritResult
+ */
 SpiritResult spDestroyPipeline (
     SpiritDevice   device,
     SpiritPipeline pipeline);

@@ -211,10 +211,6 @@ SpiritResult spSwapchainAquireNextImage(
     u32 *imageIndex)
 {
 
-    db_assert_msg(device, "Must have a valid devce");
-    db_assert_msg(swapchain, "Must have a valid swapchain");
-    db_assert_msg(imageIndex, "imageIndex must be a valid pointer to a u32");
-
     if (vkAcquireNextImageKHR(
         device->device,
         swapchain->swapchain,
@@ -262,9 +258,6 @@ SpiritResult createImages(const SpiritDevice device, SpiritSwapchain swapchain)
         swapchain->swapchain,
         &swapchain->imageCount,
         NULL);
-
-    if (swapchain->imageCount > 3)
-        log_warning("Unexpected image count %u", swapchain->imageCount);
 
     // allocate new array of images, and populate it
     VkImage imageBuf[swapchain->imageCount];

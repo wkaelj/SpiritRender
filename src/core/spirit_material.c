@@ -1,7 +1,5 @@
 #include "spirit_material.h"
 
-#include "core/spirit_types.h"
-#include "spirit_header.h"
 #include "spirit_renderpass.h"
 #include "spirit_pipeline.h"
 #include "spirit_context.h"
@@ -10,8 +8,15 @@
 #include "spirit_command_buffer.h"
 
 //
-// Structures
+// Helper functions
 //
+
+SPIRIT_INLINE void clearQueue(SpiritMaterial material)
+{
+
+    while (!LIST_EMPTY(&material->meshList))
+        LIST_REMOVE(LIST_FIRST(&material->meshList), data);
+}
 
 //
 // Public functions
@@ -28,10 +33,10 @@ SpiritMaterial spCreateMaterial(
     // render pass
     SpiritRenderPassCreateInfo renderPassCreateInfo = {};
 
-    material->renderPass = spCreateRenderPass(
+    time_function_with_return(spCreateRenderPass(
             &renderPassCreateInfo,
             context->device,
-            context->swapchain);
+            context->swapchain), material->renderPass);
     if (material->renderPass == NULL)
     {
         free(material);
@@ -46,12 +51,11 @@ SpiritMaterial spCreateMaterial(
 
     pipelineCreateInfo.resolution = context->screenResolution;
 
-    material->pipeline = spCreatePipeline (
+    time_function_with_return(spCreatePipeline (
         context->device,
         &pipelineCreateInfo,
-        context->swapchain,
         material->renderPass,
-        NULL);
+        NULL), material->pipeline);
 
     if (material->pipeline == NULL)
     {
@@ -103,28 +107,43 @@ SpiritResult spMaterialRecordCommands(
     if (buf->state != SPIRIT_COMMAND_BUFFER_STATE_RECORDING)
     {
         log_error("Command buffer must be recording 🤓");
+        clearQueue(material);
         return SPIRIT_FAILURE;
     }
 
-    if(spRenderPassBegin(
+    SpiritResult result;
+    time_function_with_return(spRenderPassBegin(
         material->renderPass,
         context->screenResolution,
         imageIndex,
-        context->commandBuffers[imageIndex]))
+        context->commandBuffers[imageIndex]), result);
+    if (result)
     {
+        clearQueue(material);
+        log_error("Failed to begin render pass");
         return SPIRIT_FAILURE;
     }
 
-
-
-    spPipelineBindCommandBuffer(
+    time_function_with_return(spPipelineBindCommandBuffer(
         material->pipeline,
-        buf);
+        buf), result);
+
+    if (result)
+    {
+        log_error("Failed to bind command buffer");
+        return SPIRIT_FAILURE;
+    }
 
     // iterate through meshes and submit vertexes
     struct t_MaterialListNode *currentMesh = material->meshList.lh_first;
+
     while(currentMesh != NULL)
     {
+
+        #ifndef FUNCTION_TIMER_NO_DIAGNOSTIC
+        struct FunctionTimerData timer = start_timer("vertex commands");
+        #endif
+
         VkBuffer vertBuffers[] =
         {
             spMeshManagerAccessMesh(currentMesh->mesh)->vertexBuffer
@@ -141,9 +160,13 @@ SpiritResult spMaterialRecordCommands(
         spReleaseMesh(oldNode->mesh);
         LIST_REMOVE(oldNode, data);
         free(oldNode);
+
+        #ifndef FUNCTION_TIMER_NO_DIAGNOSTIC
+        end_timer(timer);
+        #endif
     }
 
-    spRenderPassEnd(context->commandBuffers[imageIndex]);
+    time_function(spRenderPassEnd(context->commandBuffers[imageIndex]));
 
     return SPIRIT_SUCCESS;
 

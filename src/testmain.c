@@ -61,11 +61,8 @@ void mainlooptest (void) {
     contextInfo.windowFullscreen = false;
 
     struct FunctionTimerData startup = start_timer("startup");
-    SpiritContext context = spCreateContext(&contextInfo);
-
-    log_debug("Context res %lux%lu",
-        context->screenResolution.w,
-        context->screenResolution.h);
+    SpiritContext context;
+    time_function_with_return(spCreateContext(&contextInfo), context);
 
     if (context == NULL)
         return;
@@ -81,9 +78,10 @@ void mainlooptest (void) {
         .vertexShader = "shaders/simple_shader.vert"
     };
 
-    SpiritMaterial material = spCreateMaterial(
+    SpiritMaterial material;
+    time_function_with_return(spCreateMaterial(
         context,
-        &materialInfo);
+        &materialInfo), material);
 
     if (material == NULL)
         return;
@@ -105,7 +103,8 @@ void mainlooptest (void) {
 
     SpiritMesh mesh = spCreateMesh(context, &meshInfo);
 
-    SpiritMeshManager meshManager = spCreateMeshManager(context, NULL);
+    SpiritMeshManager meshManager;
+    time_function_with_return(spCreateMeshManager(context, NULL), meshManager);
     const SpiritMeshReference meshRef = spMeshManagerAddMesh(meshManager, mesh);
 
     end_timer(startup);
@@ -123,7 +122,7 @@ void mainlooptest (void) {
             if(spContextHandleWindowResized(context)) continue;
         } else if (windowState == SPIRIT_WINDOW_RESIZING) continue;
 
-        // time_function(spMaterialAddMesh(material, meshRef));
+        time_function(spMaterialAddMesh(material, meshRef));
 
         SpiritResult result = SPIRIT_SUCCESS;
         time_function_with_return(spContextSubmitFrame(context), result);
@@ -317,7 +316,7 @@ bool TestGLSLLoader(const char *restrict shaderPath)
     spStringStrip(stripBuf, &bufLen, shaderPath, '/');
 
     char buf[256];
-    npf_snprintf(buf, bufLen, "%s%s.spv", GLSL_LOADER_CACHE_FOLDER, stripBuf);
+    snprintf(buf, bufLen, "%s%s.spv", GLSL_LOADER_CACHE_FOLDER, stripBuf);
 
     spPlatformDeleteFile(buf);
 

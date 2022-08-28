@@ -7,9 +7,6 @@ SpiritResult spCreateImage(
     SpiritImageCreateInfo *restrict createInfo,
     SpiritImage *restrict output)
 {
-
-    db_assert_msg(output, "Output cannot be null");
-
     VkImageCreateInfo imageInfo = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
         .flags = createInfo->flags,

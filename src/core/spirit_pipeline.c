@@ -1,6 +1,8 @@
 #include "spirit_pipeline.h"
 #include "spirit_command_buffer.h"
 #include <glsl-loader/glsl_loader.h>
+#include "spirit_mesh.h"
+#include "spirit_renderpass.h"
 
 // Implementation of spirit_pipeline.h
 //
@@ -70,15 +72,13 @@ static void defaultPipelineConfig(
 SpiritPipeline spCreatePipeline (
     const SpiritDevice        device,
     SpiritPipelineCreateInfo *createInfo,
-    const SpiritSwapchain     swapchain,
     const SpiritRenderPass    renderPass,
-    SpiritPipeline            optionalPipeline)
+    SpiritPipeline            optionalPipeline __attribute_maybe_unused__)
 {
 
     SpiritPipeline pipeline = new_var (struct t_SpiritPipeline);
 
     // load shader modules
-    const u32 shaderCount = 2;
     VkShaderModule vertexShader, fragmentShader;
     if (loadShaderCode(
         device,
@@ -351,7 +351,6 @@ void defaultPipelineConfig(
             VK_COLOR_COMPONENT_G_BIT |
             VK_COLOR_COMPONENT_B_BIT |
             VK_COLOR_COMPONENT_A_BIT,
-        .blendEnable = VK_FALSE,
         .srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
         .dstColorBlendFactor = VK_BLEND_FACTOR_ZERO,
         .colorBlendOp =        VK_BLEND_OP_ADD,

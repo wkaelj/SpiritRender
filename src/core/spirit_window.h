@@ -92,7 +92,8 @@ SpiritResolution spWindowGetSize(SpiritWindow window) SPIRIT_NONULL(1);
  * @param window
  * @return SpiritWindowExtensions (const char **)
  */
-SpiritWindowExtensions spWindowGetExtensions(SpiritWindow window)
+SpiritWindowExtensions spWindowGetExtensions(
+    SpiritWindow window __attribute_maybe_unused__)
     SPIRIT_NONULL(1);
 
 /**

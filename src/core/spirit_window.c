@@ -89,7 +89,10 @@ static SpiritResolution g_windowSize = {
     .h = 0
 };
 
-void window_size_callback(GLFWwindow* window, int width, int height)
+void window_size_callback(
+    GLFWwindow* window __attribute_maybe_unused__,
+    int width,
+    int height)
 {
     g_glfwWindowWasResized = true;
     g_windowSize = (SpiritResolution) {
@@ -119,11 +122,14 @@ SpiritWindowState spWindowGetState(SpiritWindow window)
         return SPIRIT_WINDOW_CLOSED;
     }
 
-    if(!g_glfwWindowWasResized && window->resizing)
+
+    // the has stopped resizing
+    if (!g_glfwWindowWasResized && window->resizing)
     {
         return SPIRIT_WINDOW_RESIZED;
     }
 
+    // the window is being resized
     if (g_glfwWindowWasResized)
     {
         g_glfwWindowWasResized = false;
@@ -138,7 +144,7 @@ SpiritWindowState spWindowGetState(SpiritWindow window)
     return SPIRIT_WINDOW_NORMAL;
 }
 
-SpiritResult spResizeWindow (SpiritWindow window, uint32_t w, uint32_t h) {
+SpiritResult spResizeWindow(SpiritWindow window, uint32_t w, uint32_t h) {
 
     if (window->window == NULL) {
         log_error("spResizeWindow: window passed is NULL");
@@ -149,7 +155,7 @@ SpiritResult spResizeWindow (SpiritWindow window, uint32_t w, uint32_t h) {
     return SPIRIT_SUCCESS;
 }
 
-SpiritResolution spWindowGetPixelSize (SpiritWindow window) {
+SpiritResolution spWindowGetPixelSize(SpiritWindow window) {
 
     const char *glfwError;
 

@@ -13,14 +13,16 @@
 // Types
 //
 
+#ifndef FUNCTION_TIMER_NO_DIAGNOSTIC
+
 struct TimerData {
     char functionName[FUNCTION_LENGTH_BUFFER];
-    clock_t avgTime;
-    clock_t maxTime;
-    clock_t minTime;
+    f64 avgTime;
+    f64 maxTime;
+    f64 minTime;
     // remember blank
     u64 totalExecutionCount; // used for average
-    clock_t totalExecutionTime; // used for average
+    f64 totalExecutionTime; // used for average
 };
 
 
@@ -41,10 +43,10 @@ struct {
 //
 
 // update avg, min and max for an existing element
-void addDataPoint(struct FunctionListNode_t *node, clock_t executionTime);
+void addDataPoint(struct FunctionListNode_t *node, f64 executionTime);
 
 // add a new element to the list
-void addNewElement(const char *name, u64 executionTime);
+void addNewElement(const char *name, f64 executionTime);
 
 // check to see if a node has been created, if so get a reference
 struct FunctionListNode_t *findFunctionData(const char *functionName);
@@ -134,7 +136,7 @@ void end_timer(struct FunctionTimerData t)
         return;
     }
 
-    const u64 executionTime = endTime - t.startTime;
+    const f64 executionTime = clockToMs(endTime - t.startTime);
 
 
     struct FunctionListNode_t *node = findFunctionData(t.functionName);
@@ -155,14 +157,14 @@ void end_timer(struct FunctionTimerData t)
 void createTimerString(char *restrict buf, struct TimerData data)
 {
     // func,avgTime,maxTime,minTime, ,totalExecutionCount,totalExecutionTime
-    snprintf(buf, LINE_LENGTH_BUFFER, "%s,%lu,%lu,%lu\n",
+    snprintf(buf, LINE_LENGTH_BUFFER, "%s,%fms,%fms,%fms\n",
         data.functionName,
         data.avgTime,
         data.maxTime,
         data.minTime);
 }
 
-void addDataPoint(struct FunctionListNode_t *node, clock_t executionTime)
+void addDataPoint(struct FunctionListNode_t *node, f64 executionTime)
 {
     struct TimerData *data = &node->timerData;
 
@@ -175,7 +177,7 @@ void addDataPoint(struct FunctionListNode_t *node, clock_t executionTime)
 }
 
 // add a new element to the list
-void addNewElement(const char *name, u64 executionTime)
+void addNewElement(const char *name, f64 executionTime)
 {
     struct FunctionListNode_t *node = new_var(struct FunctionListNode_t);
     node->timerData = (struct TimerData) {
@@ -216,7 +218,7 @@ void exportListToFile(struct FunctionListHead_t *listHead, const char *restrict 
     spPlatformLocalizeFileName(path, filepath, &pathLength);
 
     FILE *file = fopen(path, "w");
-    fprintf(file, "Function Name,Avg Time(CPU ticks),Max Time, Min Time\n");
+    fprintf(file, "Function Name,Avg Time(ms),Max Time(ms), Min Time(ms)\n");
 
     printf("Data:");
     // write each element to string
@@ -236,8 +238,10 @@ f64 clockToMs(clock_t time)
 {
 
     f64 ftime = time;
-    ftime *= 1000.0f;
+    ftime *= 1000.0;
     ftime /= CLOCKS_PER_SEC;
 
     return ftime;
 }
+
+#endif

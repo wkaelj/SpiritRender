@@ -9,16 +9,16 @@
  * It can be disabled by defining FUNCTION_TIMER_NO_DIAGNOSTIC
  * @version 0.1
  * @date 2022-08-07
- * 
+ *
  * @copyright Copyright (c) 2022
- * 
+ *
  */
 
 
 
 /**
  * @brief time the function named call
- * 
+ *
  */
 #ifndef FUNCTION_TIMER_NO_DIAGNOSTIC
 #define time_function(call) \
@@ -37,7 +37,7 @@
 
 /**
  * @brief time a function, and set variable to be the return of the function
- * 
+ *
  */
 #ifndef FUNCTION_TIMER_NO_DIAGNOSTIC
 #define time_function_with_return(function, variable) \
@@ -53,6 +53,9 @@
     } while(0)
 #endif
 
+
+#ifndef FUNCTION_TIMER_NO_DIAGNOSTIC
+
 struct FunctionTimerData {
     unsigned long long startTime;
     char functionName[128];
@@ -60,13 +63,13 @@ struct FunctionTimerData {
 
 /**
  * @brief Initialize the function timer
- * 
+ *
  */
 void init_timer(void);
 
 /**
  * @brief terminate the function timer
- * 
+ *
  */
 void terminate_timer(void);
 
@@ -74,7 +77,7 @@ void terminate_timer(void);
 /**
  * @brief Start the timer. Should be called right before the timed function.
  * This also truncates the string, so functionName(args) becomes functionName.
- * 
+ *
  * @param func the name of the function being timed.
  */
 struct FunctionTimerData start_timer(const char *func);
@@ -82,8 +85,10 @@ struct FunctionTimerData start_timer(const char *func);
 /**
  * @brief End the function timer and store data. It should be called right after
  * the end of the function timer
- * 
+ *
  * @param t the object returned by start_timer, to calulate duration
- * 
+ *
  */
 void end_timer(struct FunctionTimerData t);
+
+#endif

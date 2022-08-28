@@ -9,10 +9,10 @@
 
 // debug_log function
 int debug_log(
-    DebugSeverity        severity, 
-    const char *file, 
-    const char *func, 
-    const int            line, 
+    DebugSeverity        severity,
+    const char *file,
+    const char *func,
+    const int            line,
     const char *format, ...)
 {
 
@@ -32,9 +32,9 @@ int debug_log(
     };
 
     // print error messege
-    npf_vsnprintf(bufferString1, BUFFER_LENGTH, format, args);
+    snprintf(bufferString1, BUFFER_LENGTH, format, args);
 
-    uint16_t strlen = npf_snprintf (
+    uint16_t strlen = snprintf(
         bufferString2,              // output
         BUFFER_LENGTH,              // max length
         ">>> %s (%s:%i)\n\t%s%s\n",  // format string
@@ -78,7 +78,7 @@ int unix_log_perror(
 
     u32 mLen;
     m && (mLen = strlen (m));
-    
+
 
     // add 2 chars to make room for newline and tab
     u32 length = fileLen + funcLen + lineLen + mLen;
@@ -92,7 +92,7 @@ int unix_log_perror(
     va_start (args, m);
 
     char consolidatedMessege[1024];
-    if (npf_vsnprintf (consolidatedMessege, 1024, m, args) > 1024)
+    if (snprintf (consolidatedMessege, 1024, m, args) > 1024)
     {
         log_error ("string length overflowed buffer!");
     }
@@ -100,12 +100,12 @@ int unix_log_perror(
     va_end (args);
 
     char prefix[length];
-    npf_snprintf (prefix, length, ">>> %s (%s:%s)\n\t%s%s%s",
+    snprintf (prefix, length, ">>> %s (%s:%s)\n\t%s%s%s",
         func, file, line,
         messegePrefix,
         consolidatedMessege,
         messegeSuffix);
-    
+
     perror (prefix);
 
     return SPIRIT_SUCCESS;

@@ -47,7 +47,6 @@ u32 g_executableDirectoryLength = 0;
 
 bool spPlatformIsAllowedFileOperation(const char *filepath)
 {
-
     const char *fileErr = "Illigal file operation. A file operation is "
         "being made outsidethe project directory.";
 
@@ -64,7 +63,6 @@ bool spPlatformIsAllowedFileOperation(const char *filepath)
 
 void spPlatformSetExecutableFolder(char *name)
 {
-
     // remove executable fild name from the path
     u32 pathLength = 0;
     spStringTruncate(NULL, &pathLength, name, '/', true);
@@ -88,7 +86,6 @@ u32 spPlatformGetExecutableFolderStrLen(void)
 
 SpiritResult spPlatformLocalizeFileName(char *output, const char *path, u32 *max)
 {
-
     const u32 pathLength = strlen(path);
 
     // handle paths that have been set to be non relative
@@ -147,7 +144,6 @@ char *spPlatformGetCWD(void)
 
 bool spPlatformTestForFile(const char *filepath)
 {
-
     localize_path(filepath, path, pathLength);
 
     if (access(path, F_OK | R_OK) == -1)
@@ -160,7 +156,6 @@ bool spPlatformTestForFile(const char *filepath)
 
 u64 spPlatformTestFileSize(const char *filepath)
 {
-
     localize_path(filepath, path, pathLength);
 
     struct stat data = (struct stat) {};
@@ -187,8 +182,6 @@ u64 spPlatformGetRunningTime(void)
 
 time_t spPlatformGetFileModifiedDate(const char *filepath)
 {
-    db_assert_msg(filepath, "Must have valid filepath");
-
     localize_path(filepath, path, pathLength);
 
     struct stat data;
@@ -199,14 +192,12 @@ time_t spPlatformGetFileModifiedDate(const char *filepath)
         return 1;
     }
 
-    return data.st_ctime;
+    return data.st_mtim.tv_sec;
 
 }
 
 SpiritResult spPlatformCreateFolder(const char *filepath)
 {
-    db_assert_msg(filepath, "Must pass a valid filepath");
-
     localize_path(filepath, path, pathLength);
 
     assert_allowed_file_operation(path);

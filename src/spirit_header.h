@@ -1,7 +1,9 @@
 #pragma once
 // Header file stores global dependencies for project
 
+// #ifdef NDEBUG
 #define DEBUG
+// #endif
 
 // attribute definitions
 #define SPIRIT_DEPRECATED __attribute_deprecated__ // mark a deprecated function
@@ -14,6 +16,7 @@
 #define __STDC_WANT_LIB_EXT1__ 1
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdbool.h>
 #include <assert.h>
 #include <string.h>
