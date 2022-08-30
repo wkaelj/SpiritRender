@@ -19,7 +19,7 @@ typedef struct t_SpiritWindowCreateInfo
 
 typedef struct t_SpiritWindowExtensions
 {
-    u32          count;
+    u32 count;
     const char **names;
 } SpiritWindowExtensions;
 
@@ -31,7 +31,6 @@ typedef enum e_SpiritWindowState
     SPIRIT_WINDOW_CLOSED
 } SpiritWindowState;
 
-
 /**
  * @brief Create a window for the current platform
  *
@@ -39,7 +38,8 @@ typedef enum e_SpiritWindowState
  * on how to create the window
  * @return SpiritWindow
  */
-SpiritWindow spCreateWindow(SpiritWindowCreateInfo *createInfo) SPIRIT_NONULL(1);
+SpiritWindow spCreateWindow(SpiritWindowCreateInfo *createInfo)
+    SPIRIT_NONULL(1);
 
 /**
  * @brief Close and destroy a SpiritWindow
@@ -92,8 +92,8 @@ SpiritResolution spWindowGetSize(SpiritWindow window) SPIRIT_NONULL(1);
  * @param window
  * @return SpiritWindowExtensions (const char **)
  */
-SpiritWindowExtensions spWindowGetExtensions(
-    SpiritWindow window __attribute_maybe_unused__)
+SpiritWindowExtensions
+spWindowGetExtensions(SpiritWindow window __attribute_maybe_unused__)
     SPIRIT_NONULL(1);
 
 /**

@@ -1,9 +1,9 @@
 #include "spirit_material.h"
 
-#include "spirit_renderpass.h"
-#include "spirit_pipeline.h"
 #include "spirit_context.h"
 #include "spirit_mesh.h"
+#include "spirit_pipeline.h"
+#include "spirit_renderpass.h"
 
 #include "spirit_command_buffer.h"
 
@@ -22,10 +22,8 @@ SPIRIT_INLINE void clearQueue(SpiritMaterial material)
 // Public functions
 //
 
-
 SpiritMaterial spCreateMaterial(
-    const SpiritContext context,
-    const SpiritMaterialCreateInfo *createInfo)
+    const SpiritContext context, const SpiritMaterialCreateInfo *createInfo)
 {
 
     SpiritMaterial material = new_var(struct t_SpiritMaterial);
@@ -33,61 +31,57 @@ SpiritMaterial spCreateMaterial(
     // render pass
     SpiritRenderPassCreateInfo renderPassCreateInfo = {};
 
-    time_function_with_return(spCreateRenderPass(
-            &renderPassCreateInfo,
-            context->device,
-            context->swapchain), material->renderPass);
+    time_function_with_return(
+        spCreateRenderPass(
+            &renderPassCreateInfo, context->device, context->swapchain),
+        material->renderPass);
     if (material->renderPass == NULL)
     {
         free(material);
-        log_error("Failed to make render pass for material '%s'", createInfo->name);
+        log_error(
+            "Failed to make render pass for material '%s'", createInfo->name);
         return NULL;
     }
 
     // create associated pipeline
     SpiritPipelineCreateInfo pipelineCreateInfo = {};
-    pipelineCreateInfo.vertexShader = createInfo->vertexShader;
-    pipelineCreateInfo.fragmentShader = createInfo->fragmentShader;
+    pipelineCreateInfo.vertexShader             = createInfo->vertexShader;
+    pipelineCreateInfo.fragmentShader           = createInfo->fragmentShader;
 
     pipelineCreateInfo.resolution = context->screenResolution;
 
-    time_function_with_return(spCreatePipeline (
-        context->device,
-        &pipelineCreateInfo,
-        material->renderPass,
-        NULL), material->pipeline);
+    time_function_with_return(
+        spCreatePipeline(
+            context->device, &pipelineCreateInfo, material->renderPass, NULL),
+        material->pipeline);
 
     if (material->pipeline == NULL)
     {
         spDestroyRenderPass(material->renderPass, context->device);
         free(material);
-        log_error("Failed to make pipeline for material '%s'", createInfo->name);
+        log_error(
+            "Failed to make pipeline for material '%s'", createInfo->name);
         return NULL;
     }
 
     LIST_INIT(&material->meshList);
 
     return material;
-
 }
 
-SpiritResult spMaterialUpdate(
-    const SpiritContext context,
-    SpiritMaterial material)
+SpiritResult
+spMaterialUpdate(const SpiritContext context, SpiritMaterial material)
 {
 
     return spRenderPassRecreateFramebuffers(
-        context->device,
-        material->renderPass,
-        context->swapchain);
+        context->device, material->renderPass, context->swapchain);
 }
 
-SpiritResult spMaterialAddMesh(
-    SpiritMaterial material,
-    const SpiritMeshReference meshRef)
+SpiritResult
+spMaterialAddMesh(SpiritMaterial material, const SpiritMeshReference meshRef)
 {
     struct t_MaterialListNode *newNode = new_var(struct t_MaterialListNode);
-    newNode->mesh = spCheckoutMesh(meshRef);
+    newNode->mesh                      = spCheckoutMesh(meshRef);
 
     LIST_INSERT_HEAD(&material->meshList, newNode, data);
     material->meshCount++;
@@ -95,12 +89,11 @@ SpiritResult spMaterialAddMesh(
 }
 
 SpiritResult spMaterialRecordCommands(
-    const SpiritContext context,
-    SpiritMaterial material,
-    const u32 imageIndex)
+    const SpiritContext context, SpiritMaterial material, const u32 imageIndex)
 {
 
-    db_assert_msg(imageIndex < context->commandBufferCount, "invalid image index");
+    db_assert_msg(
+        imageIndex < context->commandBufferCount, "invalid image index");
 
     SpiritCommandBuffer buf = context->commandBuffers[imageIndex];
 
@@ -112,11 +105,13 @@ SpiritResult spMaterialRecordCommands(
     }
 
     SpiritResult result;
-    time_function_with_return(spRenderPassBegin(
-        material->renderPass,
-        context->screenResolution,
-        imageIndex,
-        context->commandBuffers[imageIndex]), result);
+    time_function_with_return(
+        spRenderPassBegin(
+            material->renderPass,
+            context->screenResolution,
+            imageIndex,
+            context->commandBuffers[imageIndex]),
+        result);
     if (result)
     {
         clearQueue(material);
@@ -124,9 +119,8 @@ SpiritResult spMaterialRecordCommands(
         return SPIRIT_FAILURE;
     }
 
-    time_function_with_return(spPipelineBindCommandBuffer(
-        material->pipeline,
-        buf), result);
+    time_function_with_return(
+        spPipelineBindCommandBuffer(material->pipeline, buf), result);
 
     if (result)
     {
@@ -137,18 +131,16 @@ SpiritResult spMaterialRecordCommands(
     // iterate through meshes and submit vertexes
     struct t_MaterialListNode *currentMesh = material->meshList.lh_first;
 
-    while(currentMesh != NULL)
+    while (currentMesh != NULL)
     {
 
-        #ifndef FUNCTION_TIMER_NO_DIAGNOSTIC
+#ifndef FUNCTION_TIMER_NO_DIAGNOSTIC
         struct FunctionTimerData timer = start_timer("vertex commands");
-        #endif
+#endif
 
-        VkBuffer vertBuffers[] =
-        {
-            spMeshManagerAccessMesh(currentMesh->mesh)->vertexBuffer
-        };
-        VkDeviceSize offsets[] = { 0 };
+        VkBuffer vertBuffers[] = {
+            spMeshManagerAccessMesh(currentMesh->mesh)->vertexBuffer};
+        VkDeviceSize offsets[] = {0};
 
         vkCmdBindVertexBuffers(buf->handle, 0, 1, vertBuffers, offsets);
 
@@ -156,25 +148,23 @@ SpiritResult spMaterialRecordCommands(
 
         // move to next list element and remove processed element
         struct t_MaterialListNode *oldNode = currentMesh;
-        currentMesh = LIST_NEXT(currentMesh, data);
+        currentMesh                        = LIST_NEXT(currentMesh, data);
         spReleaseMesh(oldNode->mesh);
         LIST_REMOVE(oldNode, data);
         free(oldNode);
 
-        #ifndef FUNCTION_TIMER_NO_DIAGNOSTIC
+#ifndef FUNCTION_TIMER_NO_DIAGNOSTIC
         end_timer(timer);
-        #endif
+#endif
     }
 
     time_function(spRenderPassEnd(context->commandBuffers[imageIndex]));
 
     return SPIRIT_SUCCESS;
-
 }
 
-SpiritResult spDestroyMaterial(
-    const SpiritContext context,
-    SpiritMaterial material)
+SpiritResult
+spDestroyMaterial(const SpiritContext context, SpiritMaterial material)
 {
     spDestroyPipeline(context->device, material->pipeline);
     spDestroyRenderPass(material->renderPass, context->device);

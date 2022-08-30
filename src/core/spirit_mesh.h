@@ -38,7 +38,7 @@ typedef struct t_SpiritMesh
     VkDeviceMemory vetexBufferMemory;
 
     Vertex verts[]; // flex member
-} *SpiritMesh;
+} * SpiritMesh;
 
 struct t_MeshListNode
 {
@@ -65,7 +65,6 @@ typedef struct t_SpiritMeshManagerCreateInfo
     int val;
 } SpiritMeshManagerCreateInfo;
 
-
 //
 // Functions
 //
@@ -80,8 +79,7 @@ typedef struct t_SpiritMeshManagerCreateInfo
  * @return SpiritMesh a mesh object, which must be added to a mesh manager
  */
 extern SpiritMesh spCreateMesh(
-    const SpiritContext context,
-    const SpiritMeshCreateInfo *createInfo);
+    const SpiritContext context, const SpiritMeshCreateInfo *createInfo);
 
 /**
  * @brief Destroy a mesh object. This function should rarely be used, as this is
@@ -105,8 +103,7 @@ extern SpiritResult spDestroyMesh(const SpiritContext context, SpiritMesh mesh);
  * @return SpiritMeshManager
  */
 extern SpiritMeshManager spCreateMeshManager(
-    const SpiritContext context,
-    const SpiritMeshManagerCreateInfo *createInfo);
+    const SpiritContext context, const SpiritMeshManagerCreateInfo *createInfo);
 
 /**
  * @brief Add a mesh to the mesh manager. Once it is part of the mesh manager,
@@ -117,15 +114,15 @@ extern SpiritMeshManager spCreateMeshManager(
  * @param mesh
  * @return SpiritMeshReference
  */
-extern SpiritMeshReference spMeshManagerAddMesh(
-    SpiritMeshManager manager,
-    SpiritMesh mesh);
+extern SpiritMeshReference
+spMeshManagerAddMesh(SpiritMeshManager manager, SpiritMesh mesh);
 
 /**
  * @brief Release a reference to a mesh. This must be done when a meshReference
  * is going out of scope, or will no longer be used. This lets the mesh mangager
  * know that this mesh reference is no longer used, and if it was the last one
- * it can destroy the mesh. If you do not do this, it will result in memory leaks.
+ * it can destroy the mesh. If you do not do this, it will result in memory
+ * leaks.
  *
  * @param meshReference
  * @return SpiritResult
@@ -143,7 +140,8 @@ extern SpiritResult spReleaseMesh(const SpiritMeshReference meshReference);
  * @param meshReference a reference to the mesh
  * @return SpiritMeshReference a new reference to the mesh, which is safe to use
  */
-extern SpiritMeshReference spCheckoutMesh(const SpiritMeshReference meshReference);
+extern SpiritMeshReference
+spCheckoutMesh(const SpiritMeshReference meshReference);
 
 /**
  * @brief Access the mesh object referened by a mesh reference.
@@ -163,9 +161,7 @@ extern SpiritMesh spMeshManagerAccessMesh(const SpiritMeshReference ref);
  * @return SpiritResult
  */
 extern SpiritResult spDestroyMeshManager(
-    const SpiritContext context,
-    SpiritMeshManager meshManager);
+    const SpiritContext context, SpiritMeshManager meshManager);
 
 VkVertexInputAttributeDescription spMeshGetAttributeDescription(void);
 VkVertexInputBindingDescription spMeshGetBindingDescription(void);
-

@@ -3,10 +3,10 @@
 /**
  * @file function_timer.h
  * @author Kael Johnston
- * @brief Used to time a functions performance. It will write the times to a .csv
- * spreadsheet, in the format Function Name | Avg Time | Max time | Min time
- * Extra data is stored on each row, Total Time and Test Count.
- * It can be disabled by defining FUNCTION_TIMER_NO_DIAGNOSTIC
+ * @brief Used to time a functions performance. It will write the times to a
+ * .csv spreadsheet, in the format Function Name | Avg Time | Max time | Min
+ * time Extra data is stored on each row, Total Time and Test Count. It can be
+ * disabled by defining FUNCTION_TIMER_NO_DIAGNOSTIC
  * @version 0.1
  * @date 2022-08-07
  *
@@ -14,49 +14,50 @@
  *
  */
 
-
-
 /**
  * @brief time the function named call
  *
  */
 #ifndef FUNCTION_TIMER_NO_DIAGNOSTIC
-#define time_function(call) \
-    do { \
+#define time_function(call)                              \
+    do                                                   \
+    {                                                    \
         struct FunctionTimerData t = start_timer(#call); \
-        call; \
-        end_timer(t); \
+        call;                                            \
+        end_timer(t);                                    \
     } while (0)
 #else
 #define time_function(call) \
-    do { \
-        call; \
+    do                      \
+    {                       \
+        call;               \
     } while (0)
 #endif
-
 
 /**
  * @brief time a function, and set variable to be the return of the function
  *
  */
 #ifndef FUNCTION_TIMER_NO_DIAGNOSTIC
-#define time_function_with_return(function, variable) \
-    do { \
+#define time_function_with_return(function, variable)        \
+    do                                                       \
+    {                                                        \
         struct FunctionTimerData t = start_timer(#function); \
-        variable = function; \
-        end_timer(t); \
-    } while(0)
+        variable                   = function;               \
+        end_timer(t);                                        \
+    } while (0)
 #else
 #define time_function_with_return(function, variable) \
-    do { \
-        variable = function; \
-    } while(0)
+    do                                                \
+    {                                                 \
+        variable = function;                          \
+    } while (0)
 #endif
-
 
 #ifndef FUNCTION_TIMER_NO_DIAGNOSTIC
 
-struct FunctionTimerData {
+struct FunctionTimerData
+{
     unsigned long long startTime;
     char functionName[128];
 };
@@ -72,7 +73,6 @@ void init_timer(void);
  *
  */
 void terminate_timer(void);
-
 
 /**
  * @brief Start the timer. Should be called right before the timed function.

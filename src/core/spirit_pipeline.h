@@ -20,8 +20,9 @@
  * @brief Informatino to create a pipeline.
  *
  */
-typedef struct t_SpiritPipelineCreateInfo {
-    const char *vertexShader;     // array of shader names
+typedef struct t_SpiritPipelineCreateInfo
+{
+    const char *vertexShader;   // array of shader names
     const char *fragmentShader; // num of shaders
     SpiritResolution resolution;
 } SpiritPipelineCreateInfo;
@@ -41,11 +42,11 @@ struct t_SpiritPipeline
  * @param optionalPipeline
  * @return SpiritPipeline
  */
-SpiritPipeline spCreatePipeline (
-    const SpiritDevice        device,
+SpiritPipeline spCreatePipeline(
+    const SpiritDevice device,
     SpiritPipelineCreateInfo *createInfo,
-    const SpiritRenderPass    renderPass,
-    SpiritPipeline            optionalPipeline);
+    const SpiritRenderPass renderPass,
+    SpiritPipeline optionalPipeline);
 
 /**
  * @brief Bind a pipeline to a command buffer
@@ -55,8 +56,7 @@ SpiritPipeline spCreatePipeline (
  * @return SpiritResult
  */
 SpiritResult spPipelineBindCommandBuffer(
-    SpiritPipeline pipeline,
-    SpiritCommandBuffer buffer);
+    SpiritPipeline pipeline, SpiritCommandBuffer buffer);
 
 /**
  * @brief Destroy a pipeline
@@ -65,6 +65,4 @@ SpiritResult spPipelineBindCommandBuffer(
  * @param pipeline
  * @return SpiritResult
  */
-SpiritResult spDestroyPipeline (
-    SpiritDevice   device,
-    SpiritPipeline pipeline);
+SpiritResult spDestroyPipeline(SpiritDevice device, SpiritPipeline pipeline);

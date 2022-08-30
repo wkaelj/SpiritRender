@@ -12,9 +12,9 @@
 #pragma once
 
 #include <spirit_header.h>
-#include <vulkan/vulkan_core.h>
 
-struct t_SpiritImage {
+struct t_SpiritImage
+{
     VkImage image;
     VkDeviceMemory memory;
     VkFormat imageFormat;
@@ -23,7 +23,8 @@ struct t_SpiritImage {
     VkImageView view;
 };
 
-typedef struct t_SpiritImageCreateInfo {
+typedef struct t_SpiritImageCreateInfo
+{
     SpiritResolution size;
     VkImageCreateFlags flags;
     VkImageUsageFlags usageFlags;
@@ -54,9 +55,8 @@ SpiritResult spCreateImage(
  * @param device the device the image was created with
  * @param output the SpiritImage to ad the image to
  */
-SpiritResult spCreateImageView(
-    const SpiritDevice device,
-    SpiritImage *output) SPIRIT_NONULL(2);
+SpiritResult spCreateImageView(const SpiritDevice device, SpiritImage *output)
+    SPIRIT_NONULL(2);
 
 /**
  * @brief get the format of a spirit image
@@ -80,7 +80,8 @@ VkImageView spImageGetVkView(const SpiritImage *image);
  * @param device the SpiritDevice the image was created using
  * @param image the image to destroy
  */
-void spDestroyImage(const SpiritDevice device, SpiritImage *image) SPIRIT_NONULL(2);
+void spDestroyImage(const SpiritDevice device, SpiritImage *image)
+    SPIRIT_NONULL(2);
 
 /**
  * @brief Destroy a image view, without destroying the image
@@ -88,4 +89,5 @@ void spDestroyImage(const SpiritDevice device, SpiritImage *image) SPIRIT_NONULL
  * @param device The device the image was created using
  * @param image
  */
-void spDestroyImageView(const SpiritDevice device, SpiritImage *image) SPIRIT_NONULL(2);
+void spDestroyImageView(const SpiritDevice device, SpiritImage *image)
+    SPIRIT_NONULL(2);

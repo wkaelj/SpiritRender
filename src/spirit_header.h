@@ -7,22 +7,24 @@
 
 // attribute definitions
 #define SPIRIT_DEPRECATED __attribute_deprecated__ // mark a deprecated function
-#define SPIRIT_INLINE inline __attribute__((always_inline)) // force a function to be inlined
-#define SPIRIT_API __attribute__((externally_visible, visibility ("default")))
+#define SPIRIT_INLINE \
+    inline __attribute__((always_inline)) // force a function to be inlined
+#define SPIRIT_API __attribute__((externally_visible, visibility("default")))
 
-#define SPIRIT_NONULL(...) __attribute__((nonnull(__VA_ARGS__))) // a pointer that may not be null
+#define SPIRIT_NONULL(...) \
+    __attribute__((nonnull(__VA_ARGS__))) // a pointer that may not be null
 
 // std
 #define __STDC_WANT_LIB_EXT1__ 1
-#include <stdlib.h>
+#include <assert.h>
+#include <memory.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdbool.h>
-#include <assert.h>
+#include <stdlib.h>
 #include <string.h>
-#include <memory.h>
-#include <time.h>
 #include <sys/queue.h>
+#include <time.h>
 
 // dmalloc
 #ifdef DMALLOC
@@ -37,9 +39,9 @@
 #include <cglm/cglm.h>
 
 // custom
-#include "debug/messenger.h" // debug messenging functions
 #include "core/spirit_types.h" // custom types
-#include "utils/platform.h" // usefull stuff, like time and whatnot
+#include "debug/messenger.h"   // debug messenging functions
+#include "utils/platform.h"    // usefull stuff, like time and whatnot
 #include "utils/spirit_string.h"
 
 #ifndef DEBUG
@@ -53,16 +55,15 @@
 
 // definitions
 // create a new variable
-#define new_var(typename) (typename*)malloc(sizeof(typename))
-#define new_array(typename, count) (typename*)malloc(sizeof(typename) * count)
+#define new_var(typename) (typename *)malloc(sizeof(typename))
+#define new_array(typename, count) (typename *)malloc(sizeof(typename) * count)
 
 #define new_flex_array(structname, flexmembertype, elementcount) \
-    ((structname*)malloc(\
-        sizeof(structname) + \
-        sizeof(flexmembertype) * elementcount))
+    ((structname *)malloc(                                       \
+        sizeof(structname) + sizeof(flexmembertype) * elementcount))
 
 // find the size of a STACK ALLOCATED array
-#define array_length(array) (sizeof(array)/sizeof(array[0]))
+#define array_length(array) (sizeof(array) / sizeof(array[0]))
 
 // functions to clamp value, work for all(numeric) types
 #define min_value(x, y) ((x < y) ? x : y)
@@ -80,25 +81,25 @@
 
 // debug
 #ifdef DEBUG
-#define db_assert_msg(statement, errmsg) \
-    if (!(statement)) \
-    { \
+#define db_assert_msg(statement, errmsg)                             \
+    if (!(statement))                                                \
+    {                                                                \
         log_fatal("Assertion (%s) failed: %s", #statement, #errmsg); \
-        abort(); \
+        abort();                                                     \
     }
 #else
 #define db_assert_msg(statement, errmsg) ((void)0)
 #endif
 
 #ifdef DEBUG
-#define db_assert(statement) \
-    if (!(statement)) \
-    { \
+#define db_assert(statement)                            \
+    if (!(statement))                                   \
+    {                                                   \
         log_fatal("Assertion (%s) failed", #statement); \
-        abort(); \
+        abort();                                        \
     }
 #else
 #define db_assert(statement) (void(0))
 #endif
 
-#define ALLOCATION_CALLBACK ((void*)0)
+#define ALLOCATION_CALLBACK ((void *)0)

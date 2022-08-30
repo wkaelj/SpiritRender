@@ -15,7 +15,8 @@
 
 #include <spirit_header.h>
 
-struct t_SpiritFence {
+struct t_SpiritFence
+{
     VkFence handle;
     bool isSignaled;
 };
@@ -27,7 +28,8 @@ struct t_SpiritFence {
  * @param startSignaled whether the fence should be created signaled
  * @return SpiritFence
  */
-SpiritFence spCreateFence(const SpiritDevice device, bool startSignaled) SPIRIT_NONULL(1);
+SpiritFence spCreateFence(const SpiritDevice device, bool startSignaled)
+    SPIRIT_NONULL(1);
 
 /**
  * @brief Wait for a fence to complete. This function blocks
@@ -35,17 +37,17 @@ SpiritFence spCreateFence(const SpiritDevice device, bool startSignaled) SPIRIT_
  * @param fence the fence to wait for
  * @return SpiritResult
  */
-SpiritResult spFenceWait(
-    const SpiritDevice device,
-    SpiritFence fence,
-    u64 timeout_ns) SPIRIT_NONULL(1, 2);
+SpiritResult
+spFenceWait(const SpiritDevice device, SpiritFence fence, u64 timeout_ns)
+    SPIRIT_NONULL(1, 2);
 
 /**
  * @brief Reset a fence
  *
  * @param fence
  */
-void spFenceReset(const SpiritDevice device, SpiritFence fence) SPIRIT_NONULL(1, 2);
+void spFenceReset(const SpiritDevice device, SpiritFence fence)
+    SPIRIT_NONULL(1, 2);
 
 /**
  * @brief destroy a spirit fence
@@ -53,4 +55,5 @@ void spFenceReset(const SpiritDevice device, SpiritFence fence) SPIRIT_NONULL(1,
  * @param device
  * @param fence
  */
-void spDestroyFence(const SpiritDevice device, SpiritFence fence) SPIRIT_NONULL(1, 2);
+void spDestroyFence(const SpiritDevice device, SpiritFence fence)
+    SPIRIT_NONULL(1, 2);

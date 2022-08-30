@@ -4,8 +4,9 @@
  * @brief Create materials that can be assigned meshes. Each material must be
  * added to a SpiritContext, and it will then be rendered. Meshes must be added
  * to a material each frame, using a call to spMaterialAddMesh, with the meshes
- * push constants for that frame. The materials are not destroyed by the context,
- * and must be destroyed by the user using the handle returned by spCreateMaterial.
+ * push constants for that frame. The materials are not destroyed by the
+ * context, and must be destroyed by the user using the handle returned by
+ * spCreateMaterial.
  * @version 0.1
  * @date 2022-08-28
  *
@@ -28,8 +29,7 @@ typedef struct t_SpiritMaterialCreateInfo
 
 } SpiritMaterialCreateInfo;
 
-
- struct t_MaterialListNode
+struct t_MaterialListNode
 {
     SpiritMeshReference mesh;
     LIST_ENTRY(t_MaterialListNode) data;
@@ -60,8 +60,7 @@ struct t_SpiritMaterial
  * @return SpiritMaterial the handle to the material
  */
 SpiritMaterial spCreateMaterial(
-    const SpiritContext context,
-    const SpiritMaterialCreateInfo *createInfo);
+    const SpiritContext context, const SpiritMaterialCreateInfo *createInfo);
 
 /**
  * @brief Update a material to have a relevant window size, and to know all the
@@ -71,22 +70,21 @@ SpiritMaterial spCreateMaterial(
  * @param material
  * @return SpiritResult
  */
-SpiritResult spMaterialUpdate(
-    const SpiritContext context,
-    SpiritMaterial material);
+SpiritResult
+spMaterialUpdate(const SpiritContext context, SpiritMaterial material);
 
 /**
  * @brief Add a mesh to the material, which will be rendered in the next frame.
  * A mesh will only be rendered when spContextSubmitCommands is called, and then
- * it will be removed from the material. The mesh will also only be rendered when.
+ * it will be removed from the material. The mesh will also only be rendered
+ * when.
  *
  * @param material
  * @param meshRef
  * @return SpiritResult
  */
 SpiritResult spMaterialAddMesh(
-    const SpiritMaterial material,
-    const SpiritMeshReference meshRef);
+    const SpiritMaterial material, const SpiritMeshReference meshRef);
 
 /**
  * @brief Not to be used by the user, spMaterialRecordCommands is used by the
@@ -98,19 +96,16 @@ SpiritResult spMaterialAddMesh(
  * @return SpiritResult
  */
 SpiritResult spMaterialRecordCommands(
-    const SpiritContext context,
-    SpiritMaterial material,
-    const u32 imageIndex);
+    const SpiritContext context, SpiritMaterial material, const u32 imageIndex);
 
 /**
- * @brief Destroy a material. This will not destroy any meshes added to the material.
- * be sure to remove the material from the context you added it to, otherwise there
- * will be a segmentation fault.
+ * @brief Destroy a material. This will not destroy any meshes added to the
+ * material. be sure to remove the material from the context you added it to,
+ * otherwise there will be a segmentation fault.
  *
  * @param context
  * @param material
  * @return SpiritResult
  */
-SpiritResult spDestroyMaterial(
-    const SpiritContext context,
-    SpiritMaterial material);
+SpiritResult
+spDestroyMaterial(const SpiritContext context, SpiritMaterial material);

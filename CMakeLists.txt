@@ -4,7 +4,7 @@ message(STATUS "Local .env.cmake: ${LOCAL_ENV}")
 cmake_minimum_required(VERSION 3.22.0)
 
 # whether or not to build with address sanitizer
-set(SPIRIT_USE_ASAN false)
+set(SPIRIT_USE_ASAN true)
 
 set(NAME SpiritRender)
 

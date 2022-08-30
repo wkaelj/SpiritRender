@@ -1,8 +1,6 @@
 #pragma once
+#include "core/spirit_device.h"
 #include <spirit_header.h>
-#include "core/spirit_types.h"
-#include "spirit_renderpass.h"
-#include "spirit_device.h"
 
 /**
  * Manage and wrap a vulkan swapchain.
@@ -10,7 +8,6 @@
  * @author Kael Johnston
  * @date June 23 2022
  */
-
 
 /**
  * @brief Configure a swapchain. Some settings are optional. If they are
@@ -24,9 +21,9 @@ typedef struct t_SpiritSwapchainCreateInfo
     // TODO vsync option
 
     // optional options, if used set the associated boolean to true
-    bool               selectedPresentMode;
-    VkPresentModeKHR   preferredPresentMode;
-    bool               selectedFormat;
+    bool selectedPresentMode;
+    VkPresentModeKHR preferredPresentMode;
+    bool selectedFormat;
     VkSurfaceFormatKHR preferedFormat;
 
     // dimensions of the window in pixels
@@ -38,8 +35,9 @@ typedef struct t_SpiritSwapchainCreateInfo
  * A object wrapping the Vulkan VkSwapchainKHR object. It is used to transfer
  * images that have been rendered to the screen.
  *
- * It can be created using spCreateSwapchain(), and destroyed using spCreateSwapchain.
- * It depends on a SpiritDevice, and is used by the renderpasses and the context.
+ * It can be created using spCreateSwapchain(), and destroyed using
+ * spCreateSwapchain. It depends on a SpiritDevice, and is used by the
+ * renderpasses and the context.
  *
  * all sync objects use maxFramesInFlight to store their sizes.
  *
@@ -49,24 +47,22 @@ struct t_SpiritSwapchain
 {
 
     // swapchain
-    VkSwapchainKHR             swapchain;
+    VkSwapchainKHR swapchain;
     SpiritSwapchainSupportInfo supportInfo;
 
-
-    VkExtent2D         extent; // size of the images
+    VkExtent2D extent; // size of the images
     VkSurfaceFormatKHR surfaceFormat;
-    VkPresentModeKHR   presentMode;
+    VkPresentModeKHR presentMode;
 
     // VkSwapchainCreateInfoKHR createInfo; // used to recreate
 
     // images
-    u32          imageCount;
+    u32 imageCount;
     SpiritImage *images;
     SpiritImage *depthImages;
 
     // useful for recreating the swapchain
     SpiritSwapchainCreateInfo createInfo;
-
 };
 
 /**
@@ -77,20 +73,20 @@ struct t_SpiritSwapchain
  *
  * @param createInfo must be a SpiritSwapchainCreateInfo struct, which will be
  * used to configure the swapchain.
- * @param device a valid SpiritDevice, created using spCreateDevice or automatically
- * using a context.
+ * @param device a valid SpiritDevice, created using spCreateDevice or
+ * automatically using a context.
  * @param optionalSwapchain is an old swapchain which will be recreated, so that
  * resources to not need to be destroyed and created. Currently unimplemented.
  *
- * @return a SpiritSwapchain object which can be used in the program. If there is a
- * failure, it will return NULL. Always check if the result it NULL.
+ * @return a SpiritSwapchain object which can be used in the program. If there
+ * is a failure, it will return NULL. Always check if the result it NULL.
  *
  * @author Kael Johnston
  */
-SpiritSwapchain spCreateSwapchain (
+SpiritSwapchain spCreateSwapchain(
     SpiritSwapchainCreateInfo *createInfo,
-    SpiritDevice               device,
-    SpiritSwapchain            optionalSwapchain);
+    SpiritDevice device,
+    SpiritSwapchain optionalSwapchain);
 
 /**
  * @brief Prersent the swapchain image at index imageIndex
@@ -109,19 +105,22 @@ SpiritResult spSwapchainPresent(
 
 /**
  * Aquire the next image to render to. This function should be used with
- * spSwapchainSubmitCommandBuffer() to draw stuff. Run this after submitting a frame.
+ * spSwapchainSubmitCommandBuffer() to draw stuff. Run this after submitting a
+ * frame.
  *
- * It sets the imageIndex pointer to the next image to draw to, which should be passed
- * to the imageIndex parameter of spSwapchainSubmitCommandBuffer
+ * It sets the imageIndex pointer to the next image to draw to, which should be
+ * passed to the imageIndex parameter of spSwapchainSubmitCommandBuffer
  *
  * @param device must be a valid SpiritDevice, created using spCreateDevice()
- * @param swapchain must be a valid SpiritSwapchain, created using spCreateSwapchain()
+ * @param swapchain must be a valid SpiritSwapchain, created using
+ * spCreateSwapchain()
  * @param waitSemaphore the semaphore to wait on
- * @param imageIndex must be a valid pointer to a u32, which will be set to the index
- * of the next swapchain image
+ * @param imageIndex must be a valid pointer to a u32, which will be set to the
+ * index of the next swapchain image
  *
- * @return SPIRIT_SUCCESS if the image was aquired successfully, otherwise returns
- * SPIRIT_FAILURE. If the function fails, the imageIndex it provides should not be used.
+ * @return SPIRIT_SUCCESS if the image was aquired successfully, otherwise
+ * returns SPIRIT_FAILURE. If the function fails, the imageIndex it provides
+ * should not be used.
  *
  * @author Kael Johnston
  */
@@ -140,12 +139,11 @@ SpiritResult spSwapchainAquireNextImage(
  * @param device a valid SpiritDevice. If you got this far, I hope you know
  * how to create one.
  *
- * @return SPIRIT_SUCCESS if the swapchain was successfuly destroyed, SPIRIT_FAILURE
- * otherwise. Failure does not mean the swapchain was partialy destroyed, so it should
- * not be used after this call no matter what.
+ * @return SPIRIT_SUCCESS if the swapchain was successfuly destroyed,
+ * SPIRIT_FAILURE otherwise. Failure does not mean the swapchain was partialy
+ * destroyed, so it should not be used after this call no matter what.
  *
  * @author Kael Johnston
  */
-SpiritResult spDestroySwapchain(
-    SpiritSwapchain swapchain,
-    const SpiritDevice device);
+SpiritResult
+spDestroySwapchain(SpiritSwapchain swapchain, const SpiritDevice device);

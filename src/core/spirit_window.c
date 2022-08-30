@@ -3,23 +3,25 @@
 #include "spirit_window.h"
 #include <GLFW/glfw3.h>
 
-struct t_SpiritWindow {
+struct t_SpiritWindow
+{
     GLFWwindow *window;
     SpiritResolution windowSize;
     const char *title;
     bool resizing;
 };
 
-void window_size_callback(GLFWwindow* window, int width, int height);
+void window_size_callback(GLFWwindow *window, int width, int height);
 
-SpiritWindow spCreateWindow (SpiritWindowCreateInfo *createInfo) {
+SpiritWindow spCreateWindow(SpiritWindowCreateInfo *createInfo)
+{
 
     SpiritWindow window = new_var(struct t_SpiritWindow); // alloc
 
     const char *glfwError;
-    if (glfwInit () != GLFW_TRUE) // alloc
+    if (glfwInit() != GLFW_TRUE) // alloc
     {
-        glfwGetError (&glfwError);
+        glfwGetError(&glfwError);
         log_error("GLFW error: %s", glfwError);
         return NULL;
     }
@@ -27,26 +29,28 @@ SpiritWindow spCreateWindow (SpiritWindowCreateInfo *createInfo) {
     window->title = createInfo->title;
 
     GLFWmonitor *windowMonitor = NULL;
-    if (createInfo->fullscreen) windowMonitor = glfwGetPrimaryMonitor();
-    if (createInfo->fullscreen && windowMonitor == NULL) {
-        glfwGetError (&glfwError);
+    if (createInfo->fullscreen)
+        windowMonitor = glfwGetPrimaryMonitor();
+    if (createInfo->fullscreen && windowMonitor == NULL)
+    {
+        glfwGetError(&glfwError);
         log_error("No fullscreen monitor available! GLFW error %s", glfwError);
         createInfo->fullscreen = false;
     }
 
-    if (createInfo->fullscreen) {
+    if (createInfo->fullscreen)
+    {
 
         // use fullscreen window height
         int fullWidth, fullHeight;
-        glfwGetMonitorWorkarea (
-                windowMonitor,
-                NULL, NULL,
-                &fullWidth,
-                &fullHeight);
+        glfwGetMonitorWorkarea(
+            windowMonitor, NULL, NULL, &fullWidth, &fullHeight);
 
         window->windowSize.w = fullWidth;
         window->windowSize.h = fullHeight;
-    } else {
+    }
+    else
+    {
         window->windowSize = createInfo->windowSize;
     }
 
@@ -61,7 +65,7 @@ SpiritWindow spCreateWindow (SpiritWindowCreateInfo *createInfo) {
 
     if (window->window == NULL)
     {
-        glfwGetError (&glfwError);
+        glfwGetError(&glfwError);
         log_fatal("Failed to create window. GLFW Error: %s", glfwError);
     }
 
@@ -72,7 +76,7 @@ SpiritWindow spCreateWindow (SpiritWindowCreateInfo *createInfo) {
     return window;
 }
 
-SpiritResult spDestroyWindow (SpiritWindow window)
+SpiritResult spDestroyWindow(SpiritWindow window)
 {
 
     glfwDestroyWindow(window->window);
@@ -83,22 +87,14 @@ SpiritResult spDestroyWindow (SpiritWindow window)
     return SPIRIT_SUCCESS;
 }
 
-static bool g_glfwWindowWasResized = false;
-static SpiritResolution g_windowSize = {
-    .w = 0,
-    .h = 0
-};
+static bool g_glfwWindowWasResized   = false;
+static SpiritResolution g_windowSize = {.w = 0, .h = 0};
 
 void window_size_callback(
-    GLFWwindow* window __attribute_maybe_unused__,
-    int width,
-    int height)
+    GLFWwindow *window __attribute_maybe_unused__, int width, int height)
 {
     g_glfwWindowWasResized = true;
-    g_windowSize = (SpiritResolution) {
-        .w = width,
-        .h = height
-    };
+    g_windowSize           = (SpiritResolution){.w = width, .h = height};
 }
 
 SpiritWindowState spWindowGetState(SpiritWindow window)
@@ -122,7 +118,6 @@ SpiritWindowState spWindowGetState(SpiritWindow window)
         return SPIRIT_WINDOW_CLOSED;
     }
 
-
     // the has stopped resizing
     if (!g_glfwWindowWasResized && window->resizing)
     {
@@ -133,9 +128,9 @@ SpiritWindowState spWindowGetState(SpiritWindow window)
     if (g_glfwWindowWasResized)
     {
         g_glfwWindowWasResized = false;
-        window->windowSize = g_windowSize;
-        window->resizing = true;
-        g_windowSize = (SpiritResolution) {};
+        window->windowSize     = g_windowSize;
+        window->resizing       = true;
+        g_windowSize           = (SpiritResolution){};
         return SPIRIT_WINDOW_RESIZING;
     }
 
@@ -144,26 +139,30 @@ SpiritWindowState spWindowGetState(SpiritWindow window)
     return SPIRIT_WINDOW_NORMAL;
 }
 
-SpiritResult spResizeWindow(SpiritWindow window, uint32_t w, uint32_t h) {
+SpiritResult spResizeWindow(SpiritWindow window, uint32_t w, uint32_t h)
+{
 
-    if (window->window == NULL) {
+    if (window->window == NULL)
+    {
         log_error("spResizeWindow: window passed is NULL");
     }
 
-    glfwSetWindowSize (window->window, w, h);
+    glfwSetWindowSize(window->window, w, h);
 
     return SPIRIT_SUCCESS;
 }
 
-SpiritResolution spWindowGetPixelSize(SpiritWindow window) {
+SpiritResolution spWindowGetPixelSize(SpiritWindow window)
+{
 
     const char *glfwError;
 
     SpiritResolution res = {};
     int w, h;
-    glfwGetFramebufferSize (window->window, &w, &h);
-    if (glfwGetError (&glfwError) != GLFW_NO_ERROR) {
-        log_error ("Failed to get framebuffer size. GLFW error: %s", glfwError);
+    glfwGetFramebufferSize(window->window, &w, &h);
+    if (glfwGetError(&glfwError) != GLFW_NO_ERROR)
+    {
+        log_error("Failed to get framebuffer size. GLFW error: %s", glfwError);
         return res;
     }
     res.w = w, res.h = h;
@@ -176,16 +175,19 @@ SpiritResolution spWindowGetSize(SpiritWindow window)
     return window->windowSize;
 }
 
-VkSurfaceKHR spWindowGetSurface (SpiritWindow window, VkInstance instance) {
+VkSurfaceKHR spWindowGetSurface(SpiritWindow window, VkInstance instance)
+{
 
     VkSurfaceKHR surface = NULL;
 
-    if (glfwCreateWindowSurface (instance, window->window, NULL, &surface)) log_fatal("Failed to create window surface");
-    db_assert_msg (surface, "Surface cannot be NULL");
+    if (glfwCreateWindowSurface(instance, window->window, NULL, &surface))
+        log_fatal("Failed to create window surface");
+    db_assert_msg(surface, "Surface cannot be NULL");
     return surface;
 }
 
-SpiritWindowExtensions spWindowGetExtensions (SpiritWindow window) {
+SpiritWindowExtensions spWindowGetExtensions(SpiritWindow window)
+{
 
     SpiritWindowExtensions out = {};
 

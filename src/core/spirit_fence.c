@@ -11,49 +11,37 @@ SpiritFence spCreateFence(const SpiritDevice device, bool startSignaled)
 
     VkFenceCreateInfo fenceInfo = {
         .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-        .flags = startSignaled ? VK_FENCE_CREATE_SIGNALED_BIT : 0
-    };
+        .flags = startSignaled ? VK_FENCE_CREATE_SIGNALED_BIT : 0};
 
     if (vkCreateFence(
-        device->device,
-        &fenceInfo,
-        ALLOCATION_CALLBACK,
-        &out->handle)) return NULL;
+            device->device, &fenceInfo, ALLOCATION_CALLBACK, &out->handle))
+        return NULL;
 
     return out;
 }
 
-SpiritResult spFenceWait(const SpiritDevice device, SpiritFence fence, u64 timeout_ns)
+SpiritResult
+spFenceWait(const SpiritDevice device, SpiritFence fence, u64 timeout_ns)
 {
 
-    if (fence->isSignaled) return SPIRIT_SUCCESS;
+    if (fence->isSignaled)
+        return SPIRIT_SUCCESS;
     else
     {
         VkResult r = vkWaitForFences(
-            device->device,
-            1,
-            &fence->handle,
-            VK_TRUE,
-            timeout_ns);
-        switch (r) {
-        case VK_SUCCESS:
-            fence->isSignaled = true;
-            return SPIRIT_SUCCESS;
-        case VK_TIMEOUT:
-            log_warning("Timed out");
-            break;
-        case VK_ERROR_DEVICE_LOST:
-            log_error("VK_ERROR_DEVICE_LOST.");
-            break;
+            device->device, 1, &fence->handle, VK_TRUE, timeout_ns);
+        switch (r)
+        {
+        case VK_SUCCESS: fence->isSignaled = true; return SPIRIT_SUCCESS;
+        case VK_TIMEOUT: log_warning("Timed out"); break;
+        case VK_ERROR_DEVICE_LOST: log_error("VK_ERROR_DEVICE_LOST."); break;
         case VK_ERROR_OUT_OF_HOST_MEMORY:
             log_error("VK_ERROR_OUT_OF_HOST_MEMORY.");
             break;
         case VK_ERROR_OUT_OF_DEVICE_MEMORY:
             log_error("VK_ERROR_OUT_OF_DEVICE_MEMORY.");
             break;
-        default:
-            log_error("An unknown error has occurred.");
-            break;
+        default: log_error("An unknown error has occurred."); break;
         }
     }
 
@@ -71,7 +59,6 @@ void spFenceReset(const SpiritDevice device, SpiritFence fence)
 
     fence->isSignaled = false;
 }
-
 
 void spDestroyFence(const SpiritDevice device, SpiritFence fence)
 {
