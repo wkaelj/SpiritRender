@@ -64,7 +64,7 @@ target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=address)
 target_link_options(${PROJECT_NAME} PRIVATE -fsanitize=address)
 =======
 
-set(CMD_ARGS -Wall -Wextra -Wno-unused-value)
+set(CMD_ARGS -Wall -Wextra -Wno-unused-value -Wno-unused-parameter)
 
 # address sanitizer
 if (SPIRIT_USE_ASAN)

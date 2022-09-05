@@ -232,6 +232,8 @@ SpiritMesh spMeshManagerAccessMesh(
 SpiritMesh spMeshManagerAccessMesh(const SpiritMeshReference ref)
 >>>>>>> devel
 {
+    db_assert(ref.meshManager);
+    db_assert(ref.node);
     return ref.node->mesh;
 }
 
@@ -263,14 +265,9 @@ SpiritResult spReleaseMesh(const SpiritMeshReference meshReference)
 {
 
     // check to ensure meshmanager is valid
-    if (meshReference.node && meshReference.node->mesh &&
-        meshReference.vertCount && meshReference.meshManager)
-        ;
-    else
-    {
+    if (!(meshReference.node && meshReference.node->mesh &&
+          meshReference.vertCount && meshReference.meshManager))
         return SPIRIT_FAILURE;
-    }
->>>>>>> devel
 
     // reduce reference count, and if no more references free mesh
     if (--meshReference.node->referenceCount <= 0)

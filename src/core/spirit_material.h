@@ -48,6 +48,8 @@ typedef struct t_SpiritMaterialCreateInfo
 >>>>>>> devel
 struct t_MaterialListNode
 {
+    bool isBuffer; // if the node is part of a buffer
+    bool used; // if the node is part of a buffer, whether or not it is used
     SpiritMeshReference mesh;
     LIST_ENTRY(t_MaterialListNode) data;
 };
@@ -68,7 +70,10 @@ struct t_SpiritMaterial
     SpiritRenderPass renderPass;
     SpiritPipeline pipeline;
 
-    size_t meshCount;
+    u32 meshCount;
+
+    u32 currentBufferSpot; // store node buffer index to use next
+    struct t_MaterialListNode nodeBuffer[1024];
     LIST_HEAD(t_MaterialListHead, t_MaterialListNode) meshList;
 };
 

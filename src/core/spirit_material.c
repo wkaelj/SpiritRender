@@ -29,10 +29,60 @@ SPIRIT_INLINE void clearQueue(SpiritMaterial material)
 {
 
     while (!LIST_EMPTY(&material->meshList))
-        LIST_REMOVE(LIST_FIRST(&material->meshList), data);
+    {
+        struct t_MaterialListNode *np = LIST_FIRST(&material->meshList);
+
+        db_assert_msg(np->used, "Unused node added to material queue");
+        LIST_REMOVE(np, data);
+        spReleaseMesh(np->mesh);
+        if (np->isBuffer)
+            np->used = false;
+        else
+            free(np);
+    }
 }
 
->>>>>>> devel
+struct t_MaterialListNode *findNode(const SpiritMaterial material)
+{
+    struct t_MaterialListNode *node = NULL;
+    if (material->currentBufferSpot < array_length(material->nodeBuffer))
+    {
+        node = &material->nodeBuffer[material->currentBufferSpot];
+        db_assert(node->isBuffer);
+        db_assert(node->used == false);
+        material->currentBufferSpot++;
+        node->used = true;
+    }
+    else
+    {
+        node           = new_var(struct t_MaterialListNode);
+        node->isBuffer = false;
+        node->used     = true;
+        log_warning("Overflowing material node buffer, increase buffer size");
+    }
+
+    return node;
+}
+
+SpiritResult
+releaseNode(SpiritMaterial material, struct t_MaterialListNode *node)
+{
+    db_assert(node && node->used);
+
+    if (!node || !node->used)
+        return SPIRIT_FAILURE;
+
+    if (node->isBuffer)
+    {
+        node->used = false;
+        material->currentBufferSpot--;
+    }
+    else
+        free(node);
+
+    return SPIRIT_SUCCESS;
+}
+
 //
 // Public functions
 //
@@ -115,6 +165,14 @@ SpiritMaterial spCreateMaterial(
         return NULL;
     }
 
+    // set node buffer data
+    material->currentBufferSpot = 0;
+    for (u32 i = 0; i < array_length(material->nodeBuffer); i++)
+    {
+        material->nodeBuffer[i] = (struct t_MaterialListNode){
+            .isBuffer = true, .used = false, .data = {}, .mesh = {}};
+    }
+
     LIST_INIT(&material->meshList);
 
     return material;
@@ -153,9 +211,9 @@ spMaterialUpdate(const SpiritContext context, SpiritMaterial material)
 SpiritResult
 spMaterialAddMesh(SpiritMaterial material, const SpiritMeshReference meshRef)
 {
-    struct t_MaterialListNode *newNode = new_var(struct t_MaterialListNode);
-    newNode->mesh                      = spCheckoutMesh(meshRef);
->>>>>>> devel
+    struct t_MaterialListNode *newNode = findNode(material);
+
+    newNode->mesh = spCheckoutMesh(meshRef);
 
     LIST_INSERT_HEAD(&material->meshList, newNode, data);
     material->meshCount++;
@@ -259,7 +317,7 @@ SpiritResult spMaterialRecordCommands(
 
         vkCmdDraw(buf->handle, currentMesh->mesh.vertCount, 1, 0, 0);
 
-        // move to next list element and remove processed element
+        // move to next list element
         struct t_MaterialListNode *oldNode = currentMesh;
 <<<<<<< HEAD
         currentMesh = LIST_NEXT(currentMesh, data);
@@ -279,9 +337,10 @@ SpiritResult spDestroyMaterial(
     SpiritMaterial material)
 =======
         currentMesh                        = LIST_NEXT(currentMesh, data);
+
         spReleaseMesh(oldNode->mesh);
         LIST_REMOVE(oldNode, data);
-        free(oldNode);
+        releaseNode(material, oldNode);
 
 #ifndef FUNCTION_TIMER_NO_DIAGNOSTIC
         end_timer(timer);
@@ -290,6 +349,9 @@ SpiritResult spDestroyMaterial(
 
     time_function(spRenderPassEnd(context->commandBuffers[imageIndex]));
 
+    // reset queue
+    material->currentBufferSpot = 0;
+
     return SPIRIT_SUCCESS;
 }
 
@@ -297,6 +359,7 @@ SpiritResult
 spDestroyMaterial(const SpiritContext context, SpiritMaterial material)
 >>>>>>> devel
 {
+    clearQueue(material);
     spDestroyPipeline(context->device, material->pipeline);
     spDestroyRenderPass(material->renderPass, context->device);
     free(material);
