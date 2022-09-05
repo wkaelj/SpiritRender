@@ -102,6 +102,8 @@ void mainlooptest(void)
 
     SpiritMesh mesh = spCreateMesh(context, &meshInfo);
 
+    db_assert(mesh->vertCount == 6);
+
     SpiritMeshManager meshManager;
     time_function_with_return(spCreateMeshManager(context, NULL), meshManager);
     const SpiritMeshReference meshRef = spMeshManagerAddMesh(meshManager, mesh);
@@ -125,7 +127,7 @@ void mainlooptest(void)
         else if (windowState == SPIRIT_WINDOW_RESIZING)
             continue;
 
-        // time_function(spMaterialAddMesh(material, meshRef));
+        time_function(spMaterialAddMesh(material, meshRef));
 
         SpiritResult result = SPIRIT_SUCCESS;
         time_function_with_return(spContextSubmitFrame(context), result);
@@ -142,6 +144,9 @@ void mainlooptest(void)
     }
 
     spDeviceWaitIdle(context->device);
+
+    spReleaseMesh(meshRef);
+
     spDestroyMeshManager(context, meshManager);
     spDestroyMaterial(context, material);
     spDestroyContext(context);

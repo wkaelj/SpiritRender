@@ -17,7 +17,6 @@
 // std
 #define __STDC_WANT_LIB_EXT1__ 1
 #include <assert.h>
-#include <memory.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -37,6 +36,11 @@
 // cglm
 #define CGLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <cglm/cglm.h>
+
+// debug malloc
+#ifdef DEBUG
+#include "debug/debug_malloc.h"
+#endif
 
 // custom
 #include "core/spirit_types.h" // custom types
@@ -75,9 +79,6 @@
 #else
 #define log_verbose(messege, ...) ((void)0);
 #endif
-
-// tmp memory alocator
-// will be replaced with calles to a custom memory allocator
 
 // debug
 #ifdef DEBUG

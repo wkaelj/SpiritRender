@@ -58,10 +58,16 @@ SpiritContext spCreateContext(SpiritContextCreateInfo *createInfo)
     deviceCreateInfo.windowExtensions = spWindowGetExtensions(context->window);
     deviceCreateInfo.window           = context->window;
 
-    const char *deviceExtensions[1] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+    const char *deviceExtensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
-    deviceCreateInfo.requiredDeviceExtensions     = deviceExtensions;
-    deviceCreateInfo.requiredDeviceExtensionCount = 1;
+    deviceCreateInfo.requiredDeviceExtensions = deviceExtensions;
+    deviceCreateInfo.requiredDeviceExtensionCount =
+        array_length(deviceExtensions);
+
+    const char *deviceLayers[] = {/* "VK_LAYER_LUNARG_assistant_layer", */
+                                  "VK_LAYER_KHRONOS_validation"};
+    deviceCreateInfo.requiredValidationLayers     = deviceLayers;
+    deviceCreateInfo.requiredValidationLayerCount = array_length(deviceLayers);
     context->device = spCreateDevice(&deviceCreateInfo);
     if (!context->device)
     {

@@ -459,6 +459,7 @@ static VkInstance createInstance(
         debugInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
                                 VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
                                 VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+
         debugInfo.pfnUserCallback =
             (PFN_vkDebugUtilsMessengerCallbackEXT)debugCallback;
 
@@ -717,7 +718,7 @@ static bool checkValidationLayerSupport(
         if (found == false)
         {
             log_warning(
-                "Unavailable valiation layer: %s", requiredLayerNames[i]);
+                "Unavailable validation layer: %s", requiredLayerNames[i]);
             return false;
         }
     }

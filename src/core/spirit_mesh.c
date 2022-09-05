@@ -14,6 +14,7 @@ SpiritMesh spCreateMesh(
 
     SpiritMesh mesh =
         new_flex_array(struct t_SpiritMesh, Vertex, createInfo->vertCount);
+    mesh->vertCount = createInfo->vertCount;
 
     // process vertex data
     size_t dataSize = sizeof(Vertex) * createInfo->vertCount;
@@ -194,12 +195,23 @@ spDestroyMeshManager(const SpiritContext context, SpiritMeshManager meshManager)
         spDestroyMesh(context, cn->mesh);
     }
 
+#ifdef DEBUG
+    u32 deletedMeshCount = 0;
+#endif
     while (!LIST_EMPTY(&meshManager->meshes))
     {
         struct t_MeshListNode *first = LIST_FIRST(&meshManager->meshes);
         LIST_REMOVE(first, data);
         free(first);
+
+#ifdef DEBUG
+        ++deletedMeshCount;
+#endif
     }
+
+#ifdef DEBUG
+    log_debug("Deleted %u meshes", deletedMeshCount);
+#endif
 
     free(meshManager);
     return SPIRIT_SUCCESS;

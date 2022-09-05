@@ -129,7 +129,7 @@ SpiritResult spMaterialRecordCommands(
     }
 
     // iterate through meshes and submit vertexes
-    struct t_MaterialListNode *currentMesh = material->meshList.lh_first;
+    struct t_MaterialListNode *currentMesh = LIST_FIRST(&material->meshList);
 
     while (currentMesh != NULL)
     {
