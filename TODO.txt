@@ -2,6 +2,10 @@
 [ ] arg parser, check if arg is included
 [ ] implement push constants
 [ ] buffer wrapper to store size
+<<<<<<< HEAD
+=======
+[ ] bug in mesh drawing, idk why (VK_ERROR_DEVICE_LOST)
+>>>>>>> devel
 [X] change function timer to use object to store data, not a global
 [X] fix null char starting file path
 [X] use copy buffer to create vertices

@@ -2,9 +2,15 @@
 
 #include "spirit_command_buffer.h"
 #include "spirit_device.h"
+<<<<<<< HEAD
 #include "spirit_swapchain.h"
 #include "spirit_material.h"
 #include "spirit_fence.h"
+=======
+#include "spirit_fence.h"
+#include "spirit_material.h"
+#include "spirit_swapchain.h"
+>>>>>>> devel
 
 //
 // Private functions
@@ -18,7 +24,10 @@ SpiritResult beginFrame(SpiritContext context, u32 *imageIndex);
 
 SpiritResult endFrame(SpiritContext context, const u32 imageIndex);
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> devel
 //
 // Public functions
 //
@@ -31,11 +40,19 @@ SpiritContext spCreateContext(SpiritContextCreateInfo *createInfo)
     // initialize basic components
     // create window
     SpiritWindowCreateInfo windowCreateInfo = {};
+<<<<<<< HEAD
     windowCreateInfo.windowSize = createInfo->windowSize;
     windowCreateInfo.title = createInfo->windowName;
     windowCreateInfo.fullscreen = createInfo->windowFullscreen;
 
     context->window = spCreateWindow (&windowCreateInfo);
+=======
+    windowCreateInfo.windowSize             = createInfo->windowSize;
+    windowCreateInfo.title                  = createInfo->windowName;
+    windowCreateInfo.fullscreen             = createInfo->windowFullscreen;
+
+    context->window = spCreateWindow(&windowCreateInfo);
+>>>>>>> devel
     if (!context->window)
     {
         log_fatal("Must have window to create context");
@@ -43,11 +60,16 @@ SpiritContext spCreateContext(SpiritContextCreateInfo *createInfo)
         return NULL;
     }
     context->screenResolution = spWindowGetPixelSize(context->window);
+<<<<<<< HEAD
     context->windowSize = createInfo->windowSize;
+=======
+    context->windowSize       = createInfo->windowSize;
+>>>>>>> devel
     db_assert(context->window);
 
     // create device
     SpiritDeviceCreateInfo deviceCreateInfo = {};
+<<<<<<< HEAD
     deviceCreateInfo.enableValidation = createInfo->enableValidation;
     deviceCreateInfo.powerSaveMode = createInfo->powerSaving;
 
@@ -66,6 +88,30 @@ SpiritContext spCreateContext(SpiritContextCreateInfo *createInfo)
     deviceCreateInfo.requiredDeviceExtensions = deviceExtensions;
     deviceCreateInfo.requiredDeviceExtensionCount = 1;
     context->device = spCreateDevice (&deviceCreateInfo);
+=======
+    deviceCreateInfo.enableValidation       = createInfo->enableValidation;
+    deviceCreateInfo.powerSaveMode          = createInfo->powerSaving;
+
+    deviceCreateInfo.appName       = "";
+    deviceCreateInfo.appVersion    = VK_MAKE_VERSION(0, 0, 0);
+    deviceCreateInfo.engineName    = "Spirit Render";
+    deviceCreateInfo.engineVersion = VK_MAKE_VERSION(0, 0, 0);
+
+    deviceCreateInfo.windowExtensions = spWindowGetExtensions(context->window);
+    deviceCreateInfo.window           = context->window;
+
+    const char *deviceExtensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+
+    deviceCreateInfo.requiredDeviceExtensions = deviceExtensions;
+    deviceCreateInfo.requiredDeviceExtensionCount =
+        array_length(deviceExtensions);
+
+    const char *deviceLayers[] = {/* "VK_LAYER_LUNARG_assistant_layer", */
+                                  "VK_LAYER_KHRONOS_validation"};
+    deviceCreateInfo.requiredValidationLayers     = deviceLayers;
+    deviceCreateInfo.requiredValidationLayerCount = array_length(deviceLayers);
+    context->device = spCreateDevice(&deviceCreateInfo);
+>>>>>>> devel
     if (!context->device)
     {
         log_fatal("Must have device to create context");
@@ -75,6 +121,7 @@ SpiritContext spCreateContext(SpiritContextCreateInfo *createInfo)
 
     // create swapchain
     SpiritSwapchainCreateInfo swapCreateInfo = {};
+<<<<<<< HEAD
     context->windowSize = spWindowGetPixelSize(context->window);
     swapCreateInfo.windowRes = context->screenResolution;
 
@@ -82,6 +129,16 @@ SpiritContext spCreateContext(SpiritContextCreateInfo *createInfo)
     swapCreateInfo.preferredPresentMode = VK_PRESENT_MODE_FIFO_KHR;
 
     context->swapchain = spCreateSwapchain(&swapCreateInfo, context->device, NULL);
+=======
+    context->windowSize      = spWindowGetPixelSize(context->window);
+    swapCreateInfo.windowRes = context->screenResolution;
+
+    swapCreateInfo.selectedPresentMode  = true;
+    swapCreateInfo.preferredPresentMode = VK_PRESENT_MODE_FIFO_KHR;
+
+    context->swapchain =
+        spCreateSwapchain(&swapCreateInfo, context->device, NULL);
+>>>>>>> devel
     if (!context->swapchain)
     {
         log_fatal("Cannot create context without swapchain");
@@ -100,6 +157,7 @@ SpiritContext spCreateContext(SpiritContextCreateInfo *createInfo)
 
     // create command buffers
     context->commandBufferCount = context->swapchain->imageCount;
+<<<<<<< HEAD
     context->commandBuffers = new_array(
         SpiritCommandBuffer,
         context->commandBufferCount);
@@ -108,6 +166,15 @@ SpiritContext spCreateContext(SpiritContextCreateInfo *createInfo)
     {
         context->commandBuffers[i] = spCreateCommandBuffer(
             context->device, true);
+=======
+    context->commandBuffers =
+        new_array(SpiritCommandBuffer, context->commandBufferCount);
+
+    for (u32 i = 0; i < context->commandBufferCount; ++i)
+    {
+        context->commandBuffers[i] =
+            spCreateCommandBuffer(context->device, true);
+>>>>>>> devel
         if (context->commandBuffers[i] == NULL)
         {
             log_fatal("Failed to create command buffer");
@@ -127,13 +194,19 @@ SpiritContext spCreateContext(SpiritContextCreateInfo *createInfo)
 
 SpiritResult spContextHandleWindowResized(SpiritContext context)
 {
+<<<<<<< HEAD
     if(!context && context->window) return SPIRIT_FAILURE;
+=======
+    if (!context && context->window)
+        return SPIRIT_FAILURE;
+>>>>>>> devel
 
     // recreate swapchain
     spDeviceWaitIdle(context->device);
 
     // update stored sizes
     context->screenResolution = spWindowGetPixelSize(context->window);
+<<<<<<< HEAD
     context->windowSize = spWindowGetSize(context->window);
 
     // check swapchain exists, in case creation failed last frame
@@ -144,6 +217,16 @@ SpiritResult spContextHandleWindowResized(SpiritContext context)
         &swapInfo,
         context->device,
         context->swapchain);
+=======
+    context->windowSize       = spWindowGetSize(context->window);
+
+    // check swapchain exists, in case creation failed last frame
+    SpiritSwapchainCreateInfo swapInfo = {};
+    swapInfo.windowRes                 = context->screenResolution;
+
+    context->swapchain =
+        spCreateSwapchain(&swapInfo, context->device, context->swapchain);
+>>>>>>> devel
 
     if (!context->swapchain)
     {
@@ -158,7 +241,10 @@ SpiritResult spContextHandleWindowResized(SpiritContext context)
     }
 
     return SPIRIT_SUCCESS;
+<<<<<<< HEAD
 
+=======
+>>>>>>> devel
 }
 
 SpiritResult spContextSubmitFrame(SpiritContext context)
@@ -191,7 +277,12 @@ SpiritResult spContextSubmitFrame(SpiritContext context)
 
         if (result)
         {
+<<<<<<< HEAD
             log_error("Material %s failed to record commands", np->material->name);
+=======
+            log_error(
+                "Material %s failed to record commands", np->material->name);
+>>>>>>> devel
         }
     }
 
@@ -205,9 +296,14 @@ SpiritResult spContextSubmitFrame(SpiritContext context)
     return SPIRIT_SUCCESS;
 }
 
+<<<<<<< HEAD
 SpiritResult spContextAddMaterial(
     SpiritContext context,
     const SpiritMaterial material)
+=======
+SpiritResult
+spContextAddMaterial(SpiritContext context, const SpiritMaterial material)
+>>>>>>> devel
 {
 
     db_assert(context);
@@ -218,20 +314,35 @@ SpiritResult spContextAddMaterial(
         return SPIRIT_FAILURE;
     }
 
+<<<<<<< HEAD
     // ensure the same material is not added twice
     // possibly should be added to release builds
     #ifdef DEBUG
+=======
+// ensure the same material is not added twice
+// possibly should be added to release builds
+#ifdef DEBUG
+>>>>>>> devel
     struct t_ContextMaterialListNode *np;
     LIST_FOREACH(np, &context->materials, data)
     {
         if (np->material == material)
         {
+<<<<<<< HEAD
             log_error("Same material added to context twice, address %p",
                 material);
             return SPIRIT_FAILURE;
         }
     }
     #endif
+=======
+            log_error(
+                "Same material added to context twice, address %p", material);
+            return SPIRIT_FAILURE;
+        }
+    }
+#endif
+>>>>>>> devel
 
     struct t_ContextMaterialListNode *node =
         new_var(struct t_ContextMaterialListNode);
@@ -245,9 +356,14 @@ SpiritResult spContextAddMaterial(
     return SPIRIT_SUCCESS;
 }
 
+<<<<<<< HEAD
 SpiritResult spContextRemoveMaterial(
     SpiritContext context,
     const SpiritMaterial material)
+=======
+SpiritResult
+spContextRemoveMaterial(SpiritContext context, const SpiritMaterial material)
+>>>>>>> devel
 {
 
     struct t_ContextMaterialListNode *np;
@@ -271,7 +387,11 @@ SpiritResult spDestroyContext(SpiritContext context)
     // destroy materials
     struct t_ContextMaterialListNode *np, *op;
     np = LIST_FIRST(&context->materials);
+<<<<<<< HEAD
     while(!LIST_EMPTY(&context->materials))
+=======
+    while (!LIST_EMPTY(&context->materials))
+>>>>>>> devel
     {
         op = np;
         np = LIST_NEXT(np, data);
@@ -281,7 +401,12 @@ SpiritResult spDestroyContext(SpiritContext context)
 
     destroySyncObjects(context);
 
+<<<<<<< HEAD
     for (u32 i = 0; context->commandBuffers && i < context->commandBufferCount; ++i)
+=======
+    for (u32 i = 0; context->commandBuffers && i < context->commandBufferCount;
+         ++i)
+>>>>>>> devel
     {
         SpiritCommandBuffer buf = context->commandBuffers[i];
         if (buf)
@@ -295,9 +420,16 @@ SpiritResult spDestroyContext(SpiritContext context)
         }
     }
 
+<<<<<<< HEAD
     context->swapchain && spDestroySwapchain(context->swapchain, context->device);
     context->device && spDestroyDevice(context->device);
     context->window && spDestroyWindow (context->window);
+=======
+    context->swapchain &&spDestroySwapchain(
+        context->swapchain, context->device);
+    context->device &&spDestroyDevice(context->device);
+    context->window &&spDestroyWindow(context->window);
+>>>>>>> devel
 
     free(context->commandBuffers);
 
@@ -315,6 +447,7 @@ SpiritResult beginFrame(SpiritContext context, u32 *imageIndex)
 
     // aquire image
     if (spSwapchainAquireNextImage(
+<<<<<<< HEAD
         context->device,
         context->swapchain,
         context->imageAvailableSemaphores[context->currentFrame],
@@ -326,6 +459,18 @@ SpiritResult beginFrame(SpiritContext context, u32 *imageIndex)
         context->commandBuffers[*imageIndex],
         UINT64_MAX)) return SPIRIT_FAILURE;
 
+=======
+            context->device,
+            context->swapchain,
+            context->imageAvailableSemaphores[context->currentFrame],
+            imageIndex))
+        return SPIRIT_FAILURE;
+
+    // if the imageInFlight fence is not null, wait for it to complete
+    if (spCommandBufferWait(
+            context->device, context->commandBuffers[*imageIndex], UINT64_MAX))
+        return SPIRIT_FAILURE;
+>>>>>>> devel
 
     SpiritCommandBuffer buf = context->commandBuffers[*imageIndex];
 
@@ -333,6 +478,7 @@ SpiritResult beginFrame(SpiritContext context, u32 *imageIndex)
 
     // Dynamic state
     VkViewport viewport = {
+<<<<<<< HEAD
         .x = 0.0f,
         .y = (f32) context->screenResolution.h,
         .width = (f32) context->screenResolution.w,
@@ -346,19 +492,39 @@ SpiritResult beginFrame(SpiritContext context, u32 *imageIndex)
         .extent.width = context->screenResolution.w,
         .extent.height = context->screenResolution.h
     };
+=======
+        .x        = 0.0f,
+        .y        = (f32)context->screenResolution.h,
+        .width    = (f32)context->screenResolution.w,
+        .height   = -(f32)context->screenResolution.h,
+        .minDepth = 0.0f,
+        .maxDepth = 1.0f};
+
+    VkRect2D scissor = {
+        .offset.x = scissor.offset.y = 0,
+        .extent.width                = context->screenResolution.w,
+        .extent.height               = context->screenResolution.h};
+>>>>>>> devel
 
     vkCmdSetViewport(buf->handle, 0, 1, &viewport);
     vkCmdSetScissor(buf->handle, 0, 1, &scissor);
 
     return SPIRIT_SUCCESS;
+<<<<<<< HEAD
 
+=======
+>>>>>>> devel
 }
 
 SpiritResult endFrame(SpiritContext context, const u32 imageIndex)
 {
 
     SpiritCommandBuffer buf = context->commandBuffers[imageIndex];
+<<<<<<< HEAD
     const u32 currentFrame = context->currentFrame;
+=======
+    const u32 currentFrame  = context->currentFrame;
+>>>>>>> devel
 
     spCommandBufferEnd(buf);
 
@@ -367,6 +533,7 @@ SpiritResult endFrame(SpiritContext context, const u32 imageIndex)
 
     // submit command buffer
     if (spCommandBufferSubmit(
+<<<<<<< HEAD
         context->device,
         buf,
         context->imageAvailableSemaphores[currentFrame],
@@ -375,6 +542,16 @@ SpiritResult endFrame(SpiritContext context, const u32 imageIndex)
     {
         log_fatal("Failed to submit command buffer");
        return SPIRIT_FAILURE;
+=======
+            context->device,
+            buf,
+            context->imageAvailableSemaphores[currentFrame],
+            context->queueCompleteSemaphores[currentFrame],
+            &waitStages))
+    {
+        log_fatal("Failed to submit command buffer");
+        return SPIRIT_FAILURE;
+>>>>>>> devel
     }
 
     // present image
@@ -396,6 +573,7 @@ SpiritResult createSyncObjects(SpiritContext context)
     db_assert_msg(context->swapchain, "Context must have swapchain");
 
     const u32 imagesInFlight = context->maxImagesInFlight;
+<<<<<<< HEAD
     db_assert_msg(imagesInFlight < 10, "Images in flight should not be more then 10")
     const u32 imageCount = context->swapchain->imageCount;
     db_assert_msg(imageCount < 11, "Image count should not be more then 10");
@@ -404,10 +582,23 @@ SpiritResult createSyncObjects(SpiritContext context)
 
     context->imageAvailableSemaphores = new_array(VkSemaphore, imagesInFlight);
     context->queueCompleteSemaphores = new_array(VkSemaphore, imagesInFlight);
+=======
+    db_assert_msg(
+        imagesInFlight < 10, "Images in flight should not be more then 10")
+        const u32 imageCount = context->swapchain->imageCount;
+    db_assert_msg(imageCount < 11, "Image count should not be more then 10");
+    db_assert_msg(
+        imagesInFlight == imageCount - 1,
+        "Images in flight should be imageCount - 1");
+
+    context->imageAvailableSemaphores = new_array(VkSemaphore, imagesInFlight);
+    context->queueCompleteSemaphores  = new_array(VkSemaphore, imagesInFlight);
+>>>>>>> devel
 
     VkSemaphoreCreateInfo semaphoreInfo = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
         .flags = 0,
+<<<<<<< HEAD
         .pNext = 0
     };
 
@@ -424,6 +615,26 @@ SpiritResult createSyncObjects(SpiritContext context)
             &semaphoreInfo,
             NULL,
             &context->queueCompleteSemaphores[i])) failure = true;
+=======
+        .pNext = 0};
+
+    for (size_t i = 0; i < imagesInFlight; i++)
+    {
+
+        bool failure = false;
+        if (vkCreateSemaphore(
+                context->device->device,
+                &semaphoreInfo,
+                NULL,
+                &context->imageAvailableSemaphores[i]))
+            failure = true;
+        if (vkCreateSemaphore(
+                context->device->device,
+                &semaphoreInfo,
+                NULL,
+                &context->queueCompleteSemaphores[i]))
+            failure = true;
+>>>>>>> devel
 
         if (failure)
         {
@@ -439,16 +650,36 @@ void destroySyncObjects(SpiritContext context)
 {
     for (u32 i = 0; i < context->maxImagesInFlight; i++)
     {
+<<<<<<< HEAD
         if (context->queueCompleteSemaphores && context->queueCompleteSemaphores[i])
             vkDestroySemaphore(context->device->device,
                 context->queueCompleteSemaphores[i],
                 ALLOCATION_CALLBACK);
         if (context->imageAvailableSemaphores && context->imageAvailableSemaphores[i])
             vkDestroySemaphore(context->device->device,
+=======
+        if (context->queueCompleteSemaphores &&
+            context->queueCompleteSemaphores[i])
+            vkDestroySemaphore(
+                context->device->device,
+                context->queueCompleteSemaphores[i],
+                ALLOCATION_CALLBACK);
+        if (context->imageAvailableSemaphores &&
+            context->imageAvailableSemaphores[i])
+            vkDestroySemaphore(
+                context->device->device,
+>>>>>>> devel
                 context->imageAvailableSemaphores[i],
                 NULL);
     }
 
+<<<<<<< HEAD
     if (context->imageAvailableSemaphores) free(context->imageAvailableSemaphores);
     if (context->queueCompleteSemaphores)  free(context->queueCompleteSemaphores);
+=======
+    if (context->imageAvailableSemaphores)
+        free(context->imageAvailableSemaphores);
+    if (context->queueCompleteSemaphores)
+        free(context->queueCompleteSemaphores);
+>>>>>>> devel
 }

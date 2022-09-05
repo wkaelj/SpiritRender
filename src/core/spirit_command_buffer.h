@@ -13,14 +13,24 @@
 
 #include <spirit_header.h>
 
+<<<<<<< HEAD
 typedef enum e_SpiritCommandBufferState {
+=======
+typedef enum e_SpiritCommandBufferState
+{
+>>>>>>> devel
     SPIRIT_COMMAND_BUFFER_STATE_READY = 0,
     SPIRIT_COMMAND_BUFFER_STATE_RECORDING,
     SPIRIT_COMMAND_BUFFER_STATE_RECORDED,
     SPIRIT_COMMAND_BUFFER_STATE_BUSY
 } SpiritCommandBufferState;
 
+<<<<<<< HEAD
 struct t_SpiritCommandBuffer {
+=======
+struct t_SpiritCommandBuffer
+{
+>>>>>>> devel
     VkCommandBuffer handle;
     SpiritFence fence;
     SpiritCommandBufferState state;
@@ -41,9 +51,14 @@ typedef SpiritCommandBuffer SpiritCommandBufferSingleUse;
  * should be a primary command buffer
  * @return SpiritCommandBuffer
  */
+<<<<<<< HEAD
 SpiritCommandBuffer spCreateCommandBuffer(
     const SpiritDevice device,
     bool primary);
+=======
+SpiritCommandBuffer
+spCreateCommandBuffer(const SpiritDevice device, bool primary);
+>>>>>>> devel
 
 /**
  * @brief create a command buffer that can only be used once
@@ -52,7 +67,10 @@ SpiritCommandBuffer spCreateCommandBuffer(
  */
 SpiritCommandBuffer spCreateCommandBufferSingleUse(const SpiritDevice);
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> devel
 /**
  * @brief Create an array of command buffers
  *
@@ -74,8 +92,13 @@ SpiritResult spCreateCommandBuffers(
  * @param device
  * @return SpiritResult
  */
+<<<<<<< HEAD
 SpiritCommandBuffer spCreateCommandBufferAndBeginSingleUse(
     const SpiritDevice device);
+=======
+SpiritCommandBuffer
+spCreateCommandBufferAndBeginSingleUse(const SpiritDevice device);
+>>>>>>> devel
 
 /**
  * @brief destroy a command buffer
@@ -84,8 +107,12 @@ SpiritCommandBuffer spCreateCommandBufferAndBeginSingleUse(
  * @param buffer
  */
 void spDestroyCommandBuffer(
+<<<<<<< HEAD
     const SpiritDevice device,
     SpiritCommandBuffer buffer);
+=======
+    const SpiritDevice device, SpiritCommandBuffer buffer);
+>>>>>>> devel
 
 /**
  * @brief begin a command buffer. allow it to recieve commands.
@@ -130,20 +157,32 @@ SpiritResult spCommandBufferSubmit(
  * @return SpiritResult
  */
 SpiritResult spCommandBufferWait(
+<<<<<<< HEAD
     const SpiritDevice device,
     const SpiritCommandBuffer buffer,
     u64 timeout_ns) SPIRIT_NONULL(1, 2);
 /**
  * @brief submit the single use of a singl use command buffer. The command buffer
  * must be destroyed immidiatly after
+=======
+    const SpiritDevice device, const SpiritCommandBuffer buffer, u64 timeout_ns)
+    SPIRIT_NONULL(1, 2);
+/**
+ * @brief submit the single use of a singl use command buffer. The command
+ * buffer must be destroyed immidiatly after
+>>>>>>> devel
  *
  * @param device
  * @param buffer
  * @return SpiritResult
  */
 SpiritResult spCommandBufferSubmitSingleUse(
+<<<<<<< HEAD
     const SpiritDevice device,
     SpiritCommandBuffer buffer) SPIRIT_NONULL(1, 2);
+=======
+    const SpiritDevice device, SpiritCommandBuffer buffer) SPIRIT_NONULL(1, 2);
+>>>>>>> devel
 
 /**
  * @brief End a command buffer, so it can be submitted
@@ -153,8 +192,13 @@ SpiritResult spCommandBufferSubmitSingleUse(
  */
 SpiritResult spCommandBufferEnd(SpiritCommandBuffer buffer);
 
+<<<<<<< HEAD
 SPIRIT_INLINE SpiritCommandBufferState spCommandBufferGetState(
     const SpiritCommandBuffer buf)
+=======
+SPIRIT_INLINE SpiritCommandBufferState
+spCommandBufferGetState(const SpiritCommandBuffer buf)
+>>>>>>> devel
 {
     return buf->state;
 }

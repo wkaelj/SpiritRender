@@ -2,6 +2,12 @@ include(./.env.cmake OPTIONAL RESULT_VARIABLE LOCAL_ENV)
 message(STATUS "Local .env.cmake: ${LOCAL_ENV}")
 
 cmake_minimum_required(VERSION 3.22.0)
+<<<<<<< HEAD
+=======
+
+# whether or not to build with address sanitizer
+set(SPIRIT_USE_ASAN true)
+>>>>>>> devel
 
 set(NAME SpiritRender)
 
@@ -50,11 +56,25 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CM
 
 # BUILD TYPE
 set(CMAKE_BUILD_TYPE "Debug")
+<<<<<<< HEAD
 # add_compile_options(-D_FORTIFY_SOURCE=2 -fsanitize=address)
 
 # address sanitizer
 target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=address)
 target_link_options(${PROJECT_NAME} PRIVATE -fsanitize=address)
+=======
+
+set(CMD_ARGS -Wall -Wextra -Wno-unused-value)
+
+# address sanitizer
+if (SPIRIT_USE_ASAN)
+  target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=address ${CMD_ARGS})
+  target_link_options(${PROJECT_NAME} PRIVATE -fsanitize=address ${CMD_ARGS})
+else()
+  target_compile_options(${PROJECT_NAME} PRIVATE ${CMD_ARGS})
+  target_link_options(${PROJECT_NAME} PRIVATE ${CMD_ARGS})
+endif()
+>>>>>>> devel
 
 set(CMAKE_C_STANDARD gnu2x)
 
@@ -93,6 +113,7 @@ elseif (UNIX)
     target_link_libraries(${PROJECT_NAME} PRIVATE
       ${Vulkan_LIBRARIES})
 endif()
+<<<<<<< HEAD
 
 
 ############## Build SHADERS #######################
@@ -130,3 +151,5 @@ add_custom_target(
     Shaders
     DEPENDS ${SPIRV_BINARY_FILES}
 )
+=======
+>>>>>>> devel
