@@ -51,6 +51,7 @@ struct t_MaterialListNode
     bool isBuffer; // if the node is part of a buffer
     bool used; // if the node is part of a buffer, whether or not it is used
     SpiritMeshReference mesh;
+    // TODO push constant
     LIST_ENTRY(t_MaterialListNode) data;
 };
 

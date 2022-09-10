@@ -6,7 +6,7 @@ DEBUGGERARGS = --silent
 BUILDFDR = bin
 EXEC = SpiritRender
 
-default:
+default: shaders
 	cp -r Config/* bin/
 	make -s --quiet -C $(BUILDFDR)
 

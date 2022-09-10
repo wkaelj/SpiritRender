@@ -1,4 +1,5 @@
 #pragma once
+#include "core/spirit_window.h"
 #include <spirit_header.h>
 
 // Create a spirit render context
@@ -37,16 +38,36 @@ struct t_ContextMaterialListNode
 
 struct t_SpiritContext
 {
+
+    /**
+     * @brief The window the context renders to
+     *
+     */
     SpiritWindow window;
 
-<<<<<<< HEAD
-    SpiritDevice     device;
-    SpiritSwapchain  swapchain;
-=======
+    /**
+     * @brief the state of the window
+     *
+     */
+    SpiritWindowState windowState;
+
+    /**
+     * @brief The device selected by the context
+     *
+     */
     SpiritDevice device;
+
+    /**
+     * @brief The swapchain created by the context
+     *
+     */
     SpiritSwapchain swapchain;
 >>>>>>> devel
 
+    /**
+     * @brief The list of materials used by the context.
+     *
+     */
     LIST_HEAD(t_ContextMaterialListHead, t_ContextMaterialListNode) materials;
     u32 materialCount;
 
@@ -70,20 +91,46 @@ struct t_SpiritContext
     u32 currentFrame;
 };
 
+/**
+ * @brief Create a new context. The context included the swapchain, the device,
+ * and the sync objects. Materials can be added once it is created.
+ *
+ * @param createInfo information about the creation of the context, and the
+ * objects it contains
+ * @return SpiritContext a reference to the created context. This must be
+ * destroyed by spDestroyContext when it is no longer used.
+ */
 SpiritContext spCreateContext(SpiritContextCreateInfo *createInfo);
 
+/**
+ * @brief Recreate objects that depend on the window resolution, like the
+ * swapchain. Should no longer be called by the app, it is handled by
+ * spContextPollEvents.
+ *
+ * @param context
+ * @return SpiritResult
+ */
 SpiritResult spContextHandleWindowResized(SpiritContext context);
 
-<<<<<<< HEAD
+/**
+ * @brief Get the state of the of the windows. This is only updated when
+ * spContextPollEvents is called.
+ *
+ * @param context the context containing the window
+ * @return SpiritWindowState
+ */
+SpiritWindowState spContextGetWindowState(const SpiritContext context);
 
-=======
->>>>>>> devel
 SpiritResult spContextSubmitFrame(SpiritContext context);
+
+SpiritWindowState spContextPollEvents(SpiritContext context);
 
 /**
  * @brief add a new material to the context, which will be rendered.
  * The material must be destroyed manually by the user.
  * It can be removed from the context using spContextRemoveMateral.
+ * It also must be removed before it can be destroyed, otherwise the behavoir is
+ * undefined.
  *
  * @param context the context the material will be added to. It must be a valid
  * SpiritContext.

@@ -89,7 +89,9 @@ void mainlooptest(void)
     contextInfo.windowSize              = (SpiritResolution){800, 600};
     contextInfo.windowFullscreen        = false;
 
+#ifndef FUNCTION_TIMER_NO_DIAGNOSTIC
     struct FunctionTimerData startup = start_timer("startup");
+#endif
     SpiritContext context;
     time_function_with_return(spCreateContext(&contextInfo), context);
 
@@ -190,180 +192,17 @@ void mainlooptest(void)
     time_function_with_return(spCreateMeshManager(context, NULL), meshManager);
 >>>>>>> devel
     const SpiritMeshReference meshRef = spMeshManagerAddMesh(meshManager, mesh);
-
+#ifndef FUNCTION_TIMER_NO_DIAGNOSTIC
     end_timer(startup);
-
-    SpiritWindowState windowState;
+#endif
 
     u64 frameIndex = 0; // check the current frame being rendered
-<<<<<<< HEAD
-    while ((windowState = spWindowGetState(context->window)) != SPIRIT_WINDOW_CLOSED)
+    while (spContextPollEvents(context) != SPIRIT_WINDOW_CLOSED)
     {
 
+#ifndef FUNCTION_TIMER_NO_DIAGNOSTIC
         struct FunctionTimerData frametime = start_timer("frametime");
-        // handle window resized
-        if (windowState == SPIRIT_WINDOW_RESIZED)
-        {
-            if(spContextHandleWindowResized(context)) continue;
-        } else if (windowState == SPIRIT_WINDOW_RESIZING) continue;
-
-        // time_function(spMaterialAddMesh(material, meshRef));
-
-        SpiritResult result = SPIRIT_SUCCESS;
-        time_function_with_return(spContextSubmitFrame(context), result);
-
-        if (result)
-        {
-            log_error("Error on frame %lu", frameIndex);
-            sleep(5);
-        }
-
-        end_timer(frametime);
-
-        ++frameIndex;
-
-    }
-
-    spDeviceWaitIdle(context->device);
-    spDestroyMeshManager(context, meshManager);
-    spDestroyMaterial(context, material);
-    spDestroyContext(context);
-
-}
-
-//
-// Tests
-//
-
-void runTest(bool test)
-{
-    static u32 testIntex;
-    if(test)
-    {
-        log_info("Test %u passed.", testIntex);
-    } else
-    {
-        log_error("Test %u failed.", testIntex);
-    }
-
-    testIntex++;
-}
-
-// tests
-bool TestPlatformLocalizeFilename(const char *input, const char *expected)
-{
-
-    u32 max = 0;
-    time_function(spPlatformLocalizeFileName(NULL, input, &max));
-    char output[max];
-    time_function(spPlatformLocalizeFileName(output, input, &max));
-    if (strcmp(output, expected))
-    {
-        log_error("Expected %s, got %s", expected, output);
-        return false;
-    }
-    return true;
-}
-
-bool TestStringTruncate(const char *input, const char slicer, bool inclusive, const char *expected)
-{
-
-    u32 len = strlen(input) + 1;
-    char dest[len];
-
-    time_function(spStringTruncate(dest, &len, input, slicer, inclusive));
-
-    if (strcmp(dest, expected))
-    {
-        log_error("Expected %s, got %s", expected, dest);
-        return false;
-    }
-    return true;
-}
-
-bool TestStringStrip(const char *input, const char slicer, const char *expected)
-{
-
-    u32 len = strlen(input) + 1;
-    char dest[len];
-
-    time_function(spStringStrip(dest, &len, input, slicer));
-
-    if (strcmp(dest, expected))
-    {
-        log_error("Expected %s, got %s", expected, dest);
-        return false;
-    }
-    return true;
-}
-
-/**
- * @brief Test the built in file utilities. The function will create a file,
- * write text to it, read the file and verify the contents. It then deletes the file.
- * NOTE: this test will fail if the file is inside a folder that doesn't exist.
- *
- * @param textFileName
- * @param testFileContents
- * @return true
- * @return false
- */
-bool TestFileUtilities(
-    const char *restrict testFileName,
-    const char *restrict testFileContents)
-{
-
-    SpiritResult success = 0;
-
-    u64 testFileContentsLength = strlen(testFileContents) + 1;
-    char buf[testFileContentsLength]; // declare buf for goto
-
-
-    time_function_with_return(spWriteFileBinary(testFileName, testFileContents, testFileContentsLength - 1), success);
-    if (success) return false;
-
-    time_function_with_return(spReadFileText(buf, testFileName, testFileContentsLength), success);
-    if (success) goto failure;
-
-    int cmpResult;
-    time_function_with_return(strncmp(buf, testFileContents, testFileContentsLength), cmpResult);
-    if (cmpResult != 0)
-    {
-        log_error("input string and read string do not match");
-        goto failure;
-    }
-
-    memset(buf, 0, testFileContentsLength);
-    time_function_with_return(spReadFileBinary(buf, testFileName, testFileContentsLength), success);
-    if (success) goto failure;
-    cmpResult = strncmp(buf, testFileContents, testFileContentsLength);
-    if (cmpResult != 0)
-    {
-        return false;
-    }
-
-    time_function_with_return(spPlatformDeleteFile(testFileName), success);
-    if (success) return false;
-
-    return true;;
-
-    failure:
-    spPlatformDeleteFile(testFileName);
-    return false;
-
-=======
-    while ((windowState = spWindowGetState(context->window)) !=
-           SPIRIT_WINDOW_CLOSED)
-    {
-
-        struct FunctionTimerData frametime = start_timer("frametime");
-        // handle window resized
-        if (windowState == SPIRIT_WINDOW_RESIZED)
-        {
-            if (spContextHandleWindowResized(context))
-                continue;
-        }
-        else if (windowState == SPIRIT_WINDOW_RESIZING)
-            continue;
+#endif
 
         time_function(spMaterialAddMesh(material, meshRef));
 
@@ -373,13 +212,15 @@ bool TestFileUtilities(
         if (result)
         {
             log_error("Error on frame %lu", frameIndex);
-            sleep(5);
         }
-
+#ifndef FUNCTION_TIMER_NO_DIAGNOSTIC
         end_timer(frametime);
+#endif
 
         ++frameIndex;
     }
+
+    debug_malloc_dump_mem();
 
     spDeviceWaitIdle(context->device);
 
@@ -617,7 +458,9 @@ bool TestGLSLLoader(const char *restrict shaderPath)
 >>>>>>> devel
 void Test(void)
 {
+#ifndef FUNCTION_TIMER_NO_DIAGNOSTIC
     init_timer();
+#endif
     for (size_t i = 0; i < 1; i++)
     {
         runTest(TestGLSLLoader("tests/test_shader.frag"));
@@ -638,5 +481,7 @@ void Test(void)
             "testfile.txt", "Testing test file\nNewline test"));
 >>>>>>> devel
     }
+#ifndef FUNCTION_TIMER_NO_DIAGNOSTIC
     terminate_timer();
+#endif
 }

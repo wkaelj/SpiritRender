@@ -4,9 +4,8 @@
 =======
 #include "core/spirit_mesh.h"
 #include "spirit_command_buffer.h"
-#include "spirit_renderpass.h"
 #include "spirit_device.h"
->>>>>>> devel
+#include "spirit_renderpass.h"
 #include <glsl-loader/glsl_loader.h>
 
 // Implementation of spirit_pipeline.h

@@ -205,12 +205,6 @@ SpiritWindowState spWindowGetState(SpiritWindow window)
 =======
     }
 
-    // the has stopped resizing
-    if (!g_glfwWindowWasResized && window->resizing)
-    {
-        return SPIRIT_WINDOW_RESIZED;
-    }
-
     // the window is being resized
     if (g_glfwWindowWasResized)
     {

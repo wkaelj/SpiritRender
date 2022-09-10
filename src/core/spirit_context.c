@@ -268,6 +268,11 @@ SpiritResult spContextSubmitFrame(SpiritContext context)
         return SPIRIT_FAILURE;
     }
 
+    // SpiritResolution winRes = spWindowGetPixelSize(context->window);
+    // db_assert(
+    //     context->screenResolution.w == winRes.w &&
+    //     context->screenResolution.h == winRes.h);
+
     struct t_ContextMaterialListNode *np;
     LIST_FOREACH(np, &context->materials, data)
     {
@@ -296,11 +301,28 @@ SpiritResult spContextSubmitFrame(SpiritContext context)
     return SPIRIT_SUCCESS;
 }
 
-<<<<<<< HEAD
-SpiritResult spContextAddMaterial(
-    SpiritContext context,
-    const SpiritMaterial material)
-=======
+SpiritWindowState spContextPollEvents(SpiritContext context)
+{
+    context->windowState = spWindowGetState(context->window);
+    switch (context->windowState)
+    {
+    case SPIRIT_WINDOW_NORMAL:
+        // TODO poll events
+        return SPIRIT_WINDOW_NORMAL;
+    case SPIRIT_WINDOW_RESIZING:
+        spContextHandleWindowResized(context);
+        return SPIRIT_WINDOW_RESIZING;
+    case SPIRIT_WINDOW_MINIMIZED: return SPIRIT_WINDOW_MINIMIZED;
+    case SPIRIT_WINDOW_CLOSED: return SPIRIT_WINDOW_CLOSED;
+    default: return SPIRIT_WINDOW_NORMAL;
+    }
+}
+
+inline SpiritWindowState spContextGetWindowState(const SpiritContext context)
+{
+    return context->windowState;
+}
+
 SpiritResult
 spContextAddMaterial(SpiritContext context, const SpiritMaterial material)
 >>>>>>> devel
@@ -383,7 +405,6 @@ spContextRemoveMaterial(SpiritContext context, const SpiritMaterial material)
 
 SpiritResult spDestroyContext(SpiritContext context)
 {
-
     // destroy materials
     struct t_ContextMaterialListNode *np, *op;
     np = LIST_FIRST(&context->materials);
@@ -555,11 +576,15 @@ SpiritResult endFrame(SpiritContext context, const u32 imageIndex)
     }
 
     // present image
-    spSwapchainPresent(
-        context->device,
-        context->swapchain,
-        context->queueCompleteSemaphores[currentFrame],
-        imageIndex);
+    if (spSwapchainPresent(
+            context->device,
+            context->swapchain,
+            context->queueCompleteSemaphores[currentFrame],
+            imageIndex))
+    {
+        log_error("Failed to present image");
+        return SPIRIT_FAILURE;
+    };
 
     // increment current image
     context->currentFrame = (currentFrame + 1) % context->maxImagesInFlight;

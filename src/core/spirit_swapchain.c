@@ -470,8 +470,10 @@ SpiritResult spSwapchainPresent(
 
     presentInfo.pImageIndices = &imageIndex;
 
-    if (vkQueuePresentKHR(device->presentQueue, &presentInfo))
+    VkResult r = vkQueuePresentKHR(device->presentQueue, &presentInfo);
+    if (r != VK_SUCCESS && r != VK_SUBOPTIMAL_KHR)
     {
+        log_warning("Error attemting to present image");
         return SPIRIT_FAILURE;
     }
 
@@ -486,13 +488,14 @@ SpiritResult spSwapchainAquireNextImage(
     u32 *imageIndex)
 {
 
-    if (vkAcquireNextImageKHR(
-            device->device,
-            swapchain->swapchain,
-            UINT64_MAX,
-            waitSemaphore,
-            VK_NULL_HANDLE,
-            imageIndex))
+    VkResult r = vkAcquireNextImageKHR(
+        device->device,
+        swapchain->swapchain,
+        UINT64_MAX,
+        waitSemaphore,
+        VK_NULL_HANDLE,
+        imageIndex);
+    if (r != VK_SUCCESS && r != VK_SUBOPTIMAL_KHR)
     {
         log_warning("Error attempting to aquire next image");
         return SPIRIT_FAILURE;

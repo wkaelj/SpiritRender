@@ -83,6 +83,7 @@
 #ifndef DEBUG
 #define FUNCTION_TIMER_NO_DIAGNOSTIC
 #endif
+
 #include "debug/function_timer.h"
 
 // enable messeges upon success, not just failure

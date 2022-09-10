@@ -1,7 +1,8 @@
-[X] update materials to use a pool
 [ ] arg parser, check if arg is included
 [ ] implement push constants
 [ ] buffer wrapper to store size
+[ ] change context to wrap window resize handling
+[X] update materials to use a pool
 [X] bug in mesh drawing, idk why (VK_ERROR_DEVICE_LOST)
 [X] change function timer to use object to store data, not a global
 [X] fix null char starting file path
