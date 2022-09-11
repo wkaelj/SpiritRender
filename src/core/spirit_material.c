@@ -30,7 +30,7 @@ SPIRIT_INLINE void clearQueue(SpiritMaterial material)
 
     while (!LIST_EMPTY(&material->meshList))
     {
-        struct t_MaterialListNode *np = LIST_FIRST(&material->meshList);
+        struct t_SpiritMaterialListNode *np = LIST_FIRST(&material->meshList);
 
         db_assert_msg(np->used, "Unused node added to material queue");
         LIST_REMOVE(np, data);
@@ -42,9 +42,9 @@ SPIRIT_INLINE void clearQueue(SpiritMaterial material)
     }
 }
 
-struct t_MaterialListNode *findNode(const SpiritMaterial material)
+struct t_SpiritMaterialListNode *findNode(const SpiritMaterial material)
 {
-    struct t_MaterialListNode *node = NULL;
+    struct t_SpiritMaterialListNode *node = NULL;
     if (material->currentBufferSpot < array_length(material->nodeBuffer))
     {
         node = &material->nodeBuffer[material->currentBufferSpot];
@@ -55,7 +55,7 @@ struct t_MaterialListNode *findNode(const SpiritMaterial material)
     }
     else
     {
-        node           = new_var(struct t_MaterialListNode);
+        node           = new_var(struct t_SpiritMaterialListNode);
         node->isBuffer = false;
         node->used     = true;
         log_warning("Overflowing material node buffer, increase buffer size");
@@ -65,7 +65,7 @@ struct t_MaterialListNode *findNode(const SpiritMaterial material)
 }
 
 SpiritResult
-releaseNode(SpiritMaterial material, struct t_MaterialListNode *node)
+releaseNode(SpiritMaterial material, struct t_SpiritMaterialListNode *node)
 {
     db_assert(node && node->used);
 
@@ -169,7 +169,7 @@ SpiritMaterial spCreateMaterial(
     material->currentBufferSpot = 0;
     for (u32 i = 0; i < array_length(material->nodeBuffer); i++)
     {
-        material->nodeBuffer[i] = (struct t_MaterialListNode){
+        material->nodeBuffer[i] = (struct t_SpiritMaterialListNode){
             .isBuffer = true, .used = false, .data = {}, .mesh = {}};
     }
 
@@ -208,12 +208,15 @@ spMaterialUpdate(const SpiritContext context, SpiritMaterial material)
         context->device, material->renderPass, context->swapchain);
 }
 
-SpiritResult
-spMaterialAddMesh(SpiritMaterial material, const SpiritMeshReference meshRef)
+SpiritResult spMaterialAddMesh(
+    const SpiritMaterial material,
+    const SpiritMeshReference meshRef,
+    SpiritPushConstant pushConstant)
 {
-    struct t_MaterialListNode *newNode = findNode(material);
+    struct t_SpiritMaterialListNode *newNode = findNode(material);
 
-    newNode->mesh = spCheckoutMesh(meshRef);
+    newNode->mesh         = spCheckoutMesh(meshRef);
+    newNode->pushConstant = pushConstant;
 
     LIST_INSERT_HEAD(&material->meshList, newNode, data);
     material->meshCount++;
@@ -299,7 +302,8 @@ SpiritResult spMaterialRecordCommands(
     }
 
     // iterate through meshes and submit vertexes
-    struct t_MaterialListNode *currentMesh = LIST_FIRST(&material->meshList);
+    struct t_SpiritMaterialListNode *currentMesh =
+        LIST_FIRST(&material->meshList);
 
     while (currentMesh != NULL)
     {
@@ -315,28 +319,20 @@ SpiritResult spMaterialRecordCommands(
 
         vkCmdBindVertexBuffers(buf->handle, 0, 1, vertBuffers, offsets);
 
+        // push constants
+        vkCmdPushConstants(
+            buf->handle,
+            material->pipeline->layout,
+            VK_SHADER_STAGE_ALL_GRAPHICS,
+            0,
+            sizeof(SpiritPushConstant),
+            &currentMesh->pushConstant);
+
         vkCmdDraw(buf->handle, currentMesh->mesh.vertCount, 1, 0, 0);
 
         // move to next list element
-        struct t_MaterialListNode *oldNode = currentMesh;
-<<<<<<< HEAD
-        currentMesh = LIST_NEXT(currentMesh, data);
-        spReleaseMesh(oldNode->mesh);
-        LIST_REMOVE(oldNode, data);
-        free(oldNode);
-    }
-
-    spRenderPassEnd(context->commandBuffers[imageIndex]);
-
-    return SPIRIT_SUCCESS;
-
-}
-
-SpiritResult spDestroyMaterial(
-    const SpiritContext context,
-    SpiritMaterial material)
-=======
-        currentMesh                        = LIST_NEXT(currentMesh, data);
+        struct t_SpiritMaterialListNode *oldNode = currentMesh;
+        currentMesh                              = LIST_NEXT(currentMesh, data);
 
         spReleaseMesh(oldNode->mesh);
         LIST_REMOVE(oldNode, data);

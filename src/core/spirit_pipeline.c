@@ -1,7 +1,5 @@
 #include "spirit_pipeline.h"
-<<<<<<< HEAD
-#include "spirit_command_buffer.h"
-=======
+#include "core/spirit_material.h"
 #include "core/spirit_mesh.h"
 #include "spirit_command_buffer.h"
 #include "spirit_device.h"
@@ -277,6 +275,13 @@ spDestroyPipeline(const SpiritDevice device, SpiritPipeline pipeline)
 
 VkPipelineLayout createLayout(SpiritDevice device)
 {
+
+    VkPushConstantRange pushRanges = {
+        .offset = 0,
+        .size = sizeof(SpiritPushConstant),
+        .stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS
+    };
+
     VkPipelineLayoutCreateInfo layoutInfo = {};
 <<<<<<< HEAD
     layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -288,9 +293,8 @@ VkPipelineLayout createLayout(SpiritDevice device)
     layoutInfo.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     layoutInfo.setLayoutCount = 0;
     layoutInfo.pSetLayouts    = NULL;
-    layoutInfo.pushConstantRangeCount = 0;
-    layoutInfo.pPushConstantRanges    = NULL;
->>>>>>> devel
+    layoutInfo.pushConstantRangeCount = 1;
+    layoutInfo.pPushConstantRanges    = &pushRanges;
 
     VkPipelineLayout layout = VK_NULL_HANDLE;
     if (vkCreatePipelineLayout(device->device, &layoutInfo, NULL, &layout))

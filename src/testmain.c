@@ -197,6 +197,7 @@ void mainlooptest(void)
 #endif
 
     u64 frameIndex = 0; // check the current frame being rendered
+    float transform = -0.5f;
     while (spContextPollEvents(context) != SPIRIT_WINDOW_CLOSED)
     {
 
@@ -204,7 +205,13 @@ void mainlooptest(void)
         struct FunctionTimerData frametime = start_timer("frametime");
 #endif
 
-        time_function(spMaterialAddMesh(material, meshRef));
+        SpiritPushConstant uniform = {
+            .translation = {transform, 0, 0},
+            .rotation = {},
+            .scale = {}
+        };
+
+        time_function(spMaterialAddMesh(material, meshRef, uniform));
 
         SpiritResult result = SPIRIT_SUCCESS;
         time_function_with_return(spContextSubmitFrame(context), result);
@@ -218,6 +225,8 @@ void mainlooptest(void)
 #endif
 
         ++frameIndex;
+        transform += 0.001f;
+        if (transform >= 0.5f) transform = -0.5f;
     }
 
     debug_malloc_dump_mem();

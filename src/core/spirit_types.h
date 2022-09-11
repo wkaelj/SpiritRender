@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <cglm/cglm.h>
 
 // Variables for the spirit render.
 //
@@ -139,3 +140,11 @@ typedef struct t_SpiritShader
     u64 shaderSize;
 >>>>>>> devel
 } SpiritShader;
+
+
+typedef struct  __attribute__((aligned(16))) t_SpiritPushConstant
+{
+    vec3 translation; // unimplemented
+    vec3 rotation;    // unimplemented
+    vec3 scale;       // unimplemented
+} SpiritPushConstant;

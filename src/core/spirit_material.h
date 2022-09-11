@@ -41,18 +41,13 @@ typedef struct t_SpiritMaterialCreateInfo
 
 } SpiritMaterialCreateInfo;
 
-<<<<<<< HEAD
-// used internally, do not reference
-
-=======
->>>>>>> devel
-struct t_MaterialListNode
+struct t_SpiritMaterialListNode
 {
     bool isBuffer; // if the node is part of a buffer
-    bool used; // if the node is part of a buffer, whether or not it is used
+    bool used;     // if the node is part of a buffer, whether or not it is used
     SpiritMeshReference mesh;
-    // TODO push constant
-    LIST_ENTRY(t_MaterialListNode) data;
+    SpiritPushConstant pushConstant;
+    LIST_ENTRY(t_SpiritMaterialListNode) data;
 };
 
 <<<<<<< HEAD
@@ -74,8 +69,8 @@ struct t_SpiritMaterial
     u32 meshCount;
 
     u32 currentBufferSpot; // store node buffer index to use next
-    struct t_MaterialListNode nodeBuffer[1024];
-    LIST_HEAD(t_MaterialListHead, t_MaterialListNode) meshList;
+    struct t_SpiritMaterialListNode nodeBuffer[1024];
+    LIST_HEAD(t_MaterialListHead, t_SpiritMaterialListNode) meshList;
 };
 
 <<<<<<< HEAD
@@ -135,7 +130,9 @@ spMaterialUpdate(const SpiritContext context, SpiritMaterial material);
  * @return SpiritResult
  */
 SpiritResult spMaterialAddMesh(
-    const SpiritMaterial material, const SpiritMeshReference meshRef);
+    const SpiritMaterial material,
+    const SpiritMeshReference meshRef,
+    SpiritPushConstant pushConstant);
 
 /**
  * @brief Not to be used by the user, spMaterialRecordCommands is used by the

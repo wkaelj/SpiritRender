@@ -25,3 +25,5 @@ compile_commands.json
 #project
 build
 bin
+
+.cache/

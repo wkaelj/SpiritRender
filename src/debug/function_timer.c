@@ -230,8 +230,7 @@ void createTimerString(char *restrict buf, struct TimerData data)
     snprintf(
         buf,
         LINE_LENGTH_BUFFER,
-        "%s,%fms,%fms,%fms\n",
->>>>>>> devel
+        "%s,%f,%f,%f\n",
         data.functionName,
         data.avgTime,
         data.maxTime,
