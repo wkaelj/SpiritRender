@@ -38,11 +38,7 @@ typedef struct t_SpiritMesh
     VkDeviceMemory vetexBufferMemory;
 
     Vertex verts[]; // flex member
-<<<<<<< HEAD
-} *SpiritMesh;
-=======
 } * SpiritMesh;
->>>>>>> devel
 
 struct t_MeshListNode
 {
@@ -69,57 +65,10 @@ typedef struct t_SpiritMeshManagerCreateInfo
     int val;
 } SpiritMeshManagerCreateInfo;
 
-<<<<<<< HEAD
-
-=======
->>>>>>> devel
 //
 // Functions
 //
 
-<<<<<<< HEAD
-// create a mesh that can be added to a mesh manager
-// converts vector3 mesh positions to vertex structs
-// and creates vertex buffers
-extern SpiritMesh spCreateMesh(
-    const SpiritContext context,
-    const SpiritMeshCreateInfo *createInfo);
-
-// you really shouldnt ever need to call this, but you do you
-extern SpiritResult spDestroyMesh(const SpiritContext context, SpiritMesh mesh);
-
-// create a mesh manager object
-extern SpiritMeshManager spCreateMeshManager(
-    const SpiritContext context,
-    const SpiritMeshManagerCreateInfo *createInfo);
-// add a mesh to a mesh manager
-// once a mesh is managed by a mesh manager,
-// it should not be freed or modified by other components
-extern SpiritMeshReference spMeshManagerAddMesh(
-    SpiritMeshManager manager,
-    SpiritMesh mesh);
-
-// release a reference to a mesh
-extern SpiritResult spReleaseMesh(const SpiritMeshReference meshReference);
-
-// checkout a new reference to a mesh
-extern SpiritMeshReference spCheckoutMesh(const SpiritMeshReference meshReference);
-
-// access the mesh referenced by a meshreference
-extern SpiritMesh spMeshManagerAccessMesh(const SpiritMeshReference ref);
-
-// destroy a mesh manager
-// it will throw a warning if meshes included are still referenced
-// but it will still destroy the mesh manager, and all included meshes
-extern SpiritResult spDestroyMeshManager(
-    const SpiritContext context,
-    SpiritMeshManager meshManager);
-
-VkVertexInputAttributeDescription spMeshGetAttributeDescription(void);
-
-VkVertexInputBindingDescription spMeshGetBindingDescription(void);
-
-=======
 /**
  * @brief Create a mesh that can be drawn by a material. The mesh cannot be used
  * until it is added to a mesh manager, which will allow you to reference the
@@ -216,4 +165,3 @@ extern SpiritResult spDestroyMeshManager(
 
 VkVertexInputAttributeDescription spMeshGetAttributeDescription(void);
 VkVertexInputBindingDescription spMeshGetBindingDescription(void);
->>>>>>> devel

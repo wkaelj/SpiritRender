@@ -7,17 +7,8 @@
 #define BUFFER_LENGTH_FINAL BUFFER_LENGTH + 128
 
 // debug_log function
-<<<<<<< HEAD
-int debug_log(
-    DebugSeverity        severity, 
-    const char *file, 
-    const char *func, 
-    const int            line, 
-    const char *format, ...)
-=======
 int debug_log(DebugSeverity severity, const char *file, const char *func,
     const int line, const char *format, ...)
->>>>>>> devel
 {
 
     static char bufferString1[BUFFER_LENGTH];
@@ -30,33 +21,12 @@ int debug_log(DebugSeverity severity, const char *file, const char *func,
         "\033[1;31m[FATAL]: \033[0m",      // fatal
         "\033[1;33m[ERROR]: \033[0m",      // error
         "\033[1;33m[WARNING]: \033[0m",    // warning
-<<<<<<< HEAD
-	    "\033[1;96m[VALIDATION]: \033[0m", // validation
-=======
         "\033[1;96m[VALIDATION]: \033[0m", // validation
->>>>>>> devel
         "\033[1;32m[INFO]: \033[0m",       // info
         "\033[1;35m[DEBUG]: \033[0m"       // debug
     };
 
     // print error messege
-<<<<<<< HEAD
-    npf_vsnprintf(bufferString1, BUFFER_LENGTH, format, args);
-
-    uint16_t strlen = npf_snprintf (
-        bufferString2,              // output
-        BUFFER_LENGTH,              // max length
-        ">>> %s (%s:%i)\n\t%s%s\n",  // format string
-        func,                       // function name
-        file,                       // filename
-        line,                       // line number
-        messegeSeverity[severity],  // messege severity prefix
-        bufferString1               // error messege
-    );
-
-    if (strlen >= BUFFER_LENGTH_FINAL) {
-        log_warning("Debug called on line %i:%s overflowed buffer.", line, file);
-=======
     vsnprintf(bufferString1, BUFFER_LENGTH, format, args);
 
     uint16_t strlen = snprintf(bufferString2, // output
@@ -73,7 +43,6 @@ int debug_log(DebugSeverity severity, const char *file, const char *func,
     {
         log_warning(
             "Debug called on line %i:%s overflowed buffer.", line, file);
->>>>>>> devel
     }
 
     // TODO log to file
@@ -87,15 +56,7 @@ int debug_log(DebugSeverity severity, const char *file, const char *func,
 #warning Function may result in undefined behaivour passing NULL 'm' value
 #endif
 int unix_log_perror(
-<<<<<<< HEAD
-    const char *file,
-    const char *func,
-    const char *line,
-    const char *m,
-    ...)
-=======
     const char *file, const char *func, const char *line, const char *m, ...)
->>>>>>> devel
 {
 
     if (!file || !func || !line)
@@ -117,29 +78,6 @@ int unix_log_perror(
     length += sizeof(messegeSuffix);
     length += 10; // hardcoded number of extra chars in format (eg. ">>>")
 
-<<<<<<< HEAD
-    if (m) length += sizeof (messegeSuffix);
-
-    va_list args;
-    va_start (args, m);
-
-    char consolidatedMessege[1024];
-    if (npf_vsnprintf (consolidatedMessege, 1024, m, args) > 1024)
-    {
-        log_error ("string length overflowed buffer!");
-    }
-
-    va_end (args);
-
-    char prefix[length];
-    npf_snprintf (prefix, length, ">>> %s (%s:%s)\n\t%s%s%s",
-        func, file, line,
-        messegePrefix,
-        consolidatedMessege,
-        messegeSuffix);
-    
-    perror (prefix);
-=======
     if (m)
         length += sizeof(messegeSuffix);
 
@@ -166,7 +104,6 @@ int unix_log_perror(
         messegeSuffix);
 
     perror(prefix);
->>>>>>> devel
 
     return SPIRIT_SUCCESS;
 }

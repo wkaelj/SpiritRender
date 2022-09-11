@@ -1,14 +1,3 @@
-<<<<<<< HEAD
-#pragma once
-#include <spirit_header.h>
-
-
-// materials have their own render pass, pipeline and shaders
-// which allow them to be completely customizable
-// shaders work by adding a meshrender component to a material
-// and then that mesh will be rendered by the shader that frame
-
-=======
 /**
  * @file spirit_material.h
  * @author Kael Johnston (you@domain.com)
@@ -32,7 +21,6 @@
  * @brief Information to create a material
  *
  */
->>>>>>> devel
 typedef struct t_SpiritMaterialCreateInfo
 {
     const char *name;
@@ -50,13 +38,10 @@ struct t_SpiritMaterialListNode
     LIST_ENTRY(t_SpiritMaterialListNode) data;
 };
 
-<<<<<<< HEAD
-=======
 /**
  * @brief Store data needed to render a material
  *
  */
->>>>>>> devel
 struct t_SpiritMaterial
 {
     const char *name;
@@ -73,31 +58,6 @@ struct t_SpiritMaterial
     LIST_HEAD(t_MaterialListHead, t_SpiritMaterialListNode) meshList;
 };
 
-<<<<<<< HEAD
-SpiritMaterial spCreateMaterial(
-    const SpiritContext context,
-    const SpiritMaterialCreateInfo *createInfo);
-
-SpiritResult spMaterialUpdate(
-    const SpiritContext context,
-    SpiritMaterial material);
-
-SpiritResult spMaterialAddMesh(
-    const SpiritMaterial material,
-    const SpiritMeshReference meshRef);
-
-// will submit all commands to draw associated meshes, and will
-// release references to all meshes
-// returns the number of vertices submit
-SpiritResult spMaterialRecordCommands(
-    const SpiritContext context,
-    SpiritMaterial material,
-    const u32 imageIndex);
-
-SpiritResult spDestroyMaterial(
-    const SpiritContext context,
-    SpiritMaterial material);
-=======
 /**
  * @brief Create a new material with the properties defined in createInfo
  *
@@ -157,4 +117,3 @@ SpiritResult spMaterialRecordCommands(
  */
 SpiritResult
 spDestroyMaterial(const SpiritContext context, SpiritMaterial material);
->>>>>>> devel

@@ -9,12 +9,7 @@
  * @date Feb 17 2022
  */
 
-<<<<<<< HEAD
-
-//should enable
-=======
 // should enable
->>>>>>> devel
 #define ENABLE_FATAL // log a unrecoverable error
 #define ENABLE_ERROR // log a failure that might not crash, but behavoir is
                      // undefined
@@ -97,16 +92,6 @@ typedef enum
 // stupid workaround to convert line number to string
 #define int_to_str_2(int) #int
 #define int_to_str(int) int_to_str_2(int)
-<<<<<<< HEAD
-
-#define log_perror(messege, ...) unix_log_perror(\
-    __FILE__,\
-    __func__,\
-    int_to_str(__LINE__),\
-    messege,\
-    ##__VA_ARGS__)
-=======
->>>>>>> devel
 
 #define log_perror(messege, ...) \
     unix_log_perror(             \
@@ -115,31 +100,14 @@ typedef enum
 // Params:
 //      s - the automatic string identifying the file and whatnot
 //      m - an optional messege that can be left by the user
-<<<<<<< HEAD
-int unix_log_perror (
-    const char *file,
-    const char *func,
-    const char *line,
-    const char *m,
-    ...) __attribute__((format(printf, 4, 5)));
-=======
 int unix_log_perror(
     const char *file, const char *func, const char *line, const char *m, ...)
     __attribute__((format(printf, 4, 5)));
->>>>>>> devel
 #else // disable the function on non-unix systems
 #define log_perror(string) ((void)0)
 #endif
 
 // log debugging messege
-<<<<<<< HEAD
-int debug_log (
-    DebugSeverity severity,
-    const char *file,
-    const char *func,
-    const int   line,
-    const char *format, ...) __attribute__((format(printf, 5, 6)));
-=======
 int debug_log(
     DebugSeverity severity,
     const char *file,
@@ -147,4 +115,3 @@ int debug_log(
     const int line,
     const char *format,
     ...) __attribute__((format(printf, 5, 6)));
->>>>>>> devel

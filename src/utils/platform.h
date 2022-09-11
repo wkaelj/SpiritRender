@@ -2,8 +2,8 @@
 #include <spirit_header.h>
 
 // Platform specific systems
-// 
-// 
+//
+//
 // Kael Johnston May 1 2022
 
 #ifdef _WIN32

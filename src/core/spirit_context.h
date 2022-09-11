@@ -8,10 +8,6 @@
 
 // include components
 
-<<<<<<< HEAD
-
-=======
->>>>>>> devel
 typedef struct t_SpiritContextCreateInfo
 {
 
@@ -22,11 +18,7 @@ typedef struct t_SpiritContextCreateInfo
 
     // device
     bool enableValidation; // should vulkan validation be initialized
-<<<<<<< HEAD
-    bool powerSaving; // should integrated GPU's be chosen
-=======
     bool powerSaving;      // should integrated GPU's be chosen
->>>>>>> devel
 
 } SpiritContextCreateInfo;
 
@@ -62,7 +54,6 @@ struct t_SpiritContext
      *
      */
     SpiritSwapchain swapchain;
->>>>>>> devel
 
     /**
      * @brief The list of materials used by the context.
@@ -73,11 +64,7 @@ struct t_SpiritContext
 
     // command buffers
     SpiritCommandBuffer *commandBuffers;
-<<<<<<< HEAD
-    size_t           commandBufferCount;
-=======
     size_t commandBufferCount;
->>>>>>> devel
 
     SpiritResolution windowSize; // use for UI sizes, stored as screen units
     SpiritResolution screenResolution; // resolution in px, use for
@@ -135,38 +122,18 @@ SpiritWindowState spContextPollEvents(SpiritContext context);
  * @param context the context the material will be added to. It must be a valid
  * SpiritContext.
  * @param material the material which will be added to the context. It must be
-<<<<<<< HEAD
- * kept after the being submitted so that meshes can still be added to the material.
- * It must be a valid SpiritMaterial.
- * @return SpiritResult
- */
-SpiritResult spContextAddMaterial(
-    SpiritContext context,
-    const SpiritMaterial material);
-=======
  * kept after the being submitted so that meshes can still be added to the
  * material. It must be a valid SpiritMaterial.
  * @return SpiritResult
  */
 SpiritResult
 spContextAddMaterial(SpiritContext context, const SpiritMaterial material);
->>>>>>> devel
 
 /**
  * @brief Remove a material from the context that was added using
  * spContextAddMaterial. This will not destroy the material, and it can be added
  * to a different context or added to this context again later.
  *
-<<<<<<< HEAD
- * @param context the context the material will be removed from. It must be a valid
- * SpiritContext.
- * @param material the material to remove from the context.
- * @return SpiritResult
- */
-SpiritResult spContextRemoveMaterial(
-    SpiritContext context,
-    const SpiritMaterial material);
-=======
  * @param context the context the material will be removed from. It must be a
  * valid SpiritContext.
  * @param material the material to remove from the context.
@@ -174,7 +141,6 @@ SpiritResult spContextRemoveMaterial(
  */
 SpiritResult
 spContextRemoveMaterial(SpiritContext context, const SpiritMaterial material);
->>>>>>> devel
 
 /**
  * @brief Destroy a spirit context. It will not destroy the meshes associated

@@ -63,13 +63,8 @@ struct t_SpiritRenderPass
 // create a render pass
 SpiritRenderPass spCreateRenderPass(
     SpiritRenderPassCreateInfo *createInfo,
-<<<<<<< HEAD
-    const SpiritDevice          device,
-    const SpiritSwapchain       swapchain);
-=======
     const SpiritDevice device,
     const SpiritSwapchain swapchain);
->>>>>>> devel
 
 /**
  * @brief Used to recreate the framebuffers for a renderpass.
@@ -91,26 +86,15 @@ SpiritResult spRenderPassRecreateFramebuffers(
  * @param device
  * @return SpiritResult
  */
-<<<<<<< HEAD
-SpiritResult spDestroyRenderPass(
-    SpiritRenderPass renderPass,
-    SpiritDevice     device);
-=======
 SpiritResult
 spDestroyRenderPass(SpiritRenderPass renderPass, SpiritDevice device);
->>>>>>> devel
 
 /**
  * @brief Convert render
  *
  */
-<<<<<<< HEAD
-__attribute__((unavailable)) SpiritRenderPassCreateInfo spRenderPassExpandSettings(
-    SpiritRenderPassSettings *settings);
-=======
 __attribute__((unavailable)) SpiritRenderPassCreateInfo
 spRenderPassExpandSettings(SpiritRenderPassSettings *settings);
->>>>>>> devel
 
 SpiritResult spRenderPassBegin(
     SpiritRenderPass renderPass,
@@ -122,7 +106,3 @@ SPIRIT_INLINE void spRenderPassEnd(SpiritCommandBuffer buffer)
 {
     vkCmdEndRenderPass(buffer->handle);
 }
-<<<<<<< HEAD
-
-=======
->>>>>>> devel
