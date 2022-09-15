@@ -24,7 +24,12 @@
 #include <string.h>
 #include <sys/queue.h>
 #include <time.h>
+
+#ifdef __unix
 #include <sys/queue.h>
+#elif defined(_WIN32)
+#include <utils/platform/platform_queue_bundle.h>
+#endif
 
 // dmalloc
 #ifdef DMALLOC
