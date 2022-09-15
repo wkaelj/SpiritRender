@@ -180,7 +180,6 @@ SpiritResult spMaterialRecordCommands(
 
     if (spRenderPassBegin(
             material->renderPass,
-            context->screenResolution,
             imageIndex,
             context->commandBuffers[imageIndex]))
     {
@@ -216,7 +215,7 @@ SpiritResult spMaterialRecordCommands(
         vkCmdPushConstants(
             buf->handle,
             material->pipeline->layout,
-            VK_SHADER_STAGE_ALL_GRAPHICS,
+            VK_SHADER_STAGE_VERTEX_BIT,
             0,
             sizeof(SpiritPushConstant),
             &currentMesh->pushConstant);

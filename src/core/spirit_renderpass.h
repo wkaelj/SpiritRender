@@ -53,6 +53,7 @@ struct t_SpiritRenderPass
 {
     VkRenderPass renderPass;
     VkFramebuffer *framebuffers;
+    SpiritResolution framebufferSize;
     u32 framebufferCount;
 };
 
@@ -98,7 +99,6 @@ spRenderPassExpandSettings(SpiritRenderPassSettings *settings);
 
 SpiritResult spRenderPassBegin(
     SpiritRenderPass renderPass,
-    SpiritResolution framebufferSize,
     const u32 imageIndex,
     SpiritCommandBuffer commandBuffer);
 

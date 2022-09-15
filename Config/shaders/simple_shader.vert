@@ -3,15 +3,15 @@
 layout (location = 0) in vec3 position;
 
 layout (location = 0) out vec3 fragColor;
+layout (location = 1) out vec2 uv;
 
 layout (push_constant) uniform Push {
-    vec3 translation;
-    vec3 rotation;
-    vec3 scale;
+    mat4 transform;
+    vec3 color;
 } push;
 
 void main () {
-    vec3 translation = position + push.translation;
-    gl_Position = vec4(translation, 1.0);
-    fragColor = vec3(1.0, 0.0, 1.0);
+    gl_Position = vec4(push.transform * vec4(position, 1.0));
+    fragColor = push.color;
+    uv = vec2(0.0, 0.0);
 }

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stdint.h>
 #include <cglm/cglm.h>
+#include <stdint.h>
 
 // Variables for the spirit render.
 //
@@ -100,10 +100,20 @@ typedef struct t_SpiritShader
     u64 shaderSize;
 } SpiritShader;
 
-
-typedef struct  __attribute__((aligned(16))) t_SpiritPushConstant
+typedef struct t_SpiritPushConstant
 {
-    vec3 translation; // unimplemented
-    vec3 rotation;    // unimplemented
-    vec3 scale;       // unimplemented
+    mat4 transform;
+    CGLM_ALIGN(16) vec3 color;
 } SpiritPushConstant;
+
+// math presets
+/* clang-format off */
+
+#define SPIRIT_AXIS_UP       ((vec3) {0.f,  1.f,  0.f })
+#define SPIRIT_AXIS_DOWN     ((vec3) {0.f,  -1.f, 0.f })
+#define SPIRIT_AXIS_RIGHT    ((vec3) {1.f,  0.f,  0.f })
+#define SPIRIT_AXIS_LEFT     ((vec3) {-1.f, 0.f,  0.f })
+#define SPIRIT_AXIS_FORWARD  ((vec3) {0.f,  0.f,  1.f })
+#define SPIRIT_AXIS_BACKWARD ((vec3) {0.f,  0.f,  -1.f})
+
+/* clang-format on */

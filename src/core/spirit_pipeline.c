@@ -180,7 +180,7 @@ VkPipelineLayout createLayout(SpiritDevice device)
     VkPushConstantRange pushRanges = {
         .offset = 0,
         .size = sizeof(SpiritPushConstant),
-        .stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS
+        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT
     };
 
     VkPipelineLayoutCreateInfo layoutInfo = {};

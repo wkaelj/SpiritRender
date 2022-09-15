@@ -23,8 +23,12 @@ AlignAfterOpenBracket: AlwaysBreak
 BinPackArguments: false # make sure functions look nice
 BinPackParameters: false
 PointerAlignment: Right
+SpacesInContainerLiterals: true
 
 # shorten blocks to one line
 AllowShortCaseLabelsOnASingleLine: true # short switch blocks inline
 AllowShortBlocksOnASingleLine: Always # put short blocks on 1 line
 AllowShortFunctionsOnASingleLine: true
+
+# type declerations
+TypenameMacros: ['LIST_HEAD', 'LIST_ENTRY']

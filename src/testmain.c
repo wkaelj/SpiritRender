@@ -93,28 +93,31 @@ void mainlooptest(void)
         {-0.5,  -0.5f, 0.0f},
         {-0.5f, 0.5f,  0.0f},
         {0.5f,  -0.5f, 0.0f},
+    };
+    SpiritMeshCreateInfo meshInfo = {.vertCount = 3, .verts = meshVerts};
+    SpiritMesh mesh               = spCreateMesh(context, &meshInfo);
+
+    vec3 meshVerts2[] = {
         {0.5f,  -0.5f, 0.0f},
         {-0.5f, 0.5f,  0.0f},
-        {0.5f,  0.5f,  0.0f}
+        {0.5f,  0.5f,  0.0f},
     };
-
-    SpiritMeshCreateInfo meshInfo = {};
-    meshInfo.vertCount            = 6;
-    meshInfo.verts                = meshVerts;
-
-    SpiritMesh mesh = spCreateMesh(context, &meshInfo);
-
-    db_assert(mesh->vertCount == 6);
+    SpiritMeshCreateInfo meshInfo2 = {.vertCount = 3, .verts = meshVerts2};
+    SpiritMesh mesh2               = spCreateMesh(context, &meshInfo2);
 
     SpiritMeshManager meshManager;
     time_function_with_return(spCreateMeshManager(context, NULL), meshManager);
+
     const SpiritMeshReference meshRef = spMeshManagerAddMesh(meshManager, mesh);
+    const SpiritMeshReference meshRef2 =
+        spMeshManagerAddMesh(meshManager, mesh2);
+
 #ifndef FUNCTION_TIMER_NO_DIAGNOSTIC
     end_timer(startup);
 #endif
 
     u64 frameIndex = 0; // check the current frame being rendered
-    float transform = -0.5f;
+    float rotation = 0.f;
     while (spContextPollEvents(context) != SPIRIT_WINDOW_CLOSED)
     {
 
@@ -122,13 +125,16 @@ void mainlooptest(void)
         struct FunctionTimerData frametime = start_timer("frametime");
 #endif
 
-        SpiritPushConstant uniform = {
-            .translation = {transform, 0, 0},
-            .rotation = {},
-            .scale = {}
-        };
+        mat4 matrix = GLM_MAT4_IDENTITY_INIT;
+        glm_rotate(matrix, rotation * GLM_PI, SPIRIT_AXIS_FORWARD);
+
+        SpiritPushConstant uniform;
+        glm_mat4_dup(matrix, uniform.transform);
+        glm_vec3_copy((vec3){.1f, .1f, 8.f}, uniform.color);
 
         time_function(spMaterialAddMesh(material, meshRef, uniform));
+        glm_vec3_copy((vec3){8.f, .1f, .1f}, uniform.color);
+        time_function(spMaterialAddMesh(material, meshRef2, uniform));
 
         SpiritResult result = SPIRIT_SUCCESS;
         time_function_with_return(spContextSubmitFrame(context), result);
@@ -142,11 +148,10 @@ void mainlooptest(void)
 #endif
 
         ++frameIndex;
-        transform += 0.001f;
-        if (transform >= 0.5f) transform = -0.5f;
+        rotation += 0.0001f;
+        if (rotation >= 2.0f)
+            rotation = 0.f;
     }
-
-    debug_malloc_dump_mem();
 
     spDeviceWaitIdle(context->device);
 

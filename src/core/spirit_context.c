@@ -82,7 +82,7 @@ SpiritContext spCreateContext(SpiritContextCreateInfo *createInfo)
     swapCreateInfo.windowRes = context->screenResolution;
 
     swapCreateInfo.selectedPresentMode  = true;
-    swapCreateInfo.preferredPresentMode = VK_PRESENT_MODE_FIFO_KHR;
+    swapCreateInfo.preferredPresentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
 
     context->swapchain =
         spCreateSwapchain(&swapCreateInfo, context->device, NULL);
