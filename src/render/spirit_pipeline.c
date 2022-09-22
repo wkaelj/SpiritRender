@@ -1,6 +1,4 @@
 #include "spirit_pipeline.h"
-#include "core/spirit_material.h"
-#include "core/spirit_mesh.h"
 #include "spirit_command_buffer.h"
 #include "spirit_device.h"
 #include "spirit_renderpass.h"
@@ -361,7 +359,6 @@ void defaultPipelineConfig(
         .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
         .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
         .alphaBlendOp        = VK_BLEND_OP_ADD,
-
     };
 
     pConfigInfo->colorBlendInfo = (VkPipelineColorBlendStateCreateInfo){

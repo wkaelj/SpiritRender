@@ -1,5 +1,4 @@
 #include "spirit_swapchain.h"
-#include "core/spirit_fence.h"
 #include "spirit_image.h"
 
 //

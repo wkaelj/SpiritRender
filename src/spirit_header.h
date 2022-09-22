@@ -49,12 +49,12 @@
 #include <cglm/cglm.h>
 
 // debug malloc
-#ifdef DEBUG
-#include "debug/debug_malloc.h"
-#endif
+// #ifdef DEBUG
+// #include "debug/debug_malloc.h"
+// #endif
 
 // custom
-#include "core/spirit_types.h" // custom types
+#include "render/spirit_types.h" // custom types
 #include "debug/messenger.h"   // debug messenging functions
 #include "utils/platform.h"    // usefull stuff, like time and whatnot
 #include "utils/spirit_string.h"

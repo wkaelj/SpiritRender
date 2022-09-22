@@ -31,7 +31,7 @@
 
  // platform file denominator ('/' or '\')
 
-#ifdef __unix || __APPLE__
+#if defined(__unix) || defined(__APPLE__)
 #define SPIRIT_PLATFORM_FOLDER_BREAK '/' // unix
 #include <sys/queue.h>
 #elif defined(_WIN32)

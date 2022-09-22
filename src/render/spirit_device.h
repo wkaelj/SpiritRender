@@ -2,7 +2,6 @@
 #include <spirit_header.h>
 #include <vulkan/vulkan_core.h>
 
-#include "core/spirit_types.h"
 #include "spirit_window.h"
 
 // Create and return rendering device

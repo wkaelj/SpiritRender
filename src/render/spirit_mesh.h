@@ -1,17 +1,23 @@
+/**
+ * @file spirit_mesh.h
+ * @author Kael Johnston (wkaelj@gmail.com)
+ * @brief manage meshes imported into the program
+ * so that multiple entities can reference the same mesh
+ *
+ * It also counts references to each mesh, so that when a mesh is
+ * no longer referenced it can be destroyed
+ * Meshes must be checked out and released by the user,
+ * otherwise they may be held in memory without any references to them,
+ * or may be destroyed while some references still remain
+ * @version 0.1
+ * @date 2022-09-16
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
+
 #pragma once
 #include <spirit_header.h>
-
-// manage meshes imported into the program
-// so that multiple entities can reference the same mesh
-//
-// It also counts references to each mesh, so that when a mesh is
-// no longer referenced it can be destroyed
-//
-// Meshes must be checked out and released by the user,
-// otherwise they may be held in memory without any references to them,
-// or may be destroyed while some references still remain
-//
-// Kael Johnston June 15 2022
 
 //
 // Structures

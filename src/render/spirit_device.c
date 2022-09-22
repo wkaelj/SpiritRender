@@ -1,7 +1,4 @@
 #include "spirit_device.h"
-#include "core/spirit_types.h"
-#include "debug/messenger.h"
-#include <sys/cdefs.h>
 
 // Create and manage a rendering device rendering device
 //

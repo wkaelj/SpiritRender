@@ -16,6 +16,7 @@
 #define NULL ((void *)0)
 
 // types
+typedef unsigned char b8;
 typedef int8_t i8;
 typedef uint8_t u8;
 typedef int16_t i16;
@@ -24,8 +25,8 @@ typedef int32_t i32;
 typedef uint32_t u32;
 typedef int64_t i64;
 typedef uint64_t u64;
-#define f32 float
-#define f64 double
+typedef float f32;
+typedef double f64;
 
 //
 // Enumerations
@@ -44,11 +45,24 @@ typedef enum e_SpiritResult
 
 typedef struct t_SpiritResolution
 {
-    u64 w;
-    u64 h;
+    u64 w, h;
 } SpiritResolution;
 
-typedef unsigned char byte;
+typedef char SpiritName[8];
+
+/**
+ * @brief Test of two names are equal.
+ *
+ * @param n1
+ * @param n2
+ * @return true - the names are the same
+ * @return false - the names are different
+ */
+static __always_inline bool
+SPIRIT_NAME_EQ(const SpiritName *n1, const SpiritName *n2)
+{
+    return *(u64*)n1 == *(u64*)n2;
+}
 
 //
 // Component Types

@@ -1,6 +1,6 @@
 #include "glsl_loader.h"
 
-#include "core/spirit_device.h"
+#include "render/spirit_device.h"
 #include <shaderc/shaderc.h>
 #include <utils/spirit_file.h>
 

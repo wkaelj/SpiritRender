@@ -4,18 +4,19 @@
 #include <unistd.h>
 
 // types
-#include "core/spirit_context.h"
+#include "render/spirit_context.h"
 
-#include "core/spirit_device.h"
-#include "core/spirit_material.h"
-#include "core/spirit_mesh.h"
+#include "render/spirit_device.h"
+#include "render/spirit_material.h"
+#include "render/spirit_mesh.h"
 
 // utils
-#include "core/spirit_types.h"
-#include "core/spirit_window.h"
 #include "glsl-loader/glsl_loader.h"
+#include "render/spirit_types.h"
+#include "render/spirit_window.h"
 #include "utils/platform.h"
 #include "utils/spirit_file.h"
+#include "utils/spirit_vector.h"
 
 void mainlooptest(void);
 
@@ -58,7 +59,7 @@ void mainlooptest(void)
     SpiritContextCreateInfo contextInfo = {};
     contextInfo.enableValidation        = true;
     contextInfo.windowName              = "Hi Square :D";
-    contextInfo.windowSize              = (SpiritResolution){800, 600};
+    contextInfo.windowSize              = (SpiritResolution){600, 600};
     contextInfo.windowFullscreen        = false;
 
 #ifndef FUNCTION_TIMER_NO_DIAGNOSTIC
@@ -83,11 +84,13 @@ void mainlooptest(void)
     SpiritMaterial material;
     time_function_with_return(
         spCreateMaterial(context, &materialInfo), material);
+    SpiritMaterial material2 = spCreateMaterial(context, &materialInfo);
 
     if (material == NULL)
         return;
 
     spContextAddMaterial(context, material);
+    spContextAddMaterial(context, material2);
 
     vec3 meshVerts[] = {
         {-0.5,  -0.5f, 0.0f},
@@ -130,11 +133,21 @@ void mainlooptest(void)
 
         SpiritPushConstant uniform;
         glm_mat4_dup(matrix, uniform.transform);
-        glm_vec3_copy((vec3){.1f, .1f, 8.f}, uniform.color);
+        glm_vec3_copy(
+            (vec3){37.f / 255.f, 193.f / 55.f, 13.f / 255.f}, uniform.color);
 
         time_function(spMaterialAddMesh(material, meshRef, uniform));
-        glm_vec3_copy((vec3){8.f, .1f, .1f}, uniform.color);
+        glm_vec3_copy(
+            (vec3){109.f / 255.f, 5.f / 255.f, 117.f / 255.f}, uniform.color);
         time_function(spMaterialAddMesh(material, meshRef2, uniform));
+
+        glm_translate_x(uniform.transform, .5f);
+        glm_vec3_copy(
+            (vec3){255.f / 37.f, 255.f / 193.f, 255.f / 13.f}, uniform.color);
+        time_function(spMaterialAddMesh(material2, meshRef, uniform));
+        glm_vec3_copy(
+            (vec3){255.f / 109.f, 255.f / 5.f, 255.f / 117.f}, uniform.color);
+        time_function(spMaterialAddMesh(material2, meshRef2, uniform));
 
         SpiritResult result = SPIRIT_SUCCESS;
         time_function_with_return(spContextSubmitFrame(context), result);
@@ -156,9 +169,12 @@ void mainlooptest(void)
     spDeviceWaitIdle(context->device);
 
     spReleaseMesh(meshRef);
+    spReleaseMesh(meshRef2);
 
     spDestroyMeshManager(context, meshManager);
     spDestroyMaterial(context, material);
+    spDestroyMaterial(context, material2);
+
     spDestroyContext(context);
 }
 
@@ -182,6 +198,97 @@ void runTest(bool test)
 }
 
 // tests
+
+bool TestVector(const int *values, const size_t valueCount)
+{
+
+    // VECTOR
+    VECTOR(int) vec;
+    VECTOR_INIT(&vec, valueCount / 2);
+
+    for (u32 i = 0; i < valueCount; i++)
+    {
+        VECTOR_PUSH_BACK(&vec, values[i]);
+    }
+
+    for (u32 i = 0; i < valueCount; i++)
+    {
+        if (vec.at[i] != values[i])
+        {
+            log_fatal("Push failed");
+            VECTOR_DELETE(&vec);
+            return false;
+        }
+    }
+
+    VECTOR_INSERT(&vec, 7, valueCount / 4);
+    if (vec.at[valueCount / 4] != 7)
+    {
+        log_fatal("Intertion failed");
+        VECTOR_DELETE(&vec);
+        return false;
+    }
+
+    VECTOR_POP(&vec, valueCount / 4);
+    if (VECTOR_AT(&vec, valueCount / 4) != values[valueCount / 4])
+    {
+        log_fatal("Pop failed");
+        VECTOR_DELETE(&vec);
+        return false;
+    }
+
+    VECTOR_DELETE(&vec);
+
+    // DVECTOR
+    DVECTOR dvec;
+    DVECTOR_INIT(&dvec, sizeof(int), valueCount / 2);
+    const unsigned testIndex      = 2;
+    ((int *)dvec.data)[testIndex] = 5;
+    db_assert(dvec.elementSize == sizeof(int));
+
+    db_assert(
+        DVECTOR_AT_REF(&dvec, testIndex) == &((int *)dvec.data)[testIndex])
+        db_assert(*(int *)DVECTOR_AT_REF(&dvec, testIndex) == 5);
+
+    db_assert(dvec.size == 0) for (u32 i = 0; i < valueCount; i++)
+    {
+        db_assert(i == dvec.size);
+        DVECTOR_PUSH_BACK(&dvec, &values[i]);
+        db_assert(DVECTOR_AT(&dvec, i, int) == values[i]);
+    }
+
+    for (u32 i = 0; i < valueCount; i++)
+    {
+        if (DVECTOR_AT(&dvec, i, int) != values[i])
+        {
+            log_fatal("Push failed");
+            DVECTOR_DELETE(&dvec);
+            return false;
+        }
+    }
+
+    const int t = 7;
+    DVECTOR_INSERT(&dvec, &t, valueCount / 4);
+    if (DVECTOR_AT(&dvec, valueCount / 4, int) != t)
+    {
+        log_fatal("Intertion failed");
+        DVECTOR_DELETE(&dvec);
+        return false;
+    }
+
+    DVECTOR_POP(&dvec, valueCount / 4);
+    if (DVECTOR_AT(&dvec, valueCount / 4, int) != values[valueCount / 4])
+    {
+        log_fatal("Pop failed");
+        DVECTOR_DELETE(&dvec);
+        return false;
+    }
+
+    DVECTOR_DELETE(&dvec);
+
+    return true;
+}
+
 bool TestPlatformLocalizeFilename(const char *input, const char *expected)
 {
 
@@ -361,7 +468,7 @@ void Test(void)
 #endif
     for (size_t i = 0; i < 1; i++)
     {
-        runTest(TestGLSLLoader("tests/test_shader.frag"));
+        // runTest(TestGLSLLoader("tests/test_shader.frag"));
         runTest(TestPlatformLocalizeFilename(
             "file/test.png", "./bin/file/test.png"));
         runTest(TestPlatformLocalizeFilename(
@@ -370,6 +477,8 @@ void Test(void)
         runTest(TestStringStrip("filename.txt", '.', "txt"));
         runTest(TestFileUtilities(
             "testfile.txt", "Testing test file\nNewline test"));
+        const int arr[] = {5, 6, 4, 5, 2, 192381, 1028329};
+        runTest(TestVector(arr, array_length(arr)));
     }
 #ifndef FUNCTION_TIMER_NO_DIAGNOSTIC
     terminate_timer();

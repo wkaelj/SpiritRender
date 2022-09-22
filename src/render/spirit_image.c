@@ -1,6 +1,5 @@
 #include "spirit_image.h"
-#include "core/spirit_device.h"
-#include <vulkan/vulkan_core.h>
+#include "spirit_device.h"
 
 SpiritResult spCreateImage(
     const SpiritDevice device,

@@ -1,5 +1,5 @@
 #pragma once
-#include "core/spirit_window.h"
+#include "spirit_window.h"
 #include <spirit_header.h>
 
 // Create a spirit render context

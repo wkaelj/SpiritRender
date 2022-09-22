@@ -1,8 +1,5 @@
 #include "spirit_fence.h"
-#include "core/spirit_types.h"
 #include "spirit_device.h"
-#include "spirit_header.h"
-#include <vulkan/vulkan_core.h>
 
 SpiritFence spCreateFence(const SpiritDevice device, bool startSignaled)
 {

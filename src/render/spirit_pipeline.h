@@ -11,7 +11,7 @@
 
 #pragma once
 #include <spirit_header.h>
-#include "core/spirit_types.h"
+#include "render/spirit_types.h"
 #include "spirit_device.h"
 #include "spirit_renderpass.h"
 #include "spirit_mesh.h"

@@ -1,11 +1,8 @@
 #pragma once
-#include "spirit_command_buffer.h"
 #include <spirit_header.h>
-#include <vulkan/vulkan_core.h>
-#include "core/spirit_types.h"
+#include "spirit_command_buffer.h"
 #include "spirit_device.h"
 #include "spirit_swapchain.h"
-#include "spirit_renderpass.h"
 #include "spirit_command_buffer.h"
 
 // Render pass abtraction to create render passes based on templates, or

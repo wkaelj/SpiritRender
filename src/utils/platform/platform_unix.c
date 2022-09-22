@@ -190,8 +190,6 @@ u64 spPlatformGetRunningTime(void)
 
 time_t spPlatformGetFileModifiedDate(const char *filepath)
 {
-    db_assert_msg(filepath, "Must have valid filepath");
-
     localize_path(filepath, path, pathLength);
 
     struct stat data;
@@ -208,8 +206,6 @@ time_t spPlatformGetFileModifiedDate(const char *filepath)
 
 SpiritResult spPlatformCreateFolder(const char *filepath)
 {
-    db_assert_msg(filepath, "Must pass a valid filepath");
-
     localize_path(filepath, path, pathLength);
 
     assert_allowed_file_operation(path);

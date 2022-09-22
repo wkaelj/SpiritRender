@@ -1,5 +1,4 @@
 #include "spirit_renderpass.h"
-#include "core/spirit_types.h"
 
 #include "spirit_command_buffer.h"
 #include "spirit_image.h"
