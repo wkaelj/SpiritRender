@@ -3,11 +3,11 @@
 DEBUGGER = gdb
 DEBUGGERARGS = --silent
 
-BUILDFDR = bin
+BUILDFDR = build
 EXEC = SpiritRender
 
 default:
-	cp -r Config/* bin/
+	cp -r Config/* build/
 	make -s --quiet -C $(BUILDFDR)
 
 run:

@@ -163,7 +163,6 @@ typedef struct DVECTOR
     size_t elementSize;
 } DVECTOR;
 
-
 #define DVECTOR_AT(dvector, index, dvector_type) \
     (*((dvector_type *)DVECTOR_AT_REF(dvector, index)))
 
@@ -175,10 +174,7 @@ typedef struct DVECTOR
  * @param dvec the vector
  * @return size_t the size
  */
-extern __always_inline size_t DVECTOR_SIZE(const DVECTOR *dvec)
-{
-    return dvec->size;
-}
+__always_inline size_t DVECTOR_SIZE(const DVECTOR *dvec) { return dvec->size; }
 
 /**
  * @brief Get the capacity of the vector
@@ -186,7 +182,7 @@ extern __always_inline size_t DVECTOR_SIZE(const DVECTOR *dvec)
  * @param dvec the vector
  * @return size_t the number of spaces in the vector
  */
-extern __always_inline size_t DVECTOR_CAPACITY(const DVECTOR *dvec)
+__always_inline size_t DVECTOR_CAPACITY(const DVECTOR *dvec)
 {
     return dvec->capacity;
 }
@@ -198,8 +194,7 @@ extern __always_inline size_t DVECTOR_CAPACITY(const DVECTOR *dvec)
  * @param index the index of the element
  * @return void* a reference to the element at index
  */
-extern __always_inline void *
-DVECTOR_AT_REF(const DVECTOR *dvec, const unsigned index)
+__always_inline void *DVECTOR_AT_REF(const DVECTOR *dvec, const unsigned index)
 {
     return (void *)((char *)dvec->data + dvec->elementSize * index);
 }
@@ -212,7 +207,7 @@ DVECTOR_AT_REF(const DVECTOR *dvec, const unsigned index)
  * @param capacity number of elements the vector can hold initialy
  *
  */
-extern __always_inline void
+__always_inline void
 DVECTOR_INIT(DVECTOR *dvec, const size_t item_size, const size_t capacity)
 {
     *dvec = (DVECTOR){
@@ -230,7 +225,7 @@ DVECTOR_INIT(DVECTOR *dvec, const size_t item_size, const size_t capacity)
  * @param dvec the vector
  *
  */
-extern __always_inline void DVECTOR_DELETE(DVECTOR *dvec)
+__always_inline void DVECTOR_DELETE(DVECTOR *dvec)
 {
     free(dvec->data);
     *dvec = (DVECTOR){};
@@ -244,7 +239,7 @@ extern __always_inline void DVECTOR_DELETE(DVECTOR *dvec)
  * @param size the size to make the vector
  *
  */
-extern __always_inline void DVECTOR_RESIZE(DVECTOR *dvec, const size_t size)
+__always_inline void DVECTOR_RESIZE(DVECTOR *dvec, const size_t size)
 {
     assert(
         size > dvec->size &&
@@ -262,7 +257,7 @@ extern __always_inline void DVECTOR_RESIZE(DVECTOR *dvec, const size_t size)
  * @param index the index the inserted element will have
  *
  */
-extern __always_inline void
+__always_inline void
 DVECTOR_INSERT(DVECTOR *dvec, const void *item, const unsigned index)
 {
     assert(index < dvec->size && "Index out of bounds");
@@ -284,7 +279,7 @@ DVECTOR_INSERT(DVECTOR *dvec, const void *item, const unsigned index)
  * @param index the index of the element which will be removed
  *
  */
-extern __always_inline void DVECTOR_POP(DVECTOR *dvec, const unsigned index)
+__always_inline void DVECTOR_POP(DVECTOR *dvec, const unsigned index)
 {
     assert(index < dvec->size && "Index out of bounds");
     memmove(
@@ -303,7 +298,7 @@ extern __always_inline void DVECTOR_POP(DVECTOR *dvec, const unsigned index)
  * @param item a reference to the object to add
  *
  */
-extern __always_inline void DVECTOR_PUSH_BACK(DVECTOR *dvec, const void *item)
+__always_inline void DVECTOR_PUSH_BACK(DVECTOR *dvec, const void *item)
 {
     if (dvec->size + 1 > dvec->capacity)
         DVECTOR_RESIZE(dvec, dvec->size + VECTOR_RESIZE_AMOUNT);

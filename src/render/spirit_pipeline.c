@@ -167,7 +167,6 @@ spDestroyPipeline(const SpiritDevice device, SpiritPipeline pipeline)
     return SPIRIT_SUCCESS;
 }
 
-
 //
 // Helper Function Implementation
 //
@@ -177,16 +176,17 @@ VkPipelineLayout createLayout(SpiritDevice device)
 
     VkPushConstantRange pushRanges = {
         .offset = 0,
-        .size = sizeof(SpiritPushConstant),
-        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT
+        .size   = sizeof(SpiritPushConstant),
+        .stageFlags =
+            VK_SHADER_STAGE_VERTEX_BIT, //  | VK_SHADER_STAGE_FRAGMENT_BIT,
     };
 
     VkPipelineLayoutCreateInfo layoutInfo = {};
-    layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    layoutInfo.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     layoutInfo.setLayoutCount = 0;
-    layoutInfo.pSetLayouts = NULL;
+    layoutInfo.pSetLayouts    = NULL;
     layoutInfo.pushConstantRangeCount = 0;
-    layoutInfo.pPushConstantRanges = NULL;
+    layoutInfo.pPushConstantRanges    = NULL;
     layoutInfo.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     layoutInfo.setLayoutCount = 0;
     layoutInfo.pSetLayouts    = NULL;

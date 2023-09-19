@@ -324,6 +324,7 @@ SpiritResult spDestroyContext(SpiritContext context)
 
     context->swapchain &&spDestroySwapchain(
         context->swapchain, context->device);
+    log_debug("Destroyed swapchain");
     context->device &&spDestroyDevice(context->device);
     context->window &&spDestroyWindow(context->window);
 

@@ -142,7 +142,6 @@ SpiritSwapchain spCreateSwapchain(
     swapInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     swapInfo.clipped        = VK_TRUE;
 
-
     // old swapchain
     if (optionalSwapchain)
         swapInfo.oldSwapchain = optionalSwapchain->swapchain;
@@ -153,6 +152,8 @@ SpiritSwapchain spCreateSwapchain(
         free(optionalSwapchain);
         return NULL;
     }
+
+    vkDestroySwapchainKHR(device->device, swapInfo.oldSwapchain, NULL);
 
     out->imageCount = 0;
 

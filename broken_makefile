@@ -1,0 +1,72 @@
+UNAME = $(shell uname -s)
+# cmake wrapper
+
+#external dependencies
+VENDOR = libvendor.so
+VENDORDIR = libs
+
+BUILDDIR = bin
+EXEC = SpiritRender
+LIB = libspirit.so
+
+CFLAGS += --std=gnu2x -Wall -Werror -Wextra
+CFLAGS += -Wno-unused-value -Wno-unused-parameter 
+CFLAGS += -Wno-ignored-qualifiers
+# library includes
+CFLAGS += -I./src/ -I./$(VENDORDIR)/json-c/ -I./$(VENDORDIR)/cglm/include/
+CFLAGS += -I./$(VENDORDIR)/glfw/include/
+CFLAGS += -I./$(VENDORDIR)/shaderc/libshaderc/include/
+LDFLAGS += -L./$(VENDORDIR)/$(BUILDDIR)/ -lvendor -lvulkan -lm -lstdc++
+# LDFLAGS += -L./$(VENDORDIR)/$(BUILDDIR)/glslang/glslang/ -lglslang
+# LDFLAGS += -L./$(VENDORDIR)/$(BUILDDIR)/spirv-tools/source -lSPIRV-Tools
+
+DEBUGGER = gdb
+DEBUGGERARGS = --silent
+
+SRCDIRS = $(wildcard src/**/) $(wildcard src/**/**/)
+OBJDIRS = $(SRCDIRS:%=$(BUILDDIR)/%)
+
+SRC = $(wildcard src/*.c) $(wildcard src/**/*.c) $(wildcard src/**/**/*.c)
+OBJ = $(SRC:%.c=$(BUILDDIR)/%.o)
+
+.PHONY = clean all default test noshade debug
+
+# all: dirs library test run
+default: dirs vendor library exec run
+
+dirs:
+	mkdir -p ./$(BUILDDIR) ./libs/$(BUILDDIR) $(OBJDIRS)
+
+run:
+	./$(BUILDDIR)/$(EXEC)
+
+test:
+	./$(BUILDDIR)/$(EXEC) --test
+
+noshade:
+	./$(BUILDDIR)/$(EXEC) --delete-shader-cache
+
+debug:
+	cd $(BUILDDIR)
+	$(DEBUGGER) $(DEBUGGERARGS) $(BUILDDIR)/$(EXEC)
+
+cmake:
+	cmake -B $(BUILDDIR) -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+	cp $(BUILDDIR)/compile_commands.json ./compile_commands.json
+
+exec:
+	cc test/testmain.c -o $(BUILDDIR)/$(EXEC) $(CFLAGS) -lvulkan -lm -L./$(BUILDDIR) -lspirit
+	
+library: $(OBJ)
+	cc -shared -fPIC -o $(BUILDDIR)/$(LIB) $^ $(CFLAGS) $(LDFLAGS)
+
+$(BUILDDIR)/%.o: %.c
+	cc $(CFLAGS) -o $@ -c $<
+	
+vendor: .gitmodules
+	cmake -B libs/$(BUILDDIR) -G Unix\ Makefiles -S ./$(VENDORDIR)
+	make -C $(VENDORDIR)/$(BUILDDIR) -s
+
+clean:
+	rm -Rf ./$(OBJ) ./$(BUILDDIR)/$(LIB) ./$(BUILDDIR)/$(EXEC) ./$(OBJDIRS) 
+
