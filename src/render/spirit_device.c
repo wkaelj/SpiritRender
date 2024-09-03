@@ -85,7 +85,6 @@ SpiritDevice spCreateDevice(SpiritDeviceCreateInfo *createInfo)
     out->deviceExtensionCount = createInfo->windowExtensions.count;
     out->deviceExtensions     = createInfo->windowExtensions.names;
 
-
     // validation layers
 
     // default validation layers
@@ -103,7 +102,6 @@ SpiritDevice spCreateDevice(SpiritDeviceCreateInfo *createInfo)
             createInfo->requiredValidationLayers,
             createInfo->requiredValidationLayerCount))
     {
-
         // disable validation
         createInfo->enableValidation = false;
         log_validation("Automatically disabling validation, because it is not "

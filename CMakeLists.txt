@@ -4,7 +4,7 @@ message(STATUS "Local .env.cmake: ${LOCAL_ENV}")
 cmake_minimum_required(VERSION 3.22.0)
 
 # whether or not to build with address sanitizer
-set(SPIRIT_USE_ASAN false)
+set(SPIRIT_USE_ASAN true)
 
 set(NAME SpiritRender)
 
@@ -54,7 +54,7 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CM
 # BUILD TYPE
 set(CMAKE_BUILD_TYPE "Debug")
 
-set(CMD_ARGS -Wall -Wextra -Wno-unused-value -Wno-unused-parameter)
+set(CMD_ARGS -Wall -Wextra -Wno-unused-value -Wno-unused-parameter -fanalyzer)
 
 # address sanitizer
 if (SPIRIT_USE_ASAN)

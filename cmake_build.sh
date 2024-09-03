@@ -5,4 +5,4 @@ build_dir=build
 
 cmake --build $build_dir/ 
 
-./build/SpiritRender @a
+# ./build/SpiritRender @a

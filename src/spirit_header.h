@@ -7,12 +7,12 @@
 
 // attribute definitions
 #define SPIRIT_DEPRECATED __attribute_deprecated__ // mark a deprecated function
-#define SPIRIT_INLINE \
-    inline __attribute__((always_inline)) // force a function to be inlined
+#define SPIRIT_INLINE                                                          \
+  inline __attribute__((always_inline)) // force a function to be inlined
 #define SPIRIT_API __attribute__((externally_visible, visibility("default")))
 
-#define SPIRIT_NONULL(...) \
-    __attribute__((nonnull(__VA_ARGS__))) // a pointer that may not be null
+#define SPIRIT_NONULL(...)                                                     \
+  __attribute__((nonnull(__VA_ARGS__))) // a pointer that may not be null
 
 // std
 #define __STDC_WANT_LIB_EXT1__ 1
@@ -54,9 +54,9 @@
 // #endif
 
 // custom
+#include "debug/messenger.h"     // debug messenging functions
 #include "render/spirit_types.h" // custom types
-#include "debug/messenger.h"   // debug messenging functions
-#include "utils/platform.h"    // usefull stuff, like time and whatnot
+#include "utils/platform.h"      // usefull stuff, like time and whatnot
 #include "utils/spirit_string.h"
 
 #ifndef DEBUG
@@ -74,9 +74,9 @@
 #define new_var(typename) (typename *)malloc(sizeof(typename))
 #define new_array(typename, count) (typename *)malloc(sizeof(typename) * count)
 
-#define new_flex_array(structname, flexmembertype, elementcount) \
-    ((structname *)malloc(                                       \
-        sizeof(structname) + sizeof(flexmembertype) * elementcount))
+#define new_flex_array(structname, flexmembertype, elementcount)               \
+  ((structname *)malloc(sizeof(structname) +                                   \
+                        sizeof(flexmembertype) * elementcount))
 
 // find the size of a STACK ALLOCATED array
 #define array_length(array) (sizeof(array) / sizeof(array[0]))
@@ -94,23 +94,21 @@
 
 // debug
 #ifdef DEBUG
-#define db_assert_msg(statement, errmsg)                             \
-    if (!(statement))                                                \
-    {                                                                \
-        log_fatal("Assertion (%s) failed: %s", #statement, #errmsg); \
-        abort();                                                     \
-    }
+#define db_assert_msg(statement, errmsg)                                       \
+  if (!(statement)) {                                                          \
+    log_fatal("Assertion (%s) failed: %s", #statement, #errmsg);               \
+    abort();                                                                   \
+  }
 #else
 #define db_assert_msg(statement, errmsg) ((void)0)
 #endif
 
 #ifdef DEBUG
-#define db_assert(statement)                            \
-    if (!(statement))                                   \
-    {                                                   \
-        log_fatal("Assertion (%s) failed", #statement); \
-        abort();                                        \
-    }
+#define db_assert(statement)                                                   \
+  if (!(statement)) {                                                          \
+    log_fatal("Assertion (%s) failed", #statement);                            \
+    abort();                                                                   \
+  }
 #else
 #define db_assert(statement) (void(0))
 #endif

@@ -24,6 +24,7 @@ typedef struct t_SpiritSwapchainSupportInfo
     VkPresentModeKHR *presentModes;
     u32 presentModeCount;
 } SpiritSwapchainSupportInfo;
+
 // information used to create logical device
 typedef struct t_SpiritDeviceCreateInfo
 {
